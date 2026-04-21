@@ -51,11 +51,18 @@ jobs:
       - name: install npm deps
         run: npm install
 
+      - name: write signing key
+        shell: bash
+        run: |
+          echo "$TAURI_SIGNING_PRIVATE_KEY" | base64 --decode > $RUNNER_TEMP/signing.key
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+
       - name: build and publish
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PATH: ${{ runner.temp }}/signing.key
           VITE_INSFORGE_URL: ${{ secrets.VITE_INSFORGE_URL }}
           VITE_INSFORGE_ANON_KEY: ${{ secrets.VITE_INSFORGE_ANON_KEY }}
         with:
