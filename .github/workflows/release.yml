@@ -67,7 +67,8 @@ jobs:
           VITE_INSFORGE_ANON_KEY: ${{ secrets.VITE_INSFORGE_ANON_KEY }}
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
-          updaterJsonKeepUniversal: true
+          includeUpdaterJson: true
+          updaterJsonPreferNsis: true
 
   publish-release:
     runs-on: ubuntu-latest
