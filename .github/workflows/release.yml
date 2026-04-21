@@ -51,10 +51,13 @@ jobs:
       - name: install npm deps
         run: npm install
 
-      - name: write signing key
+      - name: require updater signing key
         shell: bash
         run: |
-          echo "$TAURI_SIGNING_PRIVATE_KEY" | base64 --decode > $RUNNER_TEMP/signing.key
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo '::error::Set repository secret TAURI_SIGNING_PRIVATE_KEY to the full minisign private key text (same key that matches pubkey in tauri.conf.json). Generate with: npm run tauri signer generate -- -w path/to/key'
+            exit 1
+          fi
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
 
@@ -62,7 +65,8 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY_PATH: ${{ runner.temp }}/signing.key
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           VITE_INSFORGE_URL: ${{ secrets.VITE_INSFORGE_URL }}
           VITE_INSFORGE_ANON_KEY: ${{ secrets.VITE_INSFORGE_ANON_KEY }}
         with:
