@@ -22,14 +22,7 @@
         "center": true
       }
     ],
-    "trayIcon": {
-      "iconPath": "../public/icono.ico",
-      "iconAsTemplate": false,
-      "menuOnLeftClick": false,
-      "title": "JNApp",
-      "tooltip": "JNApp - Tu espacio juntos"
-    },
-    "security": {
+"security": {
       "csp": null
     }
   },
