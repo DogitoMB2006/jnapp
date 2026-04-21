@@ -2,12 +2,14 @@ import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
 import { Download, Maximize2, Minus, Square, X } from "lucide-react"
 import { getCurrentWindow } from "@tauri-apps/api/window"
+import { useUpdaterStore } from "../../store/updaterStore"
 
 const isTauriRuntime =
   typeof window !== "undefined" && "__TAURI_INTERNALS__" in window
 
 export const CustomTitleBar = () => {
   const [maximized, setMaximized] = useState(false)
+  const { status: updateStatus, checkForUpdate, openModal } = useUpdaterStore()
 
   useEffect(() => {
     if (!isTauriRuntime) return
@@ -76,16 +78,26 @@ export const CustomTitleBar = () => {
     }
   }
 
-  const handleUpdatesClick = () => {
-    toast("Comprobación de actualizaciones disponible próximamente.", {
-      duration: 2800,
-    })
+  const handleUpdatesClick = async () => {
+    if (updateStatus === "available") {
+      openModal()
+      return
+    }
+    if (updateStatus === "checking") return
+    await checkForUpdate()
+    const latest = useUpdaterStore.getState()
+    if (latest.status === "up-to-date") {
+      toast("Ya tienes la última actualización ✓", { duration: 2500 })
+    } else if (latest.status === "error") {
+      toast.error(latest.error ?? "Error al buscar actualizaciones", { duration: 3000 })
+    }
+    // if available, the store already set modalOpen = true
   }
 
   const handleUpdatesKeyDown = (e: React.KeyboardEvent) => {
     if (e.key !== "Enter" && e.key !== " ") return
     e.preventDefault()
-    handleUpdatesClick()
+    void handleUpdatesClick()
   }
 
   return (
@@ -103,13 +115,16 @@ export const CustomTitleBar = () => {
       <div className="flex flex-shrink-0 items-stretch">
         <button
           type="button"
-          className="flex items-center gap-1.5 px-3 text-xs font-medium text-base-content/80 transition-colors hover:bg-base-300 hover:text-base-content focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-200"
+          disabled={updateStatus === "checking"}
+          className="flex items-center gap-1.5 px-3 text-xs font-medium text-base-content/80 transition-colors hover:bg-base-300 hover:text-base-content focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-200 disabled:opacity-50"
           aria-label="Buscar actualizaciones"
           tabIndex={0}
-          onClick={handleUpdatesClick}
+          onClick={() => void handleUpdatesClick()}
           onKeyDown={handleUpdatesKeyDown}
         >
-          <Download size={14} aria-hidden />
+          {updateStatus === "checking"
+            ? <span className="loading loading-spinner loading-xs" aria-hidden />
+            : <Download size={14} aria-hidden />}
           <span className="hidden min-[380px]:inline">Actualizar</span>
         </button>
 
