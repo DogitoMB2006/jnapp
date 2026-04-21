@@ -51,21 +51,27 @@ jobs:
       - name: install npm deps
         run: npm install
 
-      - name: require updater signing key
-        shell: bash
-        run: |
-          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
-            echo '::error::Set repository secret TAURI_SIGNING_PRIVATE_KEY to the full minisign private key text (same key that matches pubkey in tauri.conf.json). Generate with: npm run tauri signer generate -- -w path/to/key'
-            exit 1
-          fi
+      # Multiline secrets often do not survive into npm/tauri on windows-latest when set only as TAURI_SIGNING_PRIVATE_KEY.
+      # Write UTF-8 file + use TAURI_SIGNING_PRIVATE_KEY_PATH so the CLI reads the key reliably.
+      - name: stage minisign key for Tauri
+        id: signing
+        shell: pwsh
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:TAURI_SIGNING_PRIVATE_KEY)) {
+            Write-Host '::error::TAURI_SIGNING_PRIVATE_KEY secret empty. Paste full minisign secret key (must pair with pubkey in tauri.conf.json). Not base64 wrapper unless you decode yourself.'
+            exit 1
+          }
+          $path = Join-Path $env:RUNNER_TEMP 'tauri-signing.key'
+          [System.IO.File]::WriteAllText($path, $env:TAURI_SIGNING_PRIVATE_KEY, [System.Text.UTF8Encoding]::new($false))
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "key_path=$path" -Encoding utf8NoBOM
 
       - name: build and publish
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PATH: ${{ steps.signing.outputs.key_path }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           VITE_INSFORGE_URL: ${{ secrets.VITE_INSFORGE_URL }}
           VITE_INSFORGE_ANON_KEY: ${{ secrets.VITE_INSFORGE_ANON_KEY }}
