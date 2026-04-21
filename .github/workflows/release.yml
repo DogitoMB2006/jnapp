@@ -67,6 +67,7 @@ jobs:
           VITE_INSFORGE_ANON_KEY: ${{ secrets.VITE_INSFORGE_ANON_KEY }}
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
+          tagName: ${{ github.ref_name }}
           includeUpdaterJson: true
           updaterJsonPreferNsis: true
 
