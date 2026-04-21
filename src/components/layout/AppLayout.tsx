@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BottomNav } from "./BottomNav";
 import { CustomTitleBar } from "./CustomTitleBar";
+import { UpdateBanner } from "./UpdateBanner";
 import { NotificationPanel } from "../notifications/NotificationPanel";
 import { Avatar } from "../shared/Avatar";
 import { PlanesPage } from "../sections/planes/PlanesPage";
@@ -27,6 +28,7 @@ export function AppLayout() {
   return (
     <div className="flex flex-col h-screen bg-base-100 overflow-hidden select-none">
       <CustomTitleBar />
+      <UpdateBanner />
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 bg-base-100/80 backdrop-blur-sm border-b border-base-300 flex-shrink-0">
         <div className="flex items-center gap-2">

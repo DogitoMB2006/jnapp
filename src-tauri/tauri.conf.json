@@ -44,5 +44,12 @@
       "icons/icon.ico"
     ]
   },
-  "plugins": {}
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNENTlBNTdDREIzMUNGNDEKUldSQnp6SGJmS1ZaUFhMRGN0SGJoREdLQlpCWVliaVNDNFdmeVQ4SDh5YmcxUHB6MEVVaXcrMkYK",
+      "endpoints": [
+        "https://github.com/DogitoMB2006/jnapp/releases/latest/download/latest.json"
+      ]
+    }
+  }
 }
