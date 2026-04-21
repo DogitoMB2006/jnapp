@@ -1,13 +1,15 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Camera, Save, LogOut, UserCircle } from "lucide-react";
+import { Camera, Save, LogOut, UserCircle, RefreshCw, CheckCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import insforge from "../../lib/insforge";
 import { useAuthStore } from "../../store/authStore";
 import { Avatar } from "../shared/Avatar";
+import { useUpdaterStore } from "../../store/updaterStore";
 
 export function ProfilePage() {
   const { user, profile, setProfile, logout } = useAuthStore();
+  const { status: updateStatus, checkForUpdate, openModal, update } = useUpdaterStore();
   const [displayName, setDisplayName] = useState(profile?.display_name || "");
   const [username, setUsername] = useState(profile?.username || "");
   const [uploading, setUploading] = useState(false);
@@ -129,6 +131,35 @@ export function ProfilePage() {
             {saving ? <span className="loading loading-spinner loading-sm" /> : <><Save size={16} /> Guardar</>}
           </button>
         </div>
+      </motion.div>
+
+      {/* Update check */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
+        className="w-full">
+        {updateStatus === "available" ? (
+          <button
+            onClick={openModal}
+            className="btn btn-primary btn-sm gap-2 w-full"
+          >
+            <RefreshCw size={14} />
+            Actualizar a v{update?.version}
+          </button>
+        ) : updateStatus === "up-to-date" ? (
+          <div className="flex items-center justify-center gap-2 text-success text-sm py-2">
+            <CheckCircle size={15} />
+            <span>Tienes la última actualización</span>
+          </div>
+        ) : (
+          <button
+            onClick={checkForUpdate}
+            disabled={updateStatus === "checking"}
+            className="btn btn-ghost btn-sm gap-2 w-full text-base-content/60"
+          >
+            {updateStatus === "checking"
+              ? <><span className="loading loading-spinner loading-xs" /> Buscando...</>
+              : <><RefreshCw size={14} /> Buscar actualizaciones</>}
+          </button>
+        )}
       </motion.div>
 
       <motion.button

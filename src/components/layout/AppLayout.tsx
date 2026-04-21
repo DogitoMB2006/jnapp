@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BottomNav } from "./BottomNav";
 import { CustomTitleBar } from "./CustomTitleBar";
-import { UpdateBanner } from "./UpdateBanner";
+import { UpdateModal } from "./UpdateModal";
+import { useUpdaterStore } from "../../store/updaterStore";
 import { NotificationPanel } from "../notifications/NotificationPanel";
 import { Avatar } from "../shared/Avatar";
 import { PlanesPage } from "../sections/planes/PlanesPage";
@@ -24,11 +25,17 @@ const sectionTitles: Record<Section, string> = {
 export function AppLayout() {
   const [section, setSection] = useState<Section>("lista");
   const { profile } = useAuthStore();
+  const checkForUpdate = useUpdaterStore((s) => s.checkForUpdate);
+
+  useEffect(() => {
+    const timer = setTimeout(() => checkForUpdate(), 5000);
+    return () => clearTimeout(timer);
+  }, [checkForUpdate]);
 
   return (
     <div className="flex flex-col h-screen bg-base-100 overflow-hidden select-none">
       <CustomTitleBar />
-      <UpdateBanner />
+      <UpdateModal />
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 bg-base-100/80 backdrop-blur-sm border-b border-base-300 flex-shrink-0">
         <div className="flex items-center gap-2">

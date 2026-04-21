@@ -38,19 +38,7 @@ jobs:
 
   build-tauri:
     needs: create-release
-    strategy:
-      fail-fast: false
-      matrix:
-        settings:
-          - platform: windows-latest
-            args: ''
-          - platform: macos-latest
-            args: '--target aarch64-apple-darwin'
-          - platform: macos-latest
-            args: '--target x86_64-apple-darwin'
-          - platform: ubuntu-22.04
-            args: ''
-    runs-on: ${{ matrix.settings.platform }}
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -59,18 +47,6 @@ jobs:
           node-version: lts/*
 
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ (matrix.settings.platform == 'macos-latest') && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
-
-      - name: install linux deps
-        if: matrix.settings.platform == 'ubuntu-22.04'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            libappindicator3-dev \
-            librsvg2-dev \
-            patchelf
 
       - name: install npm deps
         run: npm install
@@ -85,7 +61,6 @@ jobs:
           VITE_INSFORGE_ANON_KEY: ${{ secrets.VITE_INSFORGE_ANON_KEY }}
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
-          args: ${{ matrix.settings.args }}
           updaterJsonKeepUniversal: true
 
   publish-release:
