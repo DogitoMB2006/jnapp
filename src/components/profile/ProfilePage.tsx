@@ -1,11 +1,15 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Camera, Save, LogOut, UserCircle, RefreshCw, CheckCircle } from "lucide-react";
+import { Camera, Save, LogOut, UserCircle, RefreshCw, CheckCircle, Monitor } from "lucide-react";
 import toast from "react-hot-toast";
 import insforge from "../../lib/insforge";
 import { useAuthStore } from "../../store/authStore";
 import { Avatar } from "../shared/Avatar";
 import { useUpdaterStore } from "../../store/updaterStore";
+
+const isTauriRuntime =
+  typeof window !== "undefined" && "__TAURI_INTERNALS__" in window
+const AUTOSTART_PREF = "jnapp-autostart-pref"
 
 export function ProfilePage() {
   const { user, profile, setProfile, logout } = useAuthStore();
@@ -14,7 +18,17 @@ export function ProfilePage() {
   const [username, setUsername] = useState(profile?.username || "");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [autostart, setAutostart] = useState(true);
+  const [autostartBusy, setAutostartBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isTauriRuntime) return
+    void (async () => {
+      const { isEnabled } = await import("@tauri-apps/plugin-autostart");
+      setAutostart(await isEnabled());
+    })();
+  }, []);
 
   const handleSave = async () => {
     if (!user) return;
@@ -79,6 +93,24 @@ export function ProfilePage() {
     toast.success("Hasta pronto");
   };
 
+  const handleAutostartChange = async (on: boolean) => {
+    if (!isTauriRuntime) return
+    setAutostartBusy(true);
+    try {
+      const { enable, disable, isEnabled } = await import(
+        "@tauri-apps/plugin-autostart"
+      );
+      if (on) await enable();
+      else await disable();
+      localStorage.setItem(AUTOSTART_PREF, on ? "true" : "false");
+      setAutostart(await isEnabled());
+    } catch {
+      toast.error("No se pudo cambiar el inicio con Windows");
+    } finally {
+      setAutostartBusy(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center gap-6 py-4 max-w-sm mx-auto">
       {/* Avatar */}
@@ -132,6 +164,38 @@ export function ProfilePage() {
           </button>
         </div>
       </motion.div>
+
+      {isTauriRuntime && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+          className="w-full card bg-base-200 border border-base-300 shadow-md"
+        >
+          <div className="card-body p-5 gap-2">
+            <div className="flex items-center gap-2 mb-1">
+              <Monitor size={18} className="text-primary" />
+              <h2 className="font-bold text-base-content text-sm">Inicio con Windows</h2>
+            </div>
+            <p className="text-xs text-base-content/50 mb-2">
+              JNApp puede abrirse al encender el equipo. Puedes apagarlo aquí.
+            </p>
+            <label className="label cursor-pointer justify-between gap-4 py-1">
+              <span className="label-text text-sm">
+                Arrancar cuando empiece Windows
+              </span>
+              <input
+                type="checkbox"
+                className="toggle toggle-primary"
+                checked={autostart}
+                disabled={autostartBusy}
+                onChange={(e) => void handleAutostartChange(e.target.checked)}
+                aria-label="Abrir JNApp al iniciar Windows"
+              />
+            </label>
+          </div>
+        </motion.div>
+      )}
 
       {/* Update check */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}

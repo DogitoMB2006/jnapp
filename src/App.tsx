@@ -7,6 +7,10 @@ import { useAuth } from "./hooks/useAuth";
 import { useInsforgeWakeOnForeground } from "./hooks/useInsforgeWakeOnForeground";
 import { useAuthStore } from "./store/authStore";
 
+const isTauriRuntime =
+  typeof window !== "undefined" && "__TAURI_INTERNALS__" in window
+const AUTOSTART_PREF = "jnapp-autostart-pref"
+
 function App() {
   const { user, loading } = useAuth();
   const { profile, fetchProfile } = useAuthStore();
@@ -18,6 +22,16 @@ function App() {
       fetchProfile(user.id);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!isTauriRuntime) return
+    if (localStorage.getItem(AUTOSTART_PREF) !== null) return
+    void (async () => {
+      const { enable } = await import("@tauri-apps/plugin-autostart");
+      await enable();
+      localStorage.setItem(AUTOSTART_PREF, "true");
+    })();
+  }, []);
 
   if (loading) {
     return (
