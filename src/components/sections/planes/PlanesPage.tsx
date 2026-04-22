@@ -11,11 +11,13 @@ import { notifyPartnerNewContent } from "../../../lib/notifyPartner";
 import { parseTableChangePayload } from "../../../lib/realtimePayload";
 import { isLikelyNotificationRealtimeRow } from "../../../lib/realtimeGuards";
 import { useAuthStore } from "../../../store/authStore";
+import { useGroupStore } from "../../../store/groupStore";
 import { formatDate } from "../../../lib/utils";
 import type { Plan, Profile } from "../../../types";
 
 export function PlanesPage() {
   const { user, profile } = useAuthStore();
+  const { group } = useGroupStore();
   const [items, setItems] = useState<Plan[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
@@ -36,14 +38,20 @@ export function PlanesPage() {
   };
 
   const fetchPlanes = async (opts?: { silent?: boolean }) => {
-    const { data } = await insforge.database.from("planes").select("*").order("created_at", { ascending: false });
+    if (!group) return;
+    const { data } = await insforge.database.from("planes").select("*").eq("group_id", group.id).order("created_at", { ascending: false });
     if (data) { setItems(data as Plan[]); await loadProfiles(data as Plan[]); }
     if (!opts?.silent) setLoading(false);
   };
 
   useEffect(() => {
+    if (!group?.id) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
     void fetchPlanes();
-  }, []);
+  }, [group?.id]);
 
   useSectionDataSync(() => fetchPlanes({ silent: true }));
 
@@ -73,6 +81,7 @@ export function PlanesPage() {
   const handleSave = async () => {
     if (!form.title.trim() || !user || saving) return;
     setSaving(true);
+    if (!group) { setSaving(false); return; }
     if (editItem) {
       const { data, error } = await insforge.database.from("planes").update({
         title: form.title.trim(), description: form.description.trim() || null,
@@ -89,7 +98,7 @@ export function PlanesPage() {
     } else {
       const { data, error } = await insforge.database.from("planes").insert([{
         title: form.title.trim(), description: form.description.trim() || null,
-        date: form.date || null, created_by: user.id,
+        date: form.date || null, created_by: user.id, group_id: group.id,
       }]).select("*");
       if (error || !data?.length) {
         toast.error("Error al agregar");

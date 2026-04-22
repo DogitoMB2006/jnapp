@@ -38,3 +38,33 @@ input, textarea {
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--p) / 0.5);
 }
+
+/* Polished form inputs */
+.input, .textarea {
+  border-radius: 14px !important;
+  border-color: rgba(255,255,255,0.09) !important;
+  background: rgba(255,255,255,0.04) !important;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input:focus, .textarea:focus {
+  border-color: rgba(255,45,107,0.5) !important;
+  box-shadow: 0 0 0 3px rgba(255,45,107,0.12) !important;
+  outline: none !important;
+}
+.input::placeholder, .textarea::placeholder {
+  color: rgba(255,255,255,0.25);
+}
+
+/* Better btn-primary */
+.btn-primary {
+  border-radius: 14px !important;
+}
+
+/* Animate bounce gentle */
+@keyframes bounce-gentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.animate-bounce-gentle {
+  animation: bounce-gentle 2s ease-in-out infinite;
+}

@@ -11,11 +11,13 @@ import { notifyPartnerNewContent } from "../../../lib/notifyPartner";
 import { parseTableChangePayload } from "../../../lib/realtimePayload";
 import { isLikelyNotificationRealtimeRow } from "../../../lib/realtimeGuards";
 import { useAuthStore } from "../../../store/authStore";
+import { useGroupStore } from "../../../store/groupStore";
 import { formatDate } from "../../../lib/utils";
 import type { Salida, Profile } from "../../../types";
 
 export function SalidasPage() {
   const { user, profile } = useAuthStore();
+  const { group } = useGroupStore();
   const [items, setItems] = useState<Salida[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
@@ -36,14 +38,20 @@ export function SalidasPage() {
   };
 
   const fetchSalidas = async (opts?: { silent?: boolean }) => {
-    const { data } = await insforge.database.from("salidas").select("*").order("created_at", { ascending: false });
+    if (!group) return;
+    const { data } = await insforge.database.from("salidas").select("*").eq("group_id", group.id).order("created_at", { ascending: false });
     if (data) { setItems(data as Salida[]); await loadProfiles(data as Salida[]); }
     if (!opts?.silent) setLoading(false);
   };
 
   useEffect(() => {
+    if (!group?.id) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
     void fetchSalidas();
-  }, []);
+  }, [group?.id]);
 
   useSectionDataSync(() => fetchSalidas({ silent: true }));
 
@@ -73,6 +81,7 @@ export function SalidasPage() {
   const handleSave = async () => {
     if (!form.title.trim() || !user || saving) return;
     setSaving(true);
+    if (!group) { setSaving(false); return; }
     if (editItem) {
       const { data, error } = await insforge.database.from("salidas").update({
         title: form.title.trim(), description: form.description || null,
@@ -90,7 +99,7 @@ export function SalidasPage() {
     } else {
       const { data, error } = await insforge.database.from("salidas").insert([{
         title: form.title.trim(), description: form.description || null,
-        date: form.date || null, location: form.location || null, created_by: user.id,
+        date: form.date || null, location: form.location || null, created_by: user.id, group_id: group.id,
       }]).select("*");
       if (error || !data?.length) {
         toast.error("Error al agregar");

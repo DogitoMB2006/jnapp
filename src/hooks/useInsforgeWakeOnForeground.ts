@@ -1,10 +1,9 @@
 import { useEffect } from "react"
-import insforge from "../lib/insforge"
+import { runInsforgeConnectionHeal } from "../lib/insforgeConnectionHeal"
 
 /**
  * After the tab or window was in the background, browsers often throttle or drop WebSocket traffic.
- * Reconnecting when the app becomes visible keeps realtime subscriptions alive so you do not have to
- * stay focused on the window for partner updates to flow once you return.
+ * Refresh session + reconnect when visible so JWT and socket stay valid (same as long-idle fix).
  */
 export function useInsforgeWakeOnForeground(enabled: boolean) {
   useEffect(() => {
@@ -16,7 +15,7 @@ export function useInsforgeWakeOnForeground(enabled: boolean) {
       const now = Date.now()
       if (now - lastWake < 250) return
       lastWake = now
-      void insforge.realtime.connect().catch(() => undefined)
+      runInsforgeConnectionHeal()
     }
 
     const onVisibility = () => {

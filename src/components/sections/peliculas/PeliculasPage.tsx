@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Film, Check, ImagePlus, X } from "lucide-react";
+import { Plus, Film, Check, ImagePlus, X, Eye, EyeOff, Pencil, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
-import { ItemCard } from "../../shared/ItemCard";
 import { Modal } from "../../shared/Modal";
 import { useRealtime } from "../../../hooks/useRealtime";
 import { useSectionDataSync } from "../../../hooks/useSectionDataSync";
@@ -11,10 +10,200 @@ import { notifyPartnerNewContent } from "../../../lib/notifyPartner";
 import { parseTableChangePayload } from "../../../lib/realtimePayload";
 import { isLikelyNotificationRealtimeRow } from "../../../lib/realtimeGuards";
 import { useAuthStore } from "../../../store/authStore";
+import { useGroupStore } from "../../../store/groupStore";
+import { Avatar } from "../../shared/Avatar";
 import type { Pelicula, Profile } from "../../../types";
+
+function MovieCard({
+  item,
+  creator,
+  onEdit,
+  onDelete,
+  onToggleWatched,
+}: {
+  item: Pelicula;
+  creator?: Profile;
+  onEdit: () => void;
+  onDelete: () => void;
+  onToggleWatched: () => void;
+}) {
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 380, damping: 28 }}
+      className="mb-4 rounded-2xl overflow-hidden"
+      style={{
+        background: "linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        boxShadow: "0 4px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)",
+        opacity: item.watched ? 0.65 : 1,
+      }}
+    >
+      {/* Poster */}
+      {item.poster_url && (
+        <div
+          className="w-full overflow-hidden relative"
+          style={{ maxHeight: "220px" }}
+        >
+          <img
+            src={item.poster_url}
+            alt={item.title}
+            loading="lazy"
+            style={{
+              width: "100%",
+              height: "220px",
+              objectFit: "cover",
+              objectPosition: "center top",
+              display: "block",
+            }}
+          />
+          {/* Gradient overlay */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(to bottom, transparent 40%, rgba(21,6,32,0.95) 100%)",
+            }}
+          />
+          {/* Genre badge on image */}
+          {item.genre && (
+            <span
+              className="absolute top-3 right-3 text-white font-semibold"
+              style={{
+                background: "rgba(255,45,107,0.85)",
+                backdropFilter: "blur(6px)",
+                borderRadius: "8px",
+                padding: "3px 10px",
+                fontSize: "11px",
+                letterSpacing: "0.04em",
+              }}
+            >
+              {item.genre}
+            </span>
+          )}
+          {/* Watched badge on image */}
+          {item.watched && (
+            <span
+              className="absolute top-3 left-3 text-white font-semibold flex items-center gap-1"
+              style={{
+                background: "rgba(34,197,94,0.85)",
+                backdropFilter: "blur(6px)",
+                borderRadius: "8px",
+                padding: "3px 10px",
+                fontSize: "11px",
+                letterSpacing: "0.04em",
+              }}
+            >
+              <Check size={10} /> Vista
+            </span>
+          )}
+        </div>
+      )}
+
+      <div className="p-4">
+        {/* Title + no-poster genre */}
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <p
+            className="font-bold text-base-content leading-tight"
+            style={{
+              fontSize: "16px",
+              letterSpacing: "-0.02em",
+              textDecoration: item.watched ? "line-through" : "none",
+              opacity: item.watched ? 0.5 : 1,
+            }}
+          >
+            {item.title}
+          </p>
+          {!item.poster_url && item.genre && (
+            <span
+              className="font-semibold flex-shrink-0"
+              style={{
+                background: "rgba(255,45,107,0.2)",
+                color: "#ff2d6b",
+                borderRadius: "8px",
+                padding: "2px 9px",
+                fontSize: "10px",
+                letterSpacing: "0.05em",
+              }}
+            >
+              {item.genre}
+            </span>
+          )}
+        </div>
+
+        {item.description && (
+          <p className="text-sm text-base-content/55 mb-2 leading-relaxed">
+            {item.description}
+          </p>
+        )}
+
+        {/* Footer */}
+        <div
+          className="flex items-center justify-between pt-2.5 mt-1"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          <div className="flex items-center gap-1.5">
+            {creator && (
+              <>
+                <Avatar profile={creator} size="xs" />
+                <span style={{ fontSize: "11px" }} className="text-base-content/40">
+                  {creator.display_name || creator.username}
+                </span>
+              </>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1">
+            <motion.button
+              whileTap={{ scale: 0.85 }}
+              onClick={onToggleWatched}
+              className="flex items-center gap-1 font-semibold"
+              style={{
+                background: item.watched
+                  ? "rgba(255,255,255,0.06)"
+                  : "rgba(34,197,94,0.15)",
+                color: item.watched ? "rgba(255,255,255,0.35)" : "#22c55e",
+                borderRadius: "10px",
+                padding: "4px 10px",
+                fontSize: "11px",
+                border: item.watched
+                  ? "1px solid rgba(255,255,255,0.06)"
+                  : "1px solid rgba(34,197,94,0.25)",
+              }}
+            >
+              {item.watched ? <EyeOff size={11} /> : <Eye size={11} />}
+              {item.watched ? "No vista" : "Ya la vi"}
+            </motion.button>
+
+            <motion.button
+              whileTap={{ scale: 0.88 }}
+              onClick={onEdit}
+              className="btn btn-ghost btn-xs btn-circle"
+              style={{ color: "rgba(255,255,255,0.3)" }}
+            >
+              <Pencil size={12} />
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.88 }}
+              onClick={onDelete}
+              className="btn btn-ghost btn-xs btn-circle hover:text-error"
+              style={{ color: "rgba(255,255,255,0.3)" }}
+            >
+              <Trash2 size={12} />
+            </motion.button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 export function PeliculasPage() {
   const { user, profile } = useAuthStore();
+  const { group } = useGroupStore();
   const [items, setItems] = useState<Pelicula[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
@@ -37,14 +226,20 @@ export function PeliculasPage() {
   };
 
   const fetchPeliculas = async (opts?: { silent?: boolean }) => {
-    const { data } = await insforge.database.from("peliculas").select("*").order("created_at", { ascending: false });
+    if (!group) return;
+    const { data } = await insforge.database.from("peliculas").select("*").eq("group_id", group.id).order("created_at", { ascending: false });
     if (data) { setItems(data as Pelicula[]); await loadProfiles(data as Pelicula[]); }
     if (!opts?.silent) setLoading(false);
   };
 
   useEffect(() => {
+    if (!group?.id) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
     void fetchPeliculas();
-  }, []);
+  }, [group?.id]);
 
   useSectionDataSync(() => fetchPeliculas({ silent: true }));
 
@@ -77,6 +272,8 @@ export function PeliculasPage() {
     const posterUrl = form.posterUrl.trim();
     const posterField = posterUrl ? { poster_url: posterUrl } : {};
 
+    if (!group) { setSaving(false); return; }
+
     if (editItem) {
       const { data, error } = await insforge.database.from("peliculas").update({
         title: form.title.trim(), description: form.description || null,
@@ -84,12 +281,7 @@ export function PeliculasPage() {
         edited_by: user.id, last_edited_at: new Date().toISOString(),
       }).eq("id", editItem.id).select("*");
       if (error || !data?.length) {
-        const message = String(error || "");
-        if (message.toLowerCase().includes("poster_url")) {
-          toast.error("Falta migración DB: agrega columna poster_url en peliculas");
-        } else {
-          toast.error("Error al guardar");
-        }
+        toast.error("Error al guardar");
         setSaving(false);
         return;
       }
@@ -100,15 +292,10 @@ export function PeliculasPage() {
       const { data, error } = await insforge.database.from("peliculas").insert([{
         title: form.title.trim(), description: form.description || null,
         genre: form.genre || null, ...posterField,
-        watched: false, created_by: user.id,
+        watched: false, created_by: user.id, group_id: group.id,
       }]).select("*");
       if (error || !data?.length) {
-        const message = String(error || "");
-        if (message.toLowerCase().includes("poster_url")) {
-          toast.error("Falta migración DB: agrega columna poster_url en peliculas");
-        } else {
-          toast.error("Error al agregar");
-        }
+        toast.error("Error al agregar");
         setSaving(false);
         return;
       }
@@ -191,87 +378,63 @@ export function PeliculasPage() {
   return (
     <div className="relative min-h-full">
       {loading ? (
-        <div className="flex justify-center py-12"><span className="loading loading-dots loading-md text-primary" /></div>
+        <div className="flex justify-center py-12">
+          <span className="loading loading-dots loading-md text-primary" />
+        </div>
       ) : items.length === 0 ? (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-16 gap-3">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center justify-center py-16 gap-3"
+        >
           <Film size={40} className="text-base-content/20" />
           <p className="text-base-content/40 text-sm">Sin películas aún</p>
-          <button onClick={() => setShowModal(true)} className="btn btn-primary btn-sm gap-2"><Plus size={16} /> Agregar película</button>
+          <button onClick={() => setShowModal(true)} className="btn btn-primary btn-sm gap-2">
+            <Plus size={16} /> Agregar película
+          </button>
         </motion.div>
       ) : (
         <>
           {pending.length > 0 && (
-            <div className="mb-2">
-              <p className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-2">Por ver · {pending.length}</p>
+            <div className="mb-1">
+              <p
+                className="uppercase mb-3 font-semibold tracking-widest"
+                style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)" }}
+              >
+                Por ver · {pending.length}
+              </p>
               <AnimatePresence>
                 {pending.map((item) => (
-                  <ItemCard
+                  <MovieCard
                     key={item.id}
-                    title={item.title}
-                    subtitle={item.description || undefined}
+                    item={item}
                     creator={profiles[item.created_by]}
-                    editedBy={item.edited_by ? profiles[item.edited_by] : undefined}
-                    lastEditedAt={item.last_edited_at}
-                    badge={item.genre || undefined}
                     onEdit={() => openEdit(item)}
                     onDelete={() => handleDelete(item.id)}
-                  >
-                    {item.poster_url && (
-                      <div className="mt-2 mb-2 overflow-hidden rounded-xl border border-base-300">
-                        <img
-                          src={item.poster_url}
-                          alt={`Poster de ${item.title}`}
-                          className="w-full h-44 object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                    )}
-                    <button
-                      onClick={() => handleToggleWatched(item)}
-                      className="btn btn-xs btn-outline btn-success mt-1 gap-1"
-                    >
-                      <Check size={12} /> Ya la vi
-                    </button>
-                  </ItemCard>
+                    onToggleWatched={() => handleToggleWatched(item)}
+                  />
                 ))}
               </AnimatePresence>
             </div>
           )}
           {watched.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-2">Vista · {watched.length}</p>
+              <p
+                className="uppercase mb-3 font-semibold tracking-widest"
+                style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)" }}
+              >
+                Vista · {watched.length}
+              </p>
               <AnimatePresence>
                 {watched.map((item) => (
-                  <ItemCard
+                  <MovieCard
                     key={item.id}
-                    title={item.title}
-                    subtitle={item.description || undefined}
+                    item={item}
                     creator={profiles[item.created_by]}
-                    editedBy={item.edited_by ? profiles[item.edited_by] : undefined}
-                    lastEditedAt={item.last_edited_at}
-                    badge={item.genre || undefined}
-                    badgeColor="badge-success"
-                    completed={true}
                     onEdit={() => openEdit(item)}
                     onDelete={() => handleDelete(item.id)}
-                  >
-                    {item.poster_url && (
-                      <div className="mt-2 mb-2 overflow-hidden rounded-xl border border-base-300">
-                        <img
-                          src={item.poster_url}
-                          alt={`Poster de ${item.title}`}
-                          className="w-full h-44 object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                    )}
-                    <button
-                      onClick={() => handleToggleWatched(item)}
-                      className="btn btn-xs btn-ghost mt-1 gap-1 text-base-content/40"
-                    >
-                      Marcar como no vista
-                    </button>
-                  </ItemCard>
+                    onToggleWatched={() => handleToggleWatched(item)}
+                  />
                 ))}
               </AnimatePresence>
             </div>
@@ -279,20 +442,45 @@ export function PeliculasPage() {
         </>
       )}
 
-      <motion.button whileTap={{ scale: 0.92 }}
-        onClick={() => { setEditItem(null); setForm({ title: "", description: "", genre: "", posterUrl: "" }); setShowModal(true); }}
-        className="fixed bottom-20 right-4 btn btn-primary btn-circle shadow-lg shadow-primary/30">
+      {/* FAB */}
+      <motion.button
+        whileTap={{ scale: 0.92 }}
+        onClick={() => {
+          setEditItem(null);
+          setForm({ title: "", description: "", genre: "", posterUrl: "" });
+          setShowModal(true);
+        }}
+        className="fixed bottom-20 right-4 btn btn-primary btn-circle shadow-lg shadow-primary/30"
+      >
         <Plus size={22} />
       </motion.button>
 
-      <Modal open={showModal} onClose={() => { setShowModal(false); setEditItem(null); }} title={editItem ? "Editar película" : "Nueva película"}>
+      <Modal
+        open={showModal}
+        onClose={() => { setShowModal(false); setEditItem(null); }}
+        title={editItem ? "Editar película" : "Nueva película"}
+      >
         <div className="flex flex-col gap-3">
-          <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-            placeholder="Nombre de la película" className="input input-bordered w-full bg-base-100 focus:outline-primary" autoFocus />
-          <textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-            placeholder="Descripción (opcional)" className="textarea textarea-bordered w-full bg-base-100 resize-none" rows={2} />
-          <input value={form.genre} onChange={(e) => setForm((f) => ({ ...f, genre: e.target.value }))}
-            placeholder="Género (Terror, Comedia...)" className="input input-bordered w-full bg-base-100 focus:outline-primary" />
+          <input
+            value={form.title}
+            onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+            placeholder="Nombre de la película"
+            className="input input-bordered w-full bg-base-100 focus:outline-primary"
+            autoFocus
+          />
+          <textarea
+            value={form.description}
+            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+            placeholder="Descripción (opcional)"
+            className="textarea textarea-bordered w-full bg-base-100 resize-none"
+            rows={2}
+          />
+          <input
+            value={form.genre}
+            onChange={(e) => setForm((f) => ({ ...f, genre: e.target.value }))}
+            placeholder="Género (Terror, Comedia...)"
+            className="input input-bordered w-full bg-base-100 focus:outline-primary"
+          />
           <input
             ref={posterFileRef}
             type="file"
@@ -300,29 +488,67 @@ export function PeliculasPage() {
             className="hidden"
             onChange={handlePosterUpload}
           />
-          <button
-            onClick={() => posterFileRef.current?.click()}
-            disabled={uploadingPoster}
-            className="btn btn-outline btn-primary gap-2"
-          >
-            {uploadingPoster ? <span className="loading loading-spinner loading-sm" /> : <ImagePlus size={16} />}
-            {uploadingPoster ? "Subiendo..." : "Adjuntar póster desde dispositivo"}
-          </button>
-          {form.posterUrl && (
-            <div className="rounded-xl border border-base-300 overflow-hidden">
-              <img src={form.posterUrl} alt="Preview del póster" className="w-full h-40 object-cover" />
+
+          {/* Poster preview or upload button */}
+          {form.posterUrl ? (
+            <div className="rounded-xl overflow-hidden relative" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
+              <img
+                src={form.posterUrl}
+                alt="Preview"
+                style={{
+                  width: "100%",
+                  height: "180px",
+                  objectFit: "cover",
+                  objectPosition: "center top",
+                  display: "block",
+                }}
+              />
               <button
                 onClick={() => setForm((f) => ({ ...f, posterUrl: "" }))}
-                className="btn btn-ghost btn-xs w-full gap-1 rounded-none"
+                className="absolute top-2 right-2 btn btn-circle btn-xs"
+                style={{ background: "rgba(0,0,0,0.7)", border: "none", color: "white" }}
               >
                 <X size={12} />
-                Quitar póster
               </button>
             </div>
+          ) : (
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => posterFileRef.current?.click()}
+              disabled={uploadingPoster}
+              className="flex items-center justify-center gap-2 w-full font-semibold"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1.5px dashed rgba(255,255,255,0.12)",
+                borderRadius: "14px",
+                padding: "14px",
+                color: "rgba(255,255,255,0.5)",
+                fontSize: "13px",
+              }}
+            >
+              {uploadingPoster ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                <ImagePlus size={16} />
+              )}
+              {uploadingPoster ? "Subiendo..." : "Adjuntar póster"}
+            </motion.button>
           )}
-          <button onClick={handleSave} disabled={!form.title.trim() || saving} className="btn btn-primary w-full gap-2">
-            {saving ? <span className="loading loading-spinner loading-sm" /> : editItem ? "Guardar" : <><Plus size={16} /> Agregar</>}
-          </button>
+
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={handleSave}
+            disabled={!form.title.trim() || saving}
+            className="btn btn-primary w-full gap-2 mt-1"
+          >
+            {saving ? (
+              <span className="loading loading-spinner loading-sm" />
+            ) : editItem ? (
+              "Guardar cambios"
+            ) : (
+              <><Plus size={16} /> Agregar</>
+            )}
+          </motion.button>
         </div>
       </Modal>
     </div>

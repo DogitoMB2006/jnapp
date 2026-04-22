@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Camera, Save, LogOut, UserCircle, RefreshCw, CheckCircle, Monitor } from "lucide-react";
+import { Camera, Save, LogOut, UserCircle, RefreshCw, CheckCircle, Monitor, Users, Copy, DoorOpen } from "lucide-react";
 import toast from "react-hot-toast";
 import insforge from "../../lib/insforge";
 import { useAuthStore } from "../../store/authStore";
+import { useGroupStore } from "../../store/groupStore";
 import { Avatar } from "../shared/Avatar";
 import { useUpdaterStore } from "../../store/updaterStore";
 
@@ -13,6 +14,7 @@ const AUTOSTART_PREF = "jnapp-autostart-pref"
 
 export function ProfilePage() {
   const { user, profile, setProfile, logout } = useAuthStore();
+  const { group, partnerId, leaveGroup } = useGroupStore();
   const { status: updateStatus, checkForUpdate, openModal, update } = useUpdaterStore();
   const [displayName, setDisplayName] = useState(profile?.display_name || "");
   const [username, setUsername] = useState(profile?.username || "");
@@ -20,6 +22,8 @@ export function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [autostart, setAutostart] = useState(true);
   const [autostartBusy, setAutostartBusy] = useState(false);
+  const [leavingGroup, setLeavingGroup] = useState(false);
+  const [partnerProfile, setPartnerProfile] = useState<{ display_name: string | null; username: string | null; avatar_url: string | null } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -29,6 +33,18 @@ export function ProfilePage() {
       setAutostart(await isEnabled());
     })();
   }, []);
+
+  useEffect(() => {
+    if (!partnerId) return;
+    void (async () => {
+      const { data } = await insforge.database
+        .from("profiles")
+        .select("display_name, username, avatar_url")
+        .eq("user_id", partnerId)
+        .single();
+      if (data) setPartnerProfile(data as typeof partnerProfile);
+    })();
+  }, [partnerId]);
 
   const handleSave = async () => {
     if (!user) return;
@@ -91,6 +107,25 @@ export function ProfilePage() {
   const handleLogout = async () => {
     await logout();
     toast.success("Hasta pronto");
+  };
+
+  const handleLeaveGroup = async () => {
+    if (leavingGroup) return;
+    setLeavingGroup(true);
+    try {
+      await leaveGroup();
+      toast.success("Saliste del grupo");
+    } catch (e) {
+      toast.error((e as Error).message || "Error al salir del grupo");
+    } finally {
+      setLeavingGroup(false);
+    }
+  };
+
+  const handleCopyCode = () => {
+    if (!group?.invite_code) return;
+    void navigator.clipboard.writeText(group.invite_code);
+    toast.success("¡Código copiado!");
   };
 
   const handleAutostartChange = async (on: boolean) => {
@@ -164,6 +199,82 @@ export function ProfilePage() {
           </button>
         </div>
       </motion.div>
+
+      {group && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.11 }}
+          className="w-full card bg-base-200 border border-base-300 shadow-md"
+        >
+          <div className="card-body p-5 gap-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Users size={18} className="text-primary" />
+              <h2 className="font-bold text-base-content text-sm">Mi Grupo</h2>
+            </div>
+
+            {/* Partner info */}
+            {partnerId ? (
+              <div className="flex items-center gap-3 py-1">
+                <div className="avatar placeholder">
+                  <div className="w-9 rounded-full bg-primary/20 text-primary font-bold text-sm flex items-center justify-center">
+                    {partnerProfile?.avatar_url ? (
+                      <img src={partnerProfile.avatar_url} alt="pareja" className="w-9 h-9 object-cover rounded-full" />
+                    ) : (
+                      <span>{(partnerProfile?.display_name || partnerProfile?.username || "?")[0].toUpperCase()}</span>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-base-content">
+                    {partnerProfile?.display_name || partnerProfile?.username || "Tu pareja"}
+                  </p>
+                  {partnerProfile?.username && (
+                    <p className="text-xs text-base-content/50">@{partnerProfile.username}</p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-base-content/50">Esperando que tu pareja se una...</p>
+            )}
+
+            {/* Invite code */}
+            <div className="form-control">
+              <label className="label py-0">
+                <span className="label-text text-xs font-medium">Código de invitación</span>
+              </label>
+              <div className="flex gap-2">
+                <input
+                  readOnly
+                  value={group.invite_code}
+                  className="input input-bordered w-full bg-base-100 input-sm h-10 font-mono tracking-widest text-center text-base"
+                />
+                <button
+                  onClick={handleCopyCode}
+                  className="btn btn-outline btn-sm h-10 px-3"
+                  title="Copiar código"
+                >
+                  <Copy size={15} />
+                </button>
+              </div>
+            </div>
+
+            {/* Leave group */}
+            <button
+              onClick={handleLeaveGroup}
+              disabled={leavingGroup}
+              className="btn btn-ghost btn-sm gap-2 text-error hover:bg-error/10 w-full mt-1"
+            >
+              {leavingGroup ? (
+                <span className="loading loading-spinner loading-xs" />
+              ) : (
+                <DoorOpen size={15} />
+              )}
+              Salir del grupo
+            </button>
+          </div>
+        </motion.div>
+      )}
 
       {isTauriRuntime && (
         <motion.div

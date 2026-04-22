@@ -96,5 +96,9 @@ export const parseNotificationInsertPayload = (
       typeof o.reference_type === "string" ? o.reference_type : null,
     created_at:
       typeof o.created_at === "string" ? o.created_at : new Date().toISOString(),
+    group_id:
+      o.group_id === null || o.group_id === undefined
+        ? null
+        : coerceId(o.group_id) ?? null,
   }
 }

@@ -2,6 +2,9 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import insforge from "../lib/insforge";
 import type { Profile } from "../types";
+// Lazily imported to avoid circular deps
+let _clearGroup: (() => void) | null = null;
+export function registerClearGroup(fn: () => void) { _clearGroup = fn; }
 
 interface AuthUser {
   id: string;
@@ -31,6 +34,7 @@ export const useAuthStore = create<AuthState>()(
       logout: async () => {
         await insforge.auth.signOut();
         set({ user: null, profile: null });
+        _clearGroup?.();
       },
       fetchProfile: async (userId: string) => {
         const { data } = await insforge.database

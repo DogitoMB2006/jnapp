@@ -2,10 +2,13 @@ import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import { LoginPage } from "./components/auth/LoginPage";
 import { AppLayout } from "./components/layout/AppLayout";
+import { GroupSetupPage } from "./components/group/GroupSetupPage";
 import { CustomTitleBar } from "./components/layout/CustomTitleBar";
 import { useAuth } from "./hooks/useAuth";
+import { useInsforgeSessionHealth } from "./hooks/useInsforgeSessionHealth";
 import { useInsforgeWakeOnForeground } from "./hooks/useInsforgeWakeOnForeground";
-import { useAuthStore } from "./store/authStore";
+import { useAuthStore, registerClearGroup } from "./store/authStore";
+import { useGroupStore } from "./store/groupStore";
 
 const isTauriRuntime =
   typeof window !== "undefined" && "__TAURI_INTERNALS__" in window
@@ -14,7 +17,10 @@ const AUTOSTART_PREF = "jnapp-autostart-pref"
 function App() {
   const { user, loading } = useAuth();
   const { profile, fetchProfile } = useAuthStore();
+  const { group, loading: groupLoading, clearGroup } = useGroupStore();
+  registerClearGroup(clearGroup);
 
+  useInsforgeSessionHealth(!!user);
   useInsforgeWakeOnForeground(!!user);
 
   useEffect(() => {
@@ -33,7 +39,7 @@ function App() {
     })();
   }, []);
 
-  if (loading) {
+  if (loading || (user && groupLoading)) {
     return (
       <div className="min-h-screen bg-base-100 flex flex-col">
         <CustomTitleBar />
@@ -49,7 +55,7 @@ function App() {
 
   return (
     <>
-      {user ? <AppLayout /> : <LoginPage />}
+      {user ? (group ? <AppLayout /> : <GroupSetupPage />) : <LoginPage />}
       <Toaster
         position="top-center"
         toastOptions={{

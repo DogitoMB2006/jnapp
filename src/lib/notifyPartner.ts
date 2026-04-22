@@ -1,4 +1,5 @@
 import insforge from "./insforge"
+import { useGroupStore } from "../store/groupStore"
 
 export type PartnerNotifySection = "lista" | "planes" | "salidas" | "peliculas"
 
@@ -10,21 +11,17 @@ const SECTION_LABEL: Record<PartnerNotifySection, string> = {
 }
 
 /**
- * Inserts in-app notifications for every other profile (partner) when the current user adds content.
+ * Inserts an in-app notification for the partner in the same group.
  */
 export const notifyPartnerNewContent = async (opts: {
   actorUserId: string
   displayName: string
   section: PartnerNotifySection
-  /** Optional extra line (e.g. task text, title) */
   detail?: string
 }) => {
-  const { data: others } = await insforge.database
-    .from("profiles")
-    .select("user_id")
-    .neq("user_id", opts.actorUserId)
+  const { group, partnerId } = useGroupStore.getState()
 
-  if (!others?.length) return
+  if (!group || !partnerId) return
 
   const sectionName = SECTION_LABEL[opts.section]
   const who = opts.displayName.trim() || "Tu pareja"
@@ -33,15 +30,15 @@ export const notifyPartnerNewContent = async (opts: {
     ? `${base}: ${opts.detail.trim()}`
     : base
 
-  const rows = (others as { user_id: string }[]).map((p) => ({
-    user_id: p.user_id,
+  const { error } = await insforge.database.from("notifications").insert([{
+    user_id: partnerId,
     title: sectionName,
     message,
     type: opts.section,
     created_by: opts.actorUserId,
-  }))
+    group_id: group.id,
+  }])
 
-  const { error } = await insforge.database.from("notifications").insert(rows)
   if (error) {
     console.warn("[notifyPartnerNewContent]", error.message)
   }

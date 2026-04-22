@@ -11,10 +11,12 @@ import { notifyPartnerNewContent } from "../../../lib/notifyPartner";
 import { parseTableChangePayload } from "../../../lib/realtimePayload";
 import { isLikelyNotificationRealtimeRow } from "../../../lib/realtimeGuards";
 import { useAuthStore } from "../../../store/authStore";
+import { useGroupStore } from "../../../store/groupStore";
 import type { ListaItem, Profile } from "../../../types";
 
 export function ListaPage() {
   const { user, profile } = useAuthStore();
+  const { group } = useGroupStore();
   const [items, setItems] = useState<ListaItem[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
@@ -24,9 +26,11 @@ export function ListaPage() {
   const [saving, setSaving] = useState(false);
 
   const fetchItems = async (opts?: { silent?: boolean }) => {
+    if (!group) return;
     const { data } = await insforge.database
       .from("lista_items")
       .select("*")
+      .eq("group_id", group.id)
       .order("created_at", { ascending: false });
     if (data) {
       setItems(data as ListaItem[]);
@@ -56,8 +60,13 @@ export function ListaPage() {
   };
 
   useEffect(() => {
+    if (!group?.id) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
     void fetchItems();
-  }, []);
+  }, [group?.id]);
 
   useSectionDataSync(() => fetchItems({ silent: true }));
 
@@ -85,7 +94,7 @@ export function ListaPage() {
   });
 
   const handleAdd = async () => {
-    if (!inputText.trim() || !user || saving) return;
+    if (!inputText.trim() || !user || !group || saving) return;
     setSaving(true);
     const text = inputText.trim();
     const { data, error } = await insforge.database
@@ -95,6 +104,7 @@ export function ListaPage() {
           content: text,
           completed: false,
           created_by: user.id,
+          group_id: group.id,
         },
       ])
       .select("*");

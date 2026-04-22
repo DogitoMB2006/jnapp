@@ -89,6 +89,24 @@ export function useRealtime(
       callbackRef.current(unwrapPayload(raw))
     }
 
+    const onSocketReconnect = () => {
+      if (cancelled) return
+      void (async () => {
+        const res = await insforge.realtime.subscribe(channel)
+        if (
+          res &&
+          typeof res === "object" &&
+          "ok" in res &&
+          !(res as { ok: boolean }).ok
+        ) {
+          console.warn(
+            `[useRealtime] re-subscribe after connect failed for "${channel}"`,
+            res
+          )
+        }
+      })()
+    }
+
     const setup = async () => {
       const ok = await subscribeChannelWithRetry(channel, () => cancelled)
       if (cancelled) {
@@ -103,12 +121,14 @@ export function useRealtime(
       for (const ev of eventsList) {
         insforge.realtime.on(ev, handler)
       }
+      insforge.realtime.on("connect", onSocketReconnect)
     }
 
     void setup()
 
     return () => {
       cancelled = true
+      insforge.realtime.off("connect", onSocketReconnect)
       for (const ev of eventsList) {
         insforge.realtime.off(ev, handler)
       }
