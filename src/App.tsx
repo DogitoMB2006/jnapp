@@ -5,8 +5,10 @@ import { AppLayout } from "./components/layout/AppLayout";
 import { GroupSetupPage } from "./components/group/GroupSetupPage";
 import { CustomTitleBar } from "./components/layout/CustomTitleBar";
 import { useAuth } from "./hooks/useAuth";
+import { useAutoUpdater } from "./hooks/useAutoUpdater";
 import { useInsforgeSessionHealth } from "./hooks/useInsforgeSessionHealth";
 import { useInsforgeWakeOnForeground } from "./hooks/useInsforgeWakeOnForeground";
+import { UpdateModal } from "./components/layout/UpdateModal";
 import { useAuthStore, registerClearGroup } from "./store/authStore";
 import { useGroupStore } from "./store/groupStore";
 
@@ -22,6 +24,7 @@ function App() {
 
   useInsforgeSessionHealth(!!user);
   useInsforgeWakeOnForeground(!!user);
+  useAutoUpdater(!!user);
 
   useEffect(() => {
     if (user && !profile) {
@@ -39,8 +42,8 @@ function App() {
     })();
   }, []);
 
-  if (loading || (user && groupLoading)) {
-    return (
+  const mainContent =
+    loading || (user && groupLoading) ? (
       <div className="min-h-screen bg-base-100 flex flex-col">
         <CustomTitleBar />
         <div className="flex flex-1 items-center justify-center">
@@ -50,12 +53,20 @@ function App() {
           </div>
         </div>
       </div>
-    );
-  }
+    ) : user ? (
+      group ? (
+        <AppLayout />
+      ) : (
+        <GroupSetupPage />
+      )
+    ) : (
+      <LoginPage />
+    )
 
   return (
     <>
-      {user ? (group ? <AppLayout /> : <GroupSetupPage />) : <LoginPage />}
+      {mainContent}
+      {isTauriRuntime && user ? <UpdateModal /> : null}
       <Toaster
         position="top-center"
         toastOptions={{

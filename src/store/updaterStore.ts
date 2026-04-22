@@ -1,8 +1,14 @@
 import { create } from "zustand";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
+import {
+  isTauriWindowInBackground,
+  sendUpdateAvailableNotification,
+} from "../lib/tauriUpdateNotify";
 
 type Status = "idle" | "checking" | "available" | "up-to-date" | "downloading" | "error";
+
+type CheckSource = "auto" | "manual";
 
 interface UpdaterStore {
   status: Status;
@@ -10,7 +16,11 @@ interface UpdaterStore {
   progress: number;
   error: string | null;
   modalOpen: boolean;
-  checkForUpdate: () => Promise<void>;
+  /** Last version we already auto-showed the modal for (stops hourly auto-repeats) */
+  lastAutoModalVersion: string | null;
+  /** Per-session: OS toast once per version when window not visible */
+  lastNotifiedVersion: string | null;
+  checkForUpdate: (source?: CheckSource) => Promise<void>;
   installUpdate: () => Promise<void>;
   openModal: () => void;
   closeModal: () => void;
@@ -22,13 +32,34 @@ export const useUpdaterStore = create<UpdaterStore>((set, get) => ({
   progress: 0,
   error: null,
   modalOpen: false,
+  lastAutoModalVersion: null,
+  lastNotifiedVersion: null,
 
-  checkForUpdate: async () => {
+  checkForUpdate: async (source: CheckSource = "auto") => {
     set({ status: "checking", error: null });
     try {
       const update = await check();
       if (update?.available) {
-        set({ status: "available", update, modalOpen: true });
+        const v = update.version;
+        const { lastAutoModalVersion, lastNotifiedVersion } = get();
+        const shouldOpenModal =
+          source === "manual" || lastAutoModalVersion !== v;
+        if (shouldOpenModal) {
+          set({
+            status: "available",
+            update,
+            modalOpen: true,
+            lastAutoModalVersion: v,
+          });
+        } else {
+          set({ status: "available", update });
+        }
+        if (lastNotifiedVersion !== v) {
+          if (await isTauriWindowInBackground()) {
+            set({ lastNotifiedVersion: v })
+            await sendUpdateAvailableNotification(v).catch(() => undefined)
+          }
+        }
       } else {
         set({ status: "up-to-date", update: null });
       }

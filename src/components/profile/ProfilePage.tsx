@@ -326,7 +326,7 @@ export function ProfilePage() {
           </div>
         ) : (
           <button
-            onClick={checkForUpdate}
+            onClick={() => void checkForUpdate("manual")}
             disabled={updateStatus === "checking"}
             className="btn btn-ghost btn-sm gap-2 w-full text-base-content/60"
           >

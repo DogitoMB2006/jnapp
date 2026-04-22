@@ -84,7 +84,7 @@ export const CustomTitleBar = () => {
       return
     }
     if (updateStatus === "checking") return
-    await checkForUpdate()
+    await checkForUpdate("manual")
     const latest = useUpdaterStore.getState()
     if (latest.status === "up-to-date") {
       toast("Ya tienes la última actualización ✓", { duration: 2500 })
