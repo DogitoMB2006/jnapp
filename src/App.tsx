@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import { LoginPage } from "./components/auth/LoginPage";
+import { RegisterPage } from "./components/auth/RegisterPage";
 import { AppLayout } from "./components/layout/AppLayout";
 import { GroupSetupPage } from "./components/group/GroupSetupPage";
 import { CustomTitleBar } from "./components/layout/CustomTitleBar";
@@ -20,6 +21,7 @@ function App() {
   const { user, loading } = useAuth();
   const { profile, fetchProfile } = useAuthStore();
   const { group, loading: groupLoading, clearGroup } = useGroupStore();
+  const [showRegister, setShowRegister] = useState(false);
   registerClearGroup(clearGroup);
 
   useInsforgeSessionHealth(!!user);
@@ -59,8 +61,10 @@ function App() {
       ) : (
         <GroupSetupPage />
       )
+    ) : showRegister ? (
+      <RegisterPage onGoToLogin={() => setShowRegister(false)} />
     ) : (
-      <LoginPage />
+      <LoginPage onGoToRegister={() => setShowRegister(true)} />
     )
 
   return (

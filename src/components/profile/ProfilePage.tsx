@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Camera, Save, LogOut, UserCircle, RefreshCw, CheckCircle, Monitor, Users, Copy, DoorOpen } from "lucide-react";
+import { Camera, Save, LogOut, UserCircle, RefreshCw, CheckCircle, Monitor, Users, Copy, DoorOpen, Globe } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import insforge from "../../lib/insforge";
 import { useAuthStore } from "../../store/authStore";
 import { useGroupStore } from "../../store/groupStore";
 import { Avatar } from "../shared/Avatar";
 import { useUpdaterStore } from "../../store/updaterStore";
+import { useLangStore } from "../../store/langStore";
 
 const isTauriRuntime =
   typeof window !== "undefined" && "__TAURI_INTERNALS__" in window
@@ -16,6 +18,8 @@ export function ProfilePage() {
   const { user, profile, setProfile, logout } = useAuthStore();
   const { group, partnerId, leaveGroup } = useGroupStore();
   const { status: updateStatus, checkForUpdate, openModal, update } = useUpdaterStore();
+  const { lang, setLang } = useLangStore();
+  const { t } = useTranslation();
   const [displayName, setDisplayName] = useState(profile?.display_name || "");
   const [username, setUsername] = useState(profile?.username || "");
   const [uploading, setUploading] = useState(false);
@@ -68,9 +72,9 @@ export function ProfilePage() {
     }
 
     if (!profile?.username && username.trim()) {
-      toast.success("¡Perfil creado!");
+      toast.success(t("profile.created"));
     } else {
-      toast.success("Perfil actualizado");
+      toast.success(t("profile.saved"));
     }
     setSaving(false);
   };
@@ -88,7 +92,7 @@ export function ProfilePage() {
       .upload(key, file);
 
     if (uploadError || !uploadData) {
-      toast.error("Error al subir imagen");
+      toast.error(t("profile.uploadError"));
       setUploading(false);
       return;
     }
@@ -100,13 +104,13 @@ export function ProfilePage() {
       .eq("user_id", user.id);
 
     if (profile) setProfile({ ...profile, avatar_url: avatarUrl });
-    toast.success("Foto actualizada");
+    toast.success(t("profile.photoUpdated"));
     setUploading(false);
   };
 
   const handleLogout = async () => {
     await logout();
-    toast.success("Hasta pronto");
+    toast.success(t("profile.loggedOut"));
   };
 
   const handleLeaveGroup = async () => {
@@ -114,9 +118,9 @@ export function ProfilePage() {
     setLeavingGroup(true);
     try {
       await leaveGroup();
-      toast.success("Saliste del grupo");
+      toast.success(t("profile.group.left"));
     } catch (e) {
-      toast.error((e as Error).message || "Error al salir del grupo");
+      toast.error((e as Error).message || t("profile.group.leaveError"));
     } finally {
       setLeavingGroup(false);
     }
@@ -125,7 +129,7 @@ export function ProfilePage() {
   const handleCopyCode = () => {
     if (!group?.invite_code) return;
     void navigator.clipboard.writeText(group.invite_code);
-    toast.success("¡Código copiado!");
+    toast.success(t("profile.group.codeCopied"));
   };
 
   const handleAutostartChange = async (on: boolean) => {
@@ -140,7 +144,7 @@ export function ProfilePage() {
       localStorage.setItem(AUTOSTART_PREF, on ? "true" : "false");
       setAutostart(await isEnabled());
     } catch {
-      toast.error("No se pudo cambiar el inicio con Windows");
+      toast.error(t("profile.autostart.error"));
     } finally {
       setAutostartBusy(false);
     }
@@ -161,26 +165,27 @@ export function ProfilePage() {
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
       </motion.div>
 
+      {/* Profile form */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
         className="w-full card bg-base-200 border border-base-300 shadow-md">
         <div className="card-body p-5 gap-4">
           <div className="flex items-center gap-2 mb-1">
             <UserCircle size={18} className="text-primary" />
-            <h2 className="font-bold text-base-content">Mi perfil</h2>
+            <h2 className="font-bold text-base-content">{t("profile.title")}</h2>
           </div>
 
           <div className="form-control">
-            <label className="label py-0"><span className="label-text text-xs font-medium">Nombre para mostrar</span></label>
+            <label className="label py-0"><span className="label-text text-xs font-medium">{t("profile.displayName")}</span></label>
             <input
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="¿Cómo te llaman?"
+              placeholder={t("profile.displayNamePlaceholder")}
               className="input input-bordered w-full bg-base-100 input-sm h-10 focus:outline-primary"
             />
           </div>
 
           <div className="form-control">
-            <label className="label py-0"><span className="label-text text-xs font-medium">Nombre de usuario</span></label>
+            <label className="label py-0"><span className="label-text text-xs font-medium">{t("profile.username")}</span></label>
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s/g, ""))}
@@ -190,13 +195,52 @@ export function ProfilePage() {
           </div>
 
           <div className="form-control">
-            <label className="label py-0"><span className="label-text text-xs font-medium">Correo</span></label>
+            <label className="label py-0"><span className="label-text text-xs font-medium">{t("profile.email")}</span></label>
             <input value={user?.email || ""} disabled className="input input-bordered w-full bg-base-100 input-sm h-10 opacity-50 cursor-not-allowed" />
           </div>
 
           <button onClick={handleSave} disabled={saving} className="btn btn-primary w-full gap-2 mt-1">
-            {saving ? <span className="loading loading-spinner loading-sm" /> : <><Save size={16} /> Guardar</>}
+            {saving ? <span className="loading loading-spinner loading-sm" /> : <><Save size={16} /> {t("profile.save")}</>}
           </button>
+        </div>
+      </motion.div>
+
+      {/* Language switcher */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.105 }}
+        className="w-full card bg-base-200 border border-base-300 shadow-md"
+      >
+        <div className="card-body p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Globe size={18} className="text-primary" />
+              <span className="font-bold text-base-content text-sm">{t("profile.language")}</span>
+            </div>
+            <div className="flex items-center gap-1 bg-base-300 rounded-full p-1">
+              <button
+                onClick={() => setLang("en")}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 ${
+                  lang === "en"
+                    ? "bg-primary text-white shadow-sm"
+                    : "text-base-content/50 hover:text-base-content"
+                }`}
+              >
+                EN
+              </button>
+              <button
+                onClick={() => setLang("es")}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 ${
+                  lang === "es"
+                    ? "bg-primary text-white shadow-sm"
+                    : "text-base-content/50 hover:text-base-content"
+                }`}
+              >
+                ES
+              </button>
+            </div>
+          </div>
         </div>
       </motion.div>
 
@@ -210,7 +254,7 @@ export function ProfilePage() {
           <div className="card-body p-5 gap-4">
             <div className="flex items-center gap-2 mb-1">
               <Users size={18} className="text-primary" />
-              <h2 className="font-bold text-base-content text-sm">Mi Grupo</h2>
+              <h2 className="font-bold text-base-content text-sm">{t("profile.group.title")}</h2>
             </div>
 
             {/* Partner info */}
@@ -227,7 +271,7 @@ export function ProfilePage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-base-content">
-                    {partnerProfile?.display_name || partnerProfile?.username || "Tu pareja"}
+                    {partnerProfile?.display_name || partnerProfile?.username || t("profile.group.partner")}
                   </p>
                   {partnerProfile?.username && (
                     <p className="text-xs text-base-content/50">@{partnerProfile.username}</p>
@@ -235,13 +279,13 @@ export function ProfilePage() {
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-base-content/50">Esperando que tu pareja se una...</p>
+              <p className="text-xs text-base-content/50">{t("profile.group.waiting")}</p>
             )}
 
             {/* Invite code */}
             <div className="form-control">
               <label className="label py-0">
-                <span className="label-text text-xs font-medium">Código de invitación</span>
+                <span className="label-text text-xs font-medium">{t("profile.group.inviteCode")}</span>
               </label>
               <div className="flex gap-2">
                 <input
@@ -252,7 +296,7 @@ export function ProfilePage() {
                 <button
                   onClick={handleCopyCode}
                   className="btn btn-outline btn-sm h-10 px-3"
-                  title="Copiar código"
+                  title={t("profile.group.copyCode")}
                 >
                   <Copy size={15} />
                 </button>
@@ -270,7 +314,7 @@ export function ProfilePage() {
               ) : (
                 <DoorOpen size={15} />
               )}
-              Salir del grupo
+              {t("profile.group.leaveGroup")}
             </button>
           </div>
         </motion.div>
@@ -286,14 +330,14 @@ export function ProfilePage() {
           <div className="card-body p-5 gap-2">
             <div className="flex items-center gap-2 mb-1">
               <Monitor size={18} className="text-primary" />
-              <h2 className="font-bold text-base-content text-sm">Inicio con Windows</h2>
+              <h2 className="font-bold text-base-content text-sm">{t("profile.autostart.title")}</h2>
             </div>
             <p className="text-xs text-base-content/50 mb-2">
-              JNApp puede abrirse al encender el equipo. Puedes apagarlo aquí.
+              {t("profile.autostart.description")}
             </p>
             <label className="label cursor-pointer justify-between gap-4 py-1">
               <span className="label-text text-sm">
-                Arrancar cuando empiece Windows
+                {t("profile.autostart.label")}
               </span>
               <input
                 type="checkbox"
@@ -301,7 +345,7 @@ export function ProfilePage() {
                 checked={autostart}
                 disabled={autostartBusy}
                 onChange={(e) => void handleAutostartChange(e.target.checked)}
-                aria-label="Abrir JNApp al iniciar Windows"
+                aria-label={t("profile.autostart.label")}
               />
             </label>
           </div>
@@ -317,12 +361,12 @@ export function ProfilePage() {
             className="btn btn-primary btn-sm gap-2 w-full"
           >
             <RefreshCw size={14} />
-            Actualizar a v{update?.version}
+            {t("profile.updates.available", { version: update?.version })}
           </button>
         ) : updateStatus === "up-to-date" ? (
           <div className="flex items-center justify-center gap-2 text-success text-sm py-2">
             <CheckCircle size={15} />
-            <span>Tienes la última actualización</span>
+            <span>{t("profile.updates.upToDate")}</span>
           </div>
         ) : (
           <button
@@ -331,8 +375,8 @@ export function ProfilePage() {
             className="btn btn-ghost btn-sm gap-2 w-full text-base-content/60"
           >
             {updateStatus === "checking"
-              ? <><span className="loading loading-spinner loading-xs" /> Buscando...</>
-              : <><RefreshCw size={14} /> Buscar actualizaciones</>}
+              ? <><span className="loading loading-spinner loading-xs" /> {t("profile.updates.checking")}</>
+              : <><RefreshCw size={14} /> {t("profile.updates.check")}</>}
           </button>
         )}
       </motion.div>
@@ -342,7 +386,7 @@ export function ProfilePage() {
         onClick={handleLogout}
         className="btn btn-ghost btn-sm gap-2 text-error hover:bg-error/10 w-full max-w-xs"
       >
-        <LogOut size={16} /> Cerrar sesión
+        <LogOut size={16} /> {t("profile.logout")}
       </motion.button>
     </div>
   );

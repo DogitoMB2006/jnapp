@@ -12,6 +12,7 @@ export function useAuth() {
     let mounted = true;
 
     const initAuth = async () => {
+      const cachedUser = useAuthStore.getState().user;
       try {
         const { data } = await insforge.auth.getCurrentUser();
         if (!mounted) return;
@@ -28,19 +29,37 @@ export function useAuth() {
         }
       } catch {
         if (!mounted) return;
-        setUser(null);
-        setProfile(null);
+        // Keep persisted session if backend is temporarily unreachable on app start.
+        if (!cachedUser) {
+          setUser(null);
+          setProfile(null);
+        }
       } finally {
         if (!mounted) return;
         setLoading(false);
       }
     };
 
-    initAuth();
+    // Safety net: never allow endless splash loading on slow/failed first auth check.
+    const failSafe = window.setTimeout(() => {
+      if (!mounted) return;
+      setLoading(false);
+    }, 8000);
+
+    void initAuth().finally(() => window.clearTimeout(failSafe));
+
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [fetchGroup, fetchProfile, setLoading, setProfile, setUser]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    void fetchGroup(user.id);
+    if (!profile) {
+      void fetchProfile(user.id);
+    }
+  }, [user?.id, profile, fetchGroup, fetchProfile]);
 
   return { user, profile, loading };
 }

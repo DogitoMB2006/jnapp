@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Bell, Check, X } from "lucide-react";
 import { useLayoutEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { useNotifications } from "../../hooks/useNotifications";
 import { formatDistanceToNow } from "../../lib/utils";
 
@@ -13,6 +14,7 @@ export function NotificationPanel() {
   const [panelPos, setPanelPos] = useState({ top: 0, left: 0 });
   const { notifications, unreadCount, markAsRead, markAllAsRead } =
     useNotifications();
+  const { t } = useTranslation();
 
   const updatePanelPosition = () => {
     const el = anchorRef.current;
@@ -51,7 +53,7 @@ export function NotificationPanel() {
         type="button"
         onClick={handleToggleOpen}
         onKeyDown={handleKeyDown}
-        aria-label="Notificaciones"
+        aria-label={t("notifications.title")}
         aria-expanded={open}
         aria-haspopup="dialog"
         className="btn btn-ghost btn-sm btn-circle relative"
@@ -87,7 +89,7 @@ export function NotificationPanel() {
                 <motion.div
                   key="notif-popover"
                   role="dialog"
-                  aria-label="Notificaciones"
+                  aria-label={t("notifications.title")}
                   initial={{ opacity: 0, y: -8, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.98 }}
@@ -96,7 +98,7 @@ export function NotificationPanel() {
                   className="fixed z-[10001] w-72 max-h-[min(24rem,calc(100vh-3rem))] flex flex-col bg-base-200 rounded-2xl shadow-2xl border border-base-300 overflow-hidden"
                 >
                   <div className="flex items-center justify-between p-4 border-b border-base-300 flex-shrink-0">
-                    <h3 className="font-bold text-sm">Notificaciones</h3>
+                    <h3 className="font-bold text-sm">{t("notifications.title")}</h3>
                     <div className="flex gap-1">
                       {unreadCount > 0 && (
                         <button
@@ -104,14 +106,14 @@ export function NotificationPanel() {
                           onClick={markAllAsRead}
                           className="btn btn-ghost btn-xs gap-1"
                         >
-                          <Check size={12} /> Todo leído
+                          <Check size={12} /> {t("notifications.markAllRead")}
                         </button>
                       )}
                       <button
                         type="button"
                         onClick={() => setOpen(false)}
                         className="btn btn-ghost btn-xs btn-circle"
-                        aria-label="Cerrar notificaciones"
+                        aria-label={t("notifications.close")}
                       >
                         <X size={14} />
                       </button>
@@ -121,7 +123,7 @@ export function NotificationPanel() {
                   <div className="max-h-72 overflow-y-auto min-h-0">
                     {notifications.length === 0 ? (
                       <div className="p-6 text-center text-base-content/40 text-sm">
-                        Sin notificaciones
+                        {t("notifications.empty")}
                       </div>
                     ) : (
                       notifications.slice(0, 20).map((n) => (

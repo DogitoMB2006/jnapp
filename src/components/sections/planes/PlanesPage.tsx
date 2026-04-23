@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Map, CalendarDays } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { ItemCard } from "../../shared/ItemCard";
 import { Modal } from "../../shared/Modal";
 import { useRealtime } from "../../../hooks/useRealtime";
@@ -25,6 +26,7 @@ export function PlanesPage() {
   const [editItem, setEditItem] = useState<Plan | null>(null);
   const [form, setForm] = useState({ title: "", description: "", date: "" });
   const [saving, setSaving] = useState(false);
+  const { t } = useTranslation();
 
   const loadProfiles = async (items: Plan[]) => {
     const ids = [...new Set(items.flatMap((i) => [i.created_by, i.edited_by].filter(Boolean) as string[]))];
@@ -88,7 +90,7 @@ export function PlanesPage() {
         date: form.date || null, edited_by: user.id, last_edited_at: new Date().toISOString(),
       }).eq("id", editItem.id).select("*");
       if (error || !data?.length) {
-        toast.error("Error al guardar");
+        toast.error(t("planes.saveError"));
         setSaving(false);
         return;
       }
@@ -101,7 +103,7 @@ export function PlanesPage() {
         date: form.date || null, created_by: user.id, group_id: group.id,
       }]).select("*");
       if (error || !data?.length) {
-        toast.error("Error al agregar");
+        toast.error(t("planes.addError"));
         setSaving(false);
         return;
       }
@@ -115,17 +117,17 @@ export function PlanesPage() {
         detail: row.title,
       });
     }
-    toast.success(editItem ? "Plan editado" : "Plan agregado");
+    toast.success(editItem ? t("planes.edited") : t("planes.added"));
     setShowModal(false); setEditItem(null); setForm({ title: "", description: "", date: "" });
     setSaving(false);
   };
 
   const handleDelete = async (id: string) => {
     setItems((prev) => prev.filter((i) => i.id !== id));
-    toast.success("Eliminado");
+    toast.success(t("planes.deleted"));
     const { error } = await insforge.database.from("planes").delete().eq("id", id);
     if (error) {
-      toast.error("No se pudo eliminar");
+      toast.error(t("planes.deleteError"));
       await fetchPlanes({ silent: true });
     }
   };
@@ -142,8 +144,8 @@ export function PlanesPage() {
       ) : items.length === 0 ? (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-16 gap-3">
           <Map size={40} className="text-base-content/20" />
-          <p className="text-base-content/40 text-sm">Sin planes aún</p>
-          <button onClick={() => setShowModal(true)} className="btn btn-primary btn-sm gap-2"><Plus size={16} /> Crear plan</button>
+          <p className="text-base-content/40 text-sm">{t("planes.empty")}</p>
+          <button onClick={() => setShowModal(true)} className="btn btn-primary btn-sm gap-2"><Plus size={16} /> {t("planes.create")}</button>
         </motion.div>
       ) : (
         <AnimatePresence>
@@ -175,19 +177,19 @@ export function PlanesPage() {
         <Plus size={22} />
       </motion.button>
 
-      <Modal open={showModal} onClose={() => { setShowModal(false); setEditItem(null); }} title={editItem ? "Editar plan" : "Nuevo plan"}>
+      <Modal open={showModal} onClose={() => { setShowModal(false); setEditItem(null); }} title={editItem ? t("planes.editModal") : t("planes.newModal")}>
         <div className="flex flex-col gap-3">
           <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-            placeholder="¿Qué planean hacer?" className="input input-bordered w-full bg-base-100 focus:outline-primary" autoFocus />
+            placeholder={t("planes.titlePlaceholder")} className="input input-bordered w-full bg-base-100 focus:outline-primary" autoFocus />
           <textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-            placeholder="Descripción (opcional)" className="textarea textarea-bordered w-full bg-base-100 resize-none" rows={2} />
+            placeholder={t("planes.descPlaceholder")} className="textarea textarea-bordered w-full bg-base-100 resize-none" rows={2} />
           <div className="form-control">
-            <label className="label py-0"><span className="label-text text-xs">Fecha (opcional)</span></label>
+            <label className="label py-0"><span className="label-text text-xs">{t("planes.datePlaceholder")}</span></label>
             <input type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
               className="input input-bordered w-full bg-base-100 focus:outline-primary" />
           </div>
           <button onClick={handleSave} disabled={!form.title.trim() || saving} className="btn btn-primary w-full gap-2">
-            {saving ? <span className="loading loading-spinner loading-sm" /> : editItem ? "Guardar" : <><Plus size={16} /> Agregar</>}
+            {saving ? <span className="loading loading-spinner loading-sm" /> : editItem ? t("planes.save") : <><Plus size={16} /> {t("planes.add")}</>}
           </button>
         </div>
       </Modal>

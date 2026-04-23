@@ -1,9 +1,11 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, X, Sparkles } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useUpdaterStore } from "../../store/updaterStore";
 
 export function UpdateModal() {
   const { status, update, progress, error, modalOpen, installUpdate, closeModal } = useUpdaterStore();
+  const { t } = useTranslation();
 
   const downloading = status === "downloading";
 
@@ -32,7 +34,7 @@ export function UpdateModal() {
             <div className="bg-primary/10 px-5 py-4 flex items-center justify-between border-b border-base-300">
               <div className="flex items-center gap-2">
                 <Sparkles size={18} className="text-primary" />
-                <span className="font-bold text-base-content text-sm">Nueva actualización disponible</span>
+                <span className="font-bold text-base-content text-sm">{t("updates.modalTitle")}</span>
               </div>
               {!downloading && (
                 <button onClick={closeModal} className="opacity-50 hover:opacity-100 transition-opacity">
@@ -48,7 +50,7 @@ export function UpdateModal() {
               ) : (
                 <>
                   <div className="text-center">
-                    <p className="text-base-content/60 text-xs mb-1">Versión disponible</p>
+                    <p className="text-base-content/60 text-xs mb-1">{t("updates.versionAvailable")}</p>
                     <p className="text-2xl font-bold text-primary">v{update?.version}</p>
                     {update?.body && (
                       <p className="text-xs text-base-content/60 mt-2 leading-relaxed">{update.body}</p>
@@ -58,7 +60,7 @@ export function UpdateModal() {
                   {downloading && (
                     <div className="flex flex-col gap-1.5">
                       <div className="flex justify-between text-xs text-base-content/60">
-                        <span>Descargando...</span>
+                        <span>{t("updates.downloading")}</span>
                         <span>{progress}%</span>
                       </div>
                       <div className="w-full bg-base-300 rounded-full h-2 overflow-hidden">
@@ -69,7 +71,7 @@ export function UpdateModal() {
                         />
                       </div>
                       <p className="text-xs text-center text-base-content/40 mt-1">
-                        La app se reiniciará automáticamente
+                        {t("updates.willRestart")}
                       </p>
                     </div>
                   )}
@@ -86,14 +88,14 @@ export function UpdateModal() {
                     className="btn btn-primary w-full gap-2"
                   >
                     <Download size={16} />
-                    Actualizar ahora
+                    {t("updates.installNow")}
                   </button>
                 )}
                 <button
                   onClick={closeModal}
                   className="btn btn-ghost btn-sm w-full text-base-content/60"
                 >
-                  {error ? "Cerrar" : "Más tarde"}
+                  {error ? t("updates.close") : t("updates.later")}
                 </button>
               </div>
             )}

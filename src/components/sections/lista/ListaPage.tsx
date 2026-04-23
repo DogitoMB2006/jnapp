@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, ListChecks } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { ItemCard } from "../../shared/ItemCard";
 import { Modal } from "../../shared/Modal";
 import { useRealtime } from "../../../hooks/useRealtime";
@@ -24,6 +25,7 @@ export function ListaPage() {
   const [editItem, setEditItem] = useState<ListaItem | null>(null);
   const [inputText, setInputText] = useState("");
   const [saving, setSaving] = useState(false);
+  const { t } = useTranslation();
 
   const fetchItems = async (opts?: { silent?: boolean }) => {
     if (!group) return;
@@ -109,14 +111,14 @@ export function ListaPage() {
       ])
       .select("*");
     if (error || !data?.length) {
-      toast.error("Error al agregar");
+      toast.error(t("lista.addError"));
       setSaving(false);
       return;
     }
     const row = data[0] as ListaItem;
     setItems((prev) => (prev.some((i) => i.id === row.id) ? prev : [row, ...prev]));
     void loadProfiles([row]);
-    toast.success("Agregado");
+    toast.success(t("lista.added"));
     setInputText("");
     setShowModal(false);
     setSaving(false);
@@ -141,14 +143,14 @@ export function ListaPage() {
       .eq("id", editItem.id)
       .select("*");
     if (error || !data?.length) {
-      toast.error("Error al editar");
+      toast.error(t("lista.editError"));
       setSaving(false);
       return;
     }
     const row = data[0] as ListaItem;
     setItems((prev) => prev.map((i) => (i.id === row.id ? row : i)));
     void loadProfiles([row]);
-    toast.success("Editado");
+    toast.success(t("lista.edited"));
     setEditItem(null);
     setInputText("");
     setShowModal(false);
@@ -169,10 +171,10 @@ export function ListaPage() {
 
   const handleDelete = async (id: string) => {
     setItems((prev) => prev.filter((i) => i.id !== id));
-    toast.success("Eliminado");
+    toast.success(t("lista.deleted"));
     const { error } = await insforge.database.from("lista_items").delete().eq("id", id);
     if (error) {
-      toast.error("No se pudo eliminar");
+      toast.error(t("lista.deleteError"));
       await fetchItems({ silent: true });
     }
   };
@@ -205,9 +207,9 @@ export function ListaPage() {
           className="flex flex-col items-center justify-center py-16 gap-3"
         >
           <ListChecks size={40} className="text-base-content/20" />
-          <p className="text-base-content/40 text-sm">La lista está vacía</p>
+          <p className="text-base-content/40 text-sm">{t("lista.empty")}</p>
           <button onClick={openAdd} className="btn btn-primary btn-sm gap-2">
-            <Plus size={16} /> Agregar algo
+            <Plus size={16} /> {t("lista.addSomething")}
           </button>
         </motion.div>
       ) : (
@@ -215,7 +217,7 @@ export function ListaPage() {
           {pending.length > 0 && (
             <div className="mb-2">
               <p className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-2">
-                Pendiente · {pending.length}
+                {t("lista.pending")} · {pending.length}
               </p>
               <AnimatePresence>
                 {pending.map((item) => (
@@ -237,7 +239,7 @@ export function ListaPage() {
           {done.length > 0 && (
             <div>
               <p className="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-2">
-                Completado · {done.length}
+                {t("lista.completed")} · {done.length}
               </p>
               <AnimatePresence>
                 {done.map((item) => (
@@ -272,13 +274,13 @@ export function ListaPage() {
       <Modal
         open={showModal}
         onClose={() => { setShowModal(false); setEditItem(null); setInputText(""); }}
-        title={editItem ? "Editar tarea" : "Nueva tarea"}
+        title={editItem ? t("lista.editModal") : t("lista.newModal")}
       >
         <div className="flex flex-col gap-3">
           <textarea
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder="¿Qué hay que hacer?"
+            placeholder={t("lista.placeholder")}
             className="textarea textarea-bordered w-full bg-base-100 resize-none focus:outline-primary"
             rows={3}
             autoFocus
@@ -296,10 +298,10 @@ export function ListaPage() {
             {saving ? (
               <span className="loading loading-spinner loading-sm" />
             ) : editItem ? (
-              "Guardar cambios"
+              t("lista.save")
             ) : (
               <>
-                <Plus size={16} /> Agregar
+                <Plus size={16} /> {t("lista.add")}
               </>
             )}
           </button>

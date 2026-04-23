@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { BottomNav } from "./BottomNav";
 import { CustomTitleBar } from "./CustomTitleBar";
 import { NotificationPanel } from "../notifications/NotificationPanel";
@@ -12,17 +13,10 @@ import { ProfilePage } from "../profile/ProfilePage";
 import { useAuthStore } from "../../store/authStore";
 import type { Section } from "../../types";
 
-const sectionTitles: Record<Section, string> = {
-  planes: "Planes",
-  lista: "Lista para Hacer",
-  salidas: "Salidas",
-  peliculas: "Películas para Ver",
-  perfil: "Mi Perfil",
-};
-
 export function AppLayout() {
   const [section, setSection] = useState<Section>("lista");
   const { profile } = useAuthStore();
+  const { t } = useTranslation();
 
   return (
     <div className="flex flex-col h-screen bg-base-100 overflow-hidden select-none">
@@ -37,7 +31,7 @@ export function AppLayout() {
             <img src="/icono.png" alt="JNApp" className="w-7 h-7" />
           </motion.div>
           <h1 className="font-bold text-base-content text-sm">
-            {sectionTitles[section]}
+            {t(`sections.${section}`)}
           </h1>
         </div>
         <div className="flex items-center gap-2">

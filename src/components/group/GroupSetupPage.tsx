@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Users, KeyRound, Plus, ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { useGroupStore } from "../../store/groupStore";
 import { useAuthStore } from "../../store/authStore";
 import { CustomTitleBar } from "../layout/CustomTitleBar";
@@ -14,15 +15,16 @@ export function GroupSetupPage() {
   const [view, setView] = useState<View>("home");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
+  const { t } = useTranslation();
 
   const handleCreate = async () => {
     if (!user || busy) return;
     setBusy(true);
     try {
       await createGroup(user.id);
-      toast.success("¡Grupo creado!");
+      toast.success(t("groupSetup.created"));
     } catch (e) {
-      toast.error((e as Error).message || "Error al crear grupo");
+      toast.error((e as Error).message || t("groupSetup.createError"));
     } finally {
       setBusy(false);
     }
@@ -33,9 +35,9 @@ export function GroupSetupPage() {
     setBusy(true);
     try {
       await joinGroup(code.trim(), user.id);
-      toast.success("¡Te uniste al grupo!");
+      toast.success(t("groupSetup.joined"));
     } catch (e) {
-      toast.error((e as Error).message || "Código inválido");
+      toast.error((e as Error).message || t("groupSetup.joinError"));
     } finally {
       setBusy(false);
     }
@@ -55,7 +57,7 @@ export function GroupSetupPage() {
             <img src="/icono.png" alt="JNApp" className="w-14 h-14" />
             <h1 className="text-xl font-bold text-base-content">JNApp</h1>
             <p className="text-sm text-base-content/50 text-center">
-              Tu espacio juntos
+              {t("groupSetup.tagline")}
             </p>
           </motion.div>
 
@@ -69,7 +71,7 @@ export function GroupSetupPage() {
                 className="w-full flex flex-col gap-3"
               >
                 <p className="text-center text-sm text-base-content/60 mb-2">
-                  Para comenzar, crea un grupo o únete al de tu pareja
+                  {t("groupSetup.intro")}
                 </p>
 
                 <motion.button
@@ -83,7 +85,7 @@ export function GroupSetupPage() {
                   ) : (
                     <Plus size={20} />
                   )}
-                  Crear grupo
+                  {t("groupSetup.create")}
                 </motion.button>
 
                 <motion.button
@@ -93,7 +95,7 @@ export function GroupSetupPage() {
                   className="btn btn-outline w-full gap-2 h-14 text-base"
                 >
                   <KeyRound size={20} />
-                  Unirse con código
+                  {t("groupSetup.joinPrompt")}
                 </motion.button>
               </motion.div>
             ) : (
@@ -112,14 +114,14 @@ export function GroupSetupPage() {
                     <ArrowLeft size={16} />
                   </button>
                   <p className="text-sm font-medium text-base-content/80">
-                    Ingresa el código de tu pareja
+                    {t("groupSetup.joinPrompt")}
                   </p>
                 </div>
 
                 <input
                   value={code}
                   onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
-                  placeholder="Ej: AB12CD34"
+                  placeholder={t("groupSetup.codePlaceholder")}
                   maxLength={8}
                   className="input input-bordered w-full bg-base-100 text-center text-xl tracking-widest font-mono focus:outline-primary uppercase"
                   autoFocus
@@ -137,7 +139,7 @@ export function GroupSetupPage() {
                     <span className="loading loading-spinner loading-sm" />
                   ) : (
                     <>
-                      <Users size={18} /> Unirse
+                      <Users size={18} /> {t("groupSetup.join")}
                     </>
                   )}
                 </button>

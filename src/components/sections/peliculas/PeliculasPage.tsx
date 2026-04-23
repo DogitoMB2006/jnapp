@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Film, Check, ImagePlus, X, Eye, EyeOff, Pencil, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { Modal } from "../../shared/Modal";
 import { useRealtime } from "../../../hooks/useRealtime";
 import { useSectionDataSync } from "../../../hooks/useSectionDataSync";
@@ -27,6 +28,8 @@ function MovieCard({
   onDelete: () => void;
   onToggleWatched: () => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <motion.div
       layout
@@ -97,7 +100,7 @@ function MovieCard({
                 letterSpacing: "0.04em",
               }}
             >
-              <Check size={10} /> Vista
+              <Check size={10} /> {t("peliculas.watched")}
             </span>
           )}
         </div>
@@ -175,7 +178,7 @@ function MovieCard({
               }}
             >
               {item.watched ? <EyeOff size={11} /> : <Eye size={11} />}
-              {item.watched ? "No vista" : "Ya la vi"}
+              {item.watched ? t("peliculas.notWatched") : t("peliculas.watched")}
             </motion.button>
 
             <motion.button
@@ -213,6 +216,7 @@ export function PeliculasPage() {
   const [saving, setSaving] = useState(false);
   const [uploadingPoster, setUploadingPoster] = useState(false);
   const posterFileRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation();
 
   const loadProfiles = async (items: Pelicula[]) => {
     const ids = [...new Set(items.flatMap((i) => [i.created_by, i.edited_by].filter(Boolean) as string[]))];
@@ -281,7 +285,7 @@ export function PeliculasPage() {
         edited_by: user.id, last_edited_at: new Date().toISOString(),
       }).eq("id", editItem.id).select("*");
       if (error || !data?.length) {
-        toast.error("Error al guardar");
+        toast.error(t("peliculas.saveError"));
         setSaving(false);
         return;
       }
@@ -295,7 +299,7 @@ export function PeliculasPage() {
         watched: false, created_by: user.id, group_id: group.id,
       }]).select("*");
       if (error || !data?.length) {
-        toast.error("Error al agregar");
+        toast.error(t("peliculas.addError"));
         setSaving(false);
         return;
       }
@@ -309,7 +313,7 @@ export function PeliculasPage() {
         detail: row.title,
       });
     }
-    toast.success(editItem ? "Película editada" : "Película agregada");
+    toast.success(editItem ? t("peliculas.edited") : t("peliculas.added"));
     setShowModal(false); setEditItem(null); setForm({ title: "", description: "", genre: "", posterUrl: "" });
     setSaving(false);
   };
@@ -324,7 +328,7 @@ export function PeliculasPage() {
     if (row) {
       setItems((prev) => prev.map((i) => (i.id === row.id ? row : i)));
     }
-    if (!item.watched) toast.success("¡Marcada como vista!");
+    if (!item.watched) toast.success(t("peliculas.markedWatched"));
   };
 
   const handlePosterUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -340,23 +344,23 @@ export function PeliculasPage() {
       .upload(key, file);
 
     if (uploadError || !uploadData?.url) {
-      toast.error("Error al subir póster");
+      toast.error(t("peliculas.posterError"));
       setUploadingPoster(false);
       return;
     }
 
     setForm((prev) => ({ ...prev, posterUrl: uploadData.url }));
-    toast.success("Póster subido");
+    toast.success(t("peliculas.posterUploaded"));
     setUploadingPoster(false);
     e.target.value = "";
   };
 
   const handleDelete = async (id: string) => {
     setItems((prev) => prev.filter((i) => i.id !== id));
-    toast.success("Eliminado");
+    toast.success(t("peliculas.deleted"));
     const { error } = await insforge.database.from("peliculas").delete().eq("id", id);
     if (error) {
-      toast.error("No se pudo eliminar");
+      toast.error(t("peliculas.deleteError"));
       await fetchPeliculas({ silent: true });
     }
   };
@@ -388,9 +392,9 @@ export function PeliculasPage() {
           className="flex flex-col items-center justify-center py-16 gap-3"
         >
           <Film size={40} className="text-base-content/20" />
-          <p className="text-base-content/40 text-sm">Sin películas aún</p>
+          <p className="text-base-content/40 text-sm">{t("peliculas.empty")}</p>
           <button onClick={() => setShowModal(true)} className="btn btn-primary btn-sm gap-2">
-            <Plus size={16} /> Agregar película
+            <Plus size={16} /> {t("peliculas.add")}
           </button>
         </motion.div>
       ) : (
@@ -401,7 +405,7 @@ export function PeliculasPage() {
                 className="uppercase mb-3 font-semibold tracking-widest"
                 style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)" }}
               >
-                Por ver · {pending.length}
+                {t("peliculas.toWatch")} · {pending.length}
               </p>
               <AnimatePresence>
                 {pending.map((item) => (
@@ -423,7 +427,7 @@ export function PeliculasPage() {
                 className="uppercase mb-3 font-semibold tracking-widest"
                 style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)" }}
               >
-                Vista · {watched.length}
+                {t("peliculas.watched")} · {watched.length}
               </p>
               <AnimatePresence>
                 {watched.map((item) => (
@@ -458,27 +462,27 @@ export function PeliculasPage() {
       <Modal
         open={showModal}
         onClose={() => { setShowModal(false); setEditItem(null); }}
-        title={editItem ? "Editar película" : "Nueva película"}
+        title={editItem ? t("peliculas.editModal") : t("peliculas.newModal")}
       >
         <div className="flex flex-col gap-3">
           <input
             value={form.title}
             onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-            placeholder="Nombre de la película"
+            placeholder={t("peliculas.titlePlaceholder")}
             className="input input-bordered w-full bg-base-100 focus:outline-primary"
             autoFocus
           />
           <textarea
             value={form.description}
             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-            placeholder="Descripción (opcional)"
+            placeholder={t("peliculas.descPlaceholder")}
             className="textarea textarea-bordered w-full bg-base-100 resize-none"
             rows={2}
           />
           <input
             value={form.genre}
             onChange={(e) => setForm((f) => ({ ...f, genre: e.target.value }))}
-            placeholder="Género (Terror, Comedia...)"
+            placeholder={t("peliculas.genrePlaceholder")}
             className="input input-bordered w-full bg-base-100 focus:outline-primary"
           />
           <input
@@ -531,7 +535,7 @@ export function PeliculasPage() {
               ) : (
                 <ImagePlus size={16} />
               )}
-              {uploadingPoster ? "Subiendo..." : "Adjuntar póster"}
+              {uploadingPoster ? t("peliculas.uploading") : t("peliculas.uploadPoster")}
             </motion.button>
           )}
 
@@ -544,9 +548,9 @@ export function PeliculasPage() {
             {saving ? (
               <span className="loading loading-spinner loading-sm" />
             ) : editItem ? (
-              "Guardar cambios"
+              t("peliculas.save")
             ) : (
-              <><Plus size={16} /> Agregar</>
+              <><Plus size={16} /> {t("peliculas.addBtn")}</>
             )}
           </motion.button>
         </div>

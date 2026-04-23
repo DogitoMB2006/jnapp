@@ -1,17 +1,35 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Lock, Heart, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Heart, Eye, EyeOff, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import insforge from "../../lib/insforge";
 import { useAuthStore } from "../../store/authStore";
+import { useGroupStore } from "../../store/groupStore";
 import { CustomTitleBar } from "../layout/CustomTitleBar";
 
-export function LoginPage() {
+interface LoginPageProps {
+  onGoToRegister: () => void;
+}
+
+const GoogleLogo = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+  </svg>
+);
+
+export function LoginPage({ onGoToRegister }: LoginPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState(false);
   const { setUser, fetchProfile } = useAuthStore();
+  const { fetchGroup } = useGroupStore();
+  const { t } = useTranslation();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,15 +42,52 @@ export function LoginPage() {
     });
 
     if (error || !data?.user) {
-      toast.error("Correo o contraseña incorrectos");
+      toast.error(t("login.error"));
       setLoading(false);
       return;
     }
 
     setUser({ id: data.user.id, email: data.user.email });
-    await fetchProfile(data.user.id);
-    toast.success("¡Bienvenido!");
+    await Promise.all([fetchProfile(data.user.id), fetchGroup(data.user.id)]);
+    toast.success(t("login.welcome"));
     setLoading(false);
+  };
+
+  const handleGoogleLogin = async () => {
+    setOauthLoading(true);
+    try {
+      const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+      const redirectTo =
+        import.meta.env.VITE_INSFORGE_OAUTH_REDIRECT_URL ||
+        (typeof window !== "undefined" ? window.location.origin : undefined);
+
+      const { data, error } = await insforge.auth.signInWithOAuth({
+        provider: "google",
+        redirectTo,
+        skipBrowserRedirect: isTauri,
+      });
+
+      if (error) {
+        throw new Error(error.message || t("register.errors.googleUnavailable"));
+      }
+
+      if (!isTauri) return;
+      if (!data?.url) {
+        throw new Error(t("register.errors.googleUnavailable"));
+      }
+
+      const { openUrl } = await import("@tauri-apps/plugin-opener");
+      await openUrl(data.url);
+      toast(t("register.googleBrowserNote"));
+    } catch (err) {
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : t("register.errors.googleUnavailable");
+      toast.error(message);
+    } finally {
+      setOauthLoading(false);
+    }
   };
 
   return (
@@ -81,17 +136,38 @@ export function LoginPage() {
             JNApp
           </h1>
           <p className="text-base-content/50 text-sm mt-1 flex items-center gap-1">
-            Nuestro espacio <Heart size={12} className="text-primary fill-primary" />
+            {t("login.tagline")} <Heart size={12} className="text-primary fill-primary" />
           </p>
         </div>
 
         {/* Card */}
         <div className="card bg-base-200 shadow-xl border border-base-300">
           <div className="card-body p-6">
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={oauthLoading || loading}
+              className="w-full h-10 rounded-xl flex items-center justify-center gap-3 font-semibold text-sm transition-colors mb-3"
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "1.5px solid rgba(255,255,255,0.1)",
+                color: "rgba(255,255,255,0.85)",
+              }}
+            >
+              {oauthLoading ? <Loader2 size={16} className="animate-spin" /> : <GoogleLogo />}
+              {t("register.withGoogle")}
+            </button>
+
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex-1 h-px bg-base-content/10" />
+              <span className="text-base-content/30 text-xs font-medium">or</span>
+              <div className="flex-1 h-px bg-base-content/10" />
+            </div>
+
             <form onSubmit={handleLogin} className="flex flex-col gap-4">
               <div className="form-control">
                 <label className="label pb-1">
-                  <span className="label-text text-xs font-medium">Correo</span>
+                  <span className="label-text text-xs font-medium">{t("login.email")}</span>
                 </label>
                 <div className="relative">
                   <Mail
@@ -102,7 +178,7 @@ export function LoginPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="tu@correo.com"
+                    placeholder={t("login.emailPlaceholder")}
                     className="input input-bordered w-full pl-9 input-sm h-10 bg-base-100 focus:outline-primary"
                     required
                   />
@@ -111,7 +187,7 @@ export function LoginPage() {
 
               <div className="form-control">
                 <label className="label pb-1">
-                  <span className="label-text text-xs font-medium">Contraseña</span>
+                  <span className="label-text text-xs font-medium">{t("login.password")}</span>
                 </label>
                 <div className="relative">
                   <Lock
@@ -146,13 +222,24 @@ export function LoginPage() {
                 ) : (
                   <>
                     <Heart size={16} className="fill-white" />
-                    Entrar
+                    {t("login.submit")}
                   </>
                 )}
               </button>
             </form>
           </div>
         </div>
+
+        <p className="text-center text-xs text-base-content/40 mt-4">
+          {t("register.noAccount")}{" "}
+          <button
+            type="button"
+            onClick={onGoToRegister}
+            className="text-primary font-semibold hover:underline"
+          >
+            {t("register.createAccount")}
+          </button>
+        </p>
       </motion.div>
       </div>
     </div>
