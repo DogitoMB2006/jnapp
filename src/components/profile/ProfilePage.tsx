@@ -8,8 +8,9 @@ import { useAuthStore } from "../../store/authStore";
 import { useGroupStore } from "../../store/groupStore";
 import { Avatar } from "../shared/Avatar";
 import { useUpdaterStore } from "../../store/updaterStore";
+import { useAndroidUpdaterStore } from "../../store/androidUpdaterStore";
 import { useLangStore } from "../../store/langStore";
-import { isDesktopTauri } from "../../lib/platform";
+import { isDesktopTauri, isMobileTauri } from "../../lib/platform";
 import { useOnSectionRefresh } from "../../hooks/useOnSectionRefresh";
 const AUTOSTART_PREF = "jnapp-autostart-pref"
 
@@ -17,6 +18,7 @@ export function ProfilePage() {
   const { user, profile, setProfile, logout, fetchProfile } = useAuthStore();
   const { group, partnerId, leaveGroup } = useGroupStore();
   const { status: updateStatus, checkForUpdate, openModal, update } = useUpdaterStore();
+  const { status: androidUpdateStatus, updateInfo: androidUpdateInfo, checkForUpdate: androidCheckForUpdate, openModal: androidOpenModal } = useAndroidUpdaterStore();
   const { lang, setLang } = useLangStore();
   const { t } = useTranslation();
   const [displayName, setDisplayName] = useState(profile?.display_name || "");
@@ -359,34 +361,67 @@ export function ProfilePage() {
         </motion.div>
       )}
 
-      {/* Update check */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
-        className="w-full">
-        {updateStatus === "available" ? (
-          <button
-            onClick={openModal}
-            className="btn btn-primary btn-sm gap-2 w-full"
-          >
-            <RefreshCw size={14} />
-            {t("profile.updates.available", { version: update?.version })}
-          </button>
-        ) : updateStatus === "up-to-date" ? (
-          <div className="flex items-center justify-center gap-2 text-success text-sm py-2">
-            <CheckCircle size={15} />
-            <span>{t("profile.updates.upToDate")}</span>
-          </div>
-        ) : (
-          <button
-            onClick={() => void checkForUpdate("manual")}
-            disabled={updateStatus === "checking"}
-            className="btn btn-ghost btn-sm gap-2 w-full text-base-content/60"
-          >
-            {updateStatus === "checking"
-              ? <><span className="loading loading-spinner loading-xs" /> {t("profile.updates.checking")}</>
-              : <><RefreshCw size={14} /> {t("profile.updates.check")}</>}
-          </button>
-        )}
-      </motion.div>
+      {/* Update check — desktop */}
+      {isDesktopTauri && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
+          className="w-full">
+          {updateStatus === "available" ? (
+            <button
+              onClick={openModal}
+              className="btn btn-primary btn-sm gap-2 w-full"
+            >
+              <RefreshCw size={14} />
+              {t("profile.updates.available", { version: update?.version })}
+            </button>
+          ) : updateStatus === "up-to-date" ? (
+            <div className="flex items-center justify-center gap-2 text-success text-sm py-2">
+              <CheckCircle size={15} />
+              <span>{t("profile.updates.upToDate")}</span>
+            </div>
+          ) : (
+            <button
+              onClick={() => void checkForUpdate("manual")}
+              disabled={updateStatus === "checking"}
+              className="btn btn-ghost btn-sm gap-2 w-full text-base-content/60"
+            >
+              {updateStatus === "checking"
+                ? <><span className="loading loading-spinner loading-xs" /> {t("profile.updates.checking")}</>
+                : <><RefreshCw size={14} /> {t("profile.updates.check")}</>}
+            </button>
+          )}
+        </motion.div>
+      )}
+
+      {/* Update check — Android */}
+      {isMobileTauri && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
+          className="w-full">
+          {androidUpdateStatus === "available" ? (
+            <button
+              onClick={androidOpenModal}
+              className="btn btn-primary btn-sm gap-2 w-full"
+            >
+              <RefreshCw size={14} />
+              {t("profile.updates.available", { version: androidUpdateInfo?.version })}
+            </button>
+          ) : androidUpdateStatus === "up-to-date" ? (
+            <div className="flex items-center justify-center gap-2 text-success text-sm py-2">
+              <CheckCircle size={15} />
+              <span>{t("profile.updates.upToDate")}</span>
+            </div>
+          ) : (
+            <button
+              onClick={() => void androidCheckForUpdate("manual")}
+              disabled={androidUpdateStatus === "checking"}
+              className="btn btn-ghost btn-sm gap-2 w-full text-base-content/60"
+            >
+              {androidUpdateStatus === "checking"
+                ? <><span className="loading loading-spinner loading-xs" /> {t("profile.updates.checking")}</>
+                : <><RefreshCw size={14} /> {t("profile.updates.check")}</>}
+            </button>
+          )}
+        </motion.div>
+      )}
 
       <motion.button
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}

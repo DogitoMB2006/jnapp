@@ -122,7 +122,9 @@
     "willRestart": "The app will restart automatically",
     "installNow": "Install now",
     "later": "Later",
-    "close": "Close"
+    "close": "Close",
+    "downloadApk": "Download APK",
+    "androidDownloadHint": "Download the APK and install it to update."
   },
   "planes": {
     "empty": "No plans yet",

@@ -6,13 +6,15 @@ import { AppLayout } from "./components/layout/AppLayout";
 import { GroupSetupPage } from "./components/group/GroupSetupPage";
 import { CustomTitleBar } from "./components/layout/CustomTitleBar";
 import { useAuth } from "./hooks/useAuth";
-import { useAutoUpdater } from "./hooks/useAutoUpdater";
+import { useAutoUpdater } from "./hooks/useAutoUpdater"
+import { useAndroidAutoUpdater } from "./hooks/useAndroidAutoUpdater";
 import { useInsforgeSessionHealth } from "./hooks/useInsforgeSessionHealth";
 import { useInsforgeWakeOnForeground } from "./hooks/useInsforgeWakeOnForeground";
-import { UpdateModal } from "./components/layout/UpdateModal";
+import { UpdateModal } from "./components/layout/UpdateModal"
+import { AndroidUpdateModal } from "./components/layout/AndroidUpdateModal";
 import { useAuthStore, registerClearGroup } from "./store/authStore";
 import { useGroupStore } from "./store/groupStore";
-import { isAnyTauri, isDesktopTauri } from "./lib/platform";
+import { isDesktopTauri, isMobileTauri } from "./lib/platform";
 import { initFirebaseWebAnalytics } from "./lib/firebaseClient";
 import { useAndroidFcmRegistration } from "./hooks/useAndroidFcmRegistration";
 const AUTOSTART_PREF = "jnapp-autostart-pref"
@@ -28,6 +30,7 @@ function App() {
   useInsforgeSessionHealth(!!user);
   useInsforgeWakeOnForeground(!!user);
   useAutoUpdater(!!user);
+  useAndroidAutoUpdater(!!user);
 
   useEffect(() => {
     void initFirebaseWebAnalytics();
@@ -75,7 +78,8 @@ function App() {
   return (
     <>
       {mainContent}
-      {isAnyTauri && user ? <UpdateModal /> : null}
+      {isDesktopTauri && user ? <UpdateModal /> : null}
+      {isMobileTauri && user ? <AndroidUpdateModal /> : null}
       <Toaster
         position="top-center"
         toastOptions={{

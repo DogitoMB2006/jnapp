@@ -1,39 +1,32 @@
 import { useEffect, useRef } from "react"
-import { TauriEvent } from "@tauri-apps/api/event"
-import { getCurrentWindow } from "@tauri-apps/api/window"
-import { useUpdaterStore } from "../store/updaterStore"
-import { isDesktopTauri } from "../lib/platform"
+import { useAndroidUpdaterStore } from "../store/androidUpdaterStore"
+import { isMobileTauri } from "../lib/platform"
 
 const INITIAL_CHECK_MS = 1_200
 const INTERVAL_CHECK_MS = 60 * 60 * 1000
 const NUDGE_MS = 320
 
 /**
- * Desktop: when logged in — check for updates shortly after start, re-check hourly,
- * auto-open the update modal when a version is found, and re-open it when the user
- * returns to the window (so "Install later" does not require opening updates manually again).
+ * Android: check GitHub releases shortly after login, re-check hourly,
+ * and re-open update modal when user returns to app (visibility change).
  */
-export const useAutoUpdater = (userLoggedIn: boolean) => {
-  const checkForUpdate = useUpdaterStore((s) => s.checkForUpdate)
+export const useAndroidAutoUpdater = (userLoggedIn: boolean) => {
+  const checkForUpdate = useAndroidUpdaterStore((s) => s.checkForUpdate)
   const wasHiddenRef = useRef(false)
   const nudgeTimerRef = useRef<number | null>(null)
 
   useEffect(() => {
-    if (!isDesktopTauri || !userLoggedIn) return
+    if (!isMobileTauri || !userLoggedIn) return
 
     const scheduleNudge = () => {
-      if (nudgeTimerRef.current) {
-        clearTimeout(nudgeTimerRef.current)
-      }
+      if (nudgeTimerRef.current) clearTimeout(nudgeTimerRef.current)
       nudgeTimerRef.current = window.setTimeout(() => {
         nudgeTimerRef.current = null
-        useUpdaterStore.getState().nudgeUpdateModal()
+        useAndroidUpdaterStore.getState().nudgeUpdateModal()
       }, NUDGE_MS)
     }
 
-    const runCheck = () => {
-      void checkForUpdate("auto")
-    }
+    const runCheck = () => void checkForUpdate("auto")
 
     const initial = window.setTimeout(runCheck, INITIAL_CHECK_MS)
     const interval = window.setInterval(runCheck, INTERVAL_CHECK_MS)
@@ -50,13 +43,6 @@ export const useAutoUpdater = (userLoggedIn: boolean) => {
 
     document.addEventListener("visibilitychange", onVisibility)
 
-    const unlistenPromise = getCurrentWindow().listen<unknown>(
-      TauriEvent.WINDOW_FOCUS,
-      () => {
-        scheduleNudge()
-      },
-    )
-
     return () => {
       window.clearTimeout(initial)
       window.clearInterval(interval)
@@ -65,7 +51,6 @@ export const useAutoUpdater = (userLoggedIn: boolean) => {
         clearTimeout(nudgeTimerRef.current)
         nudgeTimerRef.current = null
       }
-      void unlistenPromise.then((u) => u())
     }
   }, [userLoggedIn, checkForUpdate])
 }

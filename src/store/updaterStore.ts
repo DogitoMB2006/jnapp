@@ -22,6 +22,8 @@ interface UpdaterStore {
   lastNotifiedVersion: string | null;
   checkForUpdate: (source?: CheckSource) => Promise<void>;
   installUpdate: () => Promise<void>;
+  /** Re-show the install / later modal when the user comes back to the app (focus / visibility) */
+  nudgeUpdateModal: () => void;
   openModal: () => void;
   closeModal: () => void;
 }
@@ -76,6 +78,14 @@ export const useUpdaterStore = create<UpdaterStore>((set, get) => ({
         set({ status: "error", error: msg });
       }
     }
+  },
+
+  nudgeUpdateModal: () => {
+    const { update, status, modalOpen } = get();
+    if (!update) return;
+    if (status === "downloading" || status === "checking") return;
+    if (modalOpen) return;
+    set({ modalOpen: true });
   },
 
   installUpdate: async () => {

@@ -122,7 +122,9 @@
     "willRestart": "La app se reiniciará automáticamente",
     "installNow": "Actualizar ahora",
     "later": "Más tarde",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "downloadApk": "Descargar APK",
+    "androidDownloadHint": "Descarga el APK e instálalo para actualizar."
   },
   "planes": {
     "empty": "Sin planes aún",
