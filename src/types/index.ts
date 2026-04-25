@@ -64,6 +64,35 @@ export interface Pelicula {
   editor?: Profile;
 }
 
+export type PostTargetType = "planes" | "salidas" | "peliculas"
+
+export interface PostReaction {
+  id: string
+  group_id: string
+  target_type: PostTargetType
+  target_id: string
+  user_id: string
+  emoji: string
+  created_at: string
+}
+
+export interface PostComment {
+  id: string
+  group_id: string
+  target_type: PostTargetType
+  target_id: string
+  user_id: string
+  parent_comment_id: string | null
+  content: string
+  created_at: string
+  updated_at: string | null
+}
+
+export interface PostCommentNode extends PostComment {
+  replies: PostCommentNode[]
+  author?: Profile
+}
+
 export interface Notification {
   id: string;
   user_id: string;

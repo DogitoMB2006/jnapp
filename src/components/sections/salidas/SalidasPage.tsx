@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { ItemCard } from "../../shared/ItemCard";
 import { Modal } from "../../shared/Modal";
+import { PostInteractions } from "../../shared/PostInteractions";
 import { useRealtime } from "../../../hooks/useRealtime";
 import { useOnSectionRefresh } from "../../../hooks/useOnSectionRefresh";
 import { useSectionDataSync } from "../../../hooks/useSectionDataSync";
@@ -180,6 +181,12 @@ export function SalidasPage() {
                   </div>
                 )}
               </div>
+              <PostInteractions
+                targetType="salidas"
+                targetId={item.id}
+                groupId={group?.id}
+                userId={user?.id}
+              />
             </ItemCard>
           ))}
         </AnimatePresence>

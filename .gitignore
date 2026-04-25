@@ -52,3 +52,4 @@ BUILD_ANDROID.md
 .cursor/rules/ALWAYS-CHECK-BUILD-ANDROID-WHEN-BUILDING-APK.mdc
 .gitignore
 .cursor/rules/Always-check-tauri-skills.mdc
+src/lib/postInteractions.schema.sql

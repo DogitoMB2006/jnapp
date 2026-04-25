@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { ItemCard } from "../../shared/ItemCard";
 import { Modal } from "../../shared/Modal";
+import { PostInteractions } from "../../shared/PostInteractions";
 import { useRealtime } from "../../../hooks/useRealtime";
 import { useOnSectionRefresh } from "../../../hooks/useOnSectionRefresh";
 import { useSectionDataSync } from "../../../hooks/useSectionDataSync";
@@ -171,6 +172,12 @@ export function PlanesPage() {
                   <span className="text-xs text-primary">{formatDate(item.date)}</span>
                 </div>
               )}
+              <PostInteractions
+                targetType="planes"
+                targetId={item.id}
+                groupId={group?.id}
+                userId={user?.id}
+              />
             </ItemCard>
           ))}
         </AnimatePresence>

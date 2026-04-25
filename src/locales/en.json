@@ -204,6 +204,24 @@
     "save": "Save changes",
     "addBtn": "Add"
   },
+  "postInteractions": {
+    "react": "React",
+    "pickReaction": "Pick a reaction",
+    "customEmoji": "Custom emoji",
+    "add": "Add",
+    "comments": "Comments",
+    "commentsWithCount": "Comments ({{count}})",
+    "commentsTitle": "Post comments",
+    "writeComment": "Write a comment...",
+    "reply": "Reply",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "replyingTo": "Replying to {{name}}",
+    "cancel": "Cancel",
+    "noComments": "No comments yet",
+    "someone": "Your partner"
+  },
   "a11y": {
     "tapToScrollTop": "Jump to top of this screen",
     "syncSection": "Refresh this screen",

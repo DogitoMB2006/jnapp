@@ -14,17 +14,22 @@ import { isLikelyNotificationRealtimeRow } from "../../../lib/realtimeGuards";
 import { useAuthStore } from "../../../store/authStore";
 import { useGroupStore } from "../../../store/groupStore";
 import { Avatar } from "../../shared/Avatar";
+import { PostInteractions } from "../../shared/PostInteractions";
 import type { Pelicula, Profile } from "../../../types";
 
 function MovieCard({
   item,
   creator,
+  groupId,
+  userId,
   onEdit,
   onDelete,
   onToggleWatched,
 }: {
   item: Pelicula;
   creator?: Profile;
+  groupId?: string;
+  userId?: string;
   onEdit: () => void;
   onDelete: () => void;
   onToggleWatched: () => void;
@@ -200,6 +205,13 @@ function MovieCard({
             </motion.button>
           </div>
         </div>
+
+        <PostInteractions
+          targetType="peliculas"
+          targetId={item.id}
+          groupId={groupId}
+          userId={userId}
+        />
       </div>
     </motion.div>
   );
@@ -417,6 +429,8 @@ export function PeliculasPage() {
                     key={item.id}
                     item={item}
                     creator={profiles[item.created_by]}
+                    groupId={group?.id}
+                    userId={user?.id}
                     onEdit={() => openEdit(item)}
                     onDelete={() => handleDelete(item.id)}
                     onToggleWatched={() => handleToggleWatched(item)}
@@ -439,6 +453,8 @@ export function PeliculasPage() {
                     key={item.id}
                     item={item}
                     creator={profiles[item.created_by]}
+                    groupId={group?.id}
+                    userId={user?.id}
                     onEdit={() => openEdit(item)}
                     onDelete={() => handleDelete(item.id)}
                     onToggleWatched={() => handleToggleWatched(item)}
