@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { getVersion } from "@tauri-apps/api/app";
 import { motion } from "framer-motion";
 import { Camera, Save, LogOut, UserCircle, RefreshCw, CheckCircle, Monitor, Users, Copy, DoorOpen, Globe } from "lucide-react";
 import toast from "react-hot-toast";
@@ -430,6 +431,21 @@ export function ProfilePage() {
       >
         <LogOut size={16} /> {t("profile.logout")}
       </motion.button>
+
+      <AppVersion />
     </div>
   );
+}
+
+function AppVersion() {
+  const [version, setVersion] = useState<string | null>(null)
+  useEffect(() => {
+    getVersion().then(setVersion).catch(() => undefined)
+  }, [])
+  if (!version) return null
+  return (
+    <p className="text-xs text-base-content/30 text-center select-none mt-1">
+      v{version}
+    </p>
+  )
 }

@@ -1,23 +1,52 @@
+import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Download, X, Sparkles } from "lucide-react"
+import { X, Sparkles } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { openUrl } from "@tauri-apps/plugin-opener"
 import { useAndroidUpdaterStore } from "../../store/androidUpdaterStore"
+
+declare global {
+  interface Window {
+    JNApkInstaller?: { installFromUrl: (url: string) => void }
+    __apkInstallReady?: () => void
+    __apkInstallError?: (msg: string) => void
+  }
+}
 
 export function AndroidUpdateModal() {
   const { updateInfo, error, modalOpen, closeModal } = useAndroidUpdaterStore()
   const { t } = useTranslation()
+  const [installing, setInstalling] = useState(false)
+  const [installError, setInstallError] = useState<string | null>(null)
 
-  const handleDownload = async () => {
-    if (!updateInfo?.downloadUrl) return
-    try {
-      await openUrl(updateInfo.downloadUrl)
-    } catch {
-      // fallback
-      window.open(updateInfo.downloadUrl, "_blank")
+  useEffect(() => {
+    window.__apkInstallReady = () => {
+      setInstalling(false)
     }
-    closeModal()
+    window.__apkInstallError = (msg: string) => {
+      setInstalling(false)
+      setInstallError(msg)
+    }
+    return () => {
+      delete window.__apkInstallReady
+      delete window.__apkInstallError
+    }
+  }, [])
+
+  const handleInstall = () => {
+    if (!updateInfo?.downloadUrl) return
+    setInstallError(null)
+
+    if (window.JNApkInstaller) {
+      setInstalling(true)
+      window.JNApkInstaller.installFromUrl(updateInfo.downloadUrl)
+    } else {
+      // Fallback: open in browser
+      window.open(updateInfo.downloadUrl, "_blank")
+      closeModal()
+    }
   }
+
+  const displayError = error ?? installError
 
   return (
     <AnimatePresence>
@@ -28,7 +57,7 @@ export function AndroidUpdateModal() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 z-[10050]"
-            onClick={closeModal}
+            onClick={!installing ? closeModal : undefined}
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -43,15 +72,23 @@ export function AndroidUpdateModal() {
                 <Sparkles size={18} className="text-primary" />
                 <span className="font-bold text-base-content text-sm">{t("updates.modalTitle")}</span>
               </div>
-              <button onClick={closeModal} className="opacity-50 hover:opacity-100 transition-opacity">
-                <X size={16} />
-              </button>
+              {!installing && (
+                <button onClick={closeModal} className="opacity-50 hover:opacity-100 transition-opacity">
+                  <X size={16} />
+                </button>
+              )}
             </div>
 
             {/* Body */}
             <div className="px-5 py-4 flex flex-col gap-4">
-              {error ? (
-                <p className="text-error text-sm">{error}</p>
+              {displayError ? (
+                <p className="text-error text-sm">{displayError}</p>
+              ) : installing ? (
+                <div className="flex flex-col items-center gap-3 py-2">
+                  <span className="loading loading-spinner loading-md text-primary" />
+                  <p className="text-sm text-base-content/60">{t("updates.downloading")}</p>
+                  <p className="text-xs text-base-content/40">{t("updates.androidInstallHint")}</p>
+                </div>
               ) : (
                 <div className="text-center">
                   <p className="text-base-content/60 text-xs mb-1">{t("updates.versionAvailable")}</p>
@@ -61,31 +98,29 @@ export function AndroidUpdateModal() {
                       {updateInfo.body.slice(0, 300)}
                     </p>
                   )}
-                  <p className="text-xs text-base-content/40 mt-3">
-                    {t("updates.androidDownloadHint")}
-                  </p>
                 </div>
               )}
             </div>
 
             {/* Actions */}
-            <div className="px-5 pb-5 flex flex-col gap-2">
-              {!error && (
+            {!installing && (
+              <div className="px-5 pb-5 flex flex-col gap-2">
+                {!displayError && (
+                  <button
+                    onClick={handleInstall}
+                    className="btn btn-primary w-full gap-2"
+                  >
+                    {t("updates.downloadApk")}
+                  </button>
+                )}
                 <button
-                  onClick={() => void handleDownload()}
-                  className="btn btn-primary w-full gap-2"
+                  onClick={closeModal}
+                  className="btn btn-ghost btn-sm w-full text-base-content/60"
                 >
-                  <Download size={16} />
-                  {t("updates.downloadApk")}
+                  {displayError ? t("updates.close") : t("updates.later")}
                 </button>
-              )}
-              <button
-                onClick={closeModal}
-                className="btn btn-ghost btn-sm w-full text-base-content/60"
-              >
-                {error ? t("updates.close") : t("updates.later")}
-              </button>
-            </div>
+              </div>
+            )}
           </motion.div>
         </>
       )}

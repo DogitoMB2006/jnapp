@@ -123,8 +123,9 @@
     "installNow": "Install now",
     "later": "Later",
     "close": "Close",
-    "downloadApk": "Download APK",
-    "androidDownloadHint": "Download the APK and install it to update."
+    "downloadApk": "Download & Install",
+    "androidDownloadHint": "Download the APK and install it to update.",
+    "androidInstallHint": "The install dialog will appear shortly..."
   },
   "planes": {
     "empty": "No plans yet",

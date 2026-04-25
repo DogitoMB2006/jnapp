@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.webkit.WebView
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -32,5 +33,9 @@ class MainActivity : TauriActivity() {
             val t = task.result ?: return@addOnCompleteListener
             FcmTokenStore.write(this, t)
         }
+    }
+
+    override fun onWebViewCreate(webView: WebView) {
+        webView.addJavascriptInterface(ApkInstaller(this, webView), "JNApkInstaller")
     }
 }
