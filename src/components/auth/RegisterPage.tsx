@@ -89,7 +89,10 @@ function OtpInput({ value, onChange }: { value: string; onChange: (v: string) =>
   };
 
   return (
-    <div className="flex gap-2 justify-center" onPaste={handlePaste}>
+    <div
+      className="w-full max-w-[340px] mx-auto grid grid-cols-6 gap-2"
+      onPaste={handlePaste}
+    >
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <input
           key={i}
@@ -101,7 +104,7 @@ function OtpInput({ value, onChange }: { value: string; onChange: (v: string) =>
           onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKey(i, e)}
           onClick={() => refs.current[i]?.select()}
-          className="w-11 h-14 text-center text-xl font-bold rounded-xl border-2 bg-base-100 focus:outline-none transition-all duration-150"
+          className="w-full min-w-0 h-12 sm:h-14 text-center text-lg sm:text-xl font-bold rounded-xl border-2 bg-base-100 focus:outline-none transition-all duration-150"
           style={{
             borderColor: digits[i].trim()
               ? "hsl(var(--p))"
