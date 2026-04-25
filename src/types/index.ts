@@ -4,6 +4,8 @@ export interface Profile {
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;
+  /** FCM device token (Android), optional column in `profiles` */
+  fcm_token?: string | null;
   created_at: string;
   updated_at: string;
 }

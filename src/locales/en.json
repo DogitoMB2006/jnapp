@@ -56,6 +56,7 @@
     "password": "Password",
     "submit": "Sign In",
     "error": "Incorrect email or password",
+    "oauthError": "Could not complete Google sign-in. Try again.",
     "welcome": "Welcome!"
   },
   "profile": {
@@ -199,5 +200,10 @@
     "posterError": "Error uploading poster",
     "save": "Save changes",
     "addBtn": "Add"
+  },
+  "a11y": {
+    "tapToScrollTop": "Jump to top of this screen",
+    "syncSection": "Refresh this screen",
+    "bottomNav": "Main sections"
   }
 }

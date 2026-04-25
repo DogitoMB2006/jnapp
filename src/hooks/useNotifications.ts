@@ -95,7 +95,7 @@ export function useNotifications() {
 
     const pollMs = 12_000;
     /** Chromium throttles `setInterval` when minimized; Tauri emits ticks from Rust instead. */
-    let intervalId: ReturnType<typeof setInterval> | undefined;
+    let intervalId: number | undefined;
     if (!isTauriRuntime) {
       intervalId = window.setInterval(() => {
         void fetchList();

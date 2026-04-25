@@ -56,9 +56,9 @@ export function NotificationPanel() {
         aria-label={t("notifications.title")}
         aria-expanded={open}
         aria-haspopup="dialog"
-        className="btn btn-ghost btn-sm btn-circle relative"
+        className="btn btn-ghost btn-circle relative min-h-11 min-w-11 h-11 w-11"
       >
-        <Bell size={20} />
+        <Bell size={22} />
         {unreadCount > 0 && (
           <motion.span
             initial={{ scale: 0 }}

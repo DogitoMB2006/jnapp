@@ -6,10 +6,12 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import insforge from "../../lib/insforge";
+import insforge from "../../lib/insforge"
+import { isAnyTauri } from "../../lib/platform"
+import { syncTauriSessionFromAuthData } from "../../lib/insforgeTauriSession"
 import { useAuthStore } from "../../store/authStore";
 import { useGroupStore } from "../../store/groupStore";
-import { CustomTitleBar } from "../layout/CustomTitleBar";
+import { CustomTitleBar } from "../layout/CustomTitleBar"
 
 /* ------------------------------------------------------------------ */
 /*  Types & constants                                                   */
@@ -146,7 +148,6 @@ export function RegisterPage({ onGoToLogin }: RegisterPageProps) {
   const handleGoogle = async () => {
     setBusy(true);
     try {
-      const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
       const redirectTo =
         import.meta.env.VITE_INSFORGE_OAUTH_REDIRECT_URL ||
         (typeof window !== "undefined" ? window.location.origin : undefined);
@@ -154,25 +155,17 @@ export function RegisterPage({ onGoToLogin }: RegisterPageProps) {
       const { data, error } = await insforge.auth.signInWithOAuth({
         provider: "google",
         redirectTo,
-        skipBrowserRedirect: isTauri,
+        skipBrowserRedirect: false,
       });
 
       if (error) {
         throw new Error(error.message || t("register.errors.googleUnavailable"));
       }
-
-      // Web flow: SDK redirects automatically when skipBrowserRedirect is false.
-      if (!isTauri) return;
-
-      if (!data?.url) {
-        throw new Error(t("register.errors.googleUnavailable"));
+      if (isAnyTauri && data?.url) {
+        window.location.href = data.url
+        return
       }
-
-      if (isTauri) {
-        const { openUrl } = await import("@tauri-apps/plugin-opener");
-        await openUrl(data.url);
-        toast(t("register.googleBrowserNote"));
-      }
+      return;
     } catch (err) {
       const message =
         err instanceof Error && err.message
@@ -218,6 +211,9 @@ export function RegisterPage({ onGoToLogin }: RegisterPageProps) {
     if (data?.requireEmailVerification) {
       goTo("verify");
     } else if (data?.accessToken && data?.user) {
+      if (isAnyTauri) {
+        await syncTauriSessionFromAuthData(insforge, data)
+      }
       await finishSignIn(data.user.id, data.user.email as string);
     }
     setBusy(false);
@@ -243,6 +239,9 @@ export function RegisterPage({ onGoToLogin }: RegisterPageProps) {
     if (signInErr || !signIn?.user) {
       toast.success("Email verified! Please sign in.");
       onGoToLogin(); setBusy(false); return;
+    }
+    if (isAnyTauri) {
+      await syncTauriSessionFromAuthData(insforge, signIn)
     }
     await finishSignIn(signIn.user.id, signIn.user.email as string);
     setBusy(false);
@@ -282,10 +281,11 @@ export function RegisterPage({ onGoToLogin }: RegisterPageProps) {
 
             {/* Google */}
             <motion.button
+              type="button"
               whileTap={{ scale: 0.97 }}
               onClick={handleGoogle}
               disabled={busy}
-              className="w-full h-12 rounded-2xl flex items-center justify-center gap-3 font-semibold text-sm transition-colors"
+              className="w-full min-h-[3rem] h-12 rounded-2xl flex items-center justify-center gap-3 font-semibold text-base transition-colors"
               style={{
                 background: "rgba(255,255,255,0.06)",
                 border: "1.5px solid rgba(255,255,255,0.1)",
@@ -305,11 +305,12 @@ export function RegisterPage({ onGoToLogin }: RegisterPageProps) {
 
             {/* Email */}
             <motion.button
+              type="button"
               whileTap={{ scale: 0.97 }}
               onClick={() => goTo("email")}
-              className="w-full h-12 btn btn-primary rounded-2xl flex items-center justify-center gap-3 font-semibold text-sm"
+              className="w-full min-h-[3rem] h-12 btn btn-primary rounded-2xl flex items-center justify-center gap-3 font-semibold text-base"
             >
-              <Mail size={18} />
+              <Mail size={20} />
               {t("register.withEmail")}
             </motion.button>
 
@@ -492,7 +493,7 @@ export function RegisterPage({ onGoToLogin }: RegisterPageProps) {
   /* ---------------------------------------------------------------- */
 
   return (
-    <div className="min-h-screen bg-base-100 flex flex-col overflow-hidden select-none">
+    <div className="min-h-screen min-h-[100dvh] bg-base-100 flex flex-col overflow-hidden select-none pt-[env(safe-area-inset-top,0px)]">
       <CustomTitleBar />
 
       {/* Ambient background glows */}

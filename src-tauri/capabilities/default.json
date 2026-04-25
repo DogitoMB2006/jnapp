@@ -20,6 +20,8 @@
     "updater:allow-install",
     "updater:allow-download-and-install",
     "process:default",
-    "process:allow-restart"
+    "process:allow-restart",
+    "allow-fcm-get-stored-token",
+    "store:default"
   ]
 }

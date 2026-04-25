@@ -1,4 +1,5 @@
 import insforge from "./insforge"
+import { requestPartnerFcmPush } from "./requestPartnerFcmPush"
 import { useGroupStore } from "../store/groupStore"
 
 export type PartnerNotifySection = "lista" | "planes" | "salidas" | "peliculas"
@@ -12,6 +13,8 @@ const SECTION_LABEL: Record<PartnerNotifySection, string> = {
 
 /**
  * Inserts an in-app notification for the partner in the same group.
+ * If `VITE_PARTNER_FCM_FUNCTION_SLUG` is set, also asks your InsForge function to
+ * send FCM so the partner gets a system notification when the app is killed.
  */
 export const notifyPartnerNewContent = async (opts: {
   actorUserId: string
@@ -41,5 +44,11 @@ export const notifyPartnerNewContent = async (opts: {
 
   if (error) {
     console.warn("[notifyPartnerNewContent]", error.message)
+    return
   }
+  void requestPartnerFcmPush({
+    targetUserId: partnerId,
+    title: sectionName,
+    body: message,
+  })
 }

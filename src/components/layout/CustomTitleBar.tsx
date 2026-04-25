@@ -3,16 +3,14 @@ import toast from "react-hot-toast"
 import { Download, Maximize2, Minus, Square, X } from "lucide-react"
 import { getCurrentWindow } from "@tauri-apps/api/window"
 import { useUpdaterStore } from "../../store/updaterStore"
-
-const isTauriRuntime =
-  typeof window !== "undefined" && "__TAURI_INTERNALS__" in window
+import { isDesktopTauri } from "../../lib/platform"
 
 export const CustomTitleBar = () => {
   const [maximized, setMaximized] = useState(false)
   const { status: updateStatus, checkForUpdate, openModal } = useUpdaterStore()
 
   useEffect(() => {
-    if (!isTauriRuntime) return
+    if (!isDesktopTauri) return
 
     const win = getCurrentWindow()
     let unlistenResize: (() => void) | undefined
@@ -41,7 +39,7 @@ export const CustomTitleBar = () => {
     }
   }, [])
 
-  if (!isTauriRuntime) {
+  if (!isDesktopTauri) {
     return null
   }
 

@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { ItemCard } from "../../shared/ItemCard";
 import { Modal } from "../../shared/Modal";
 import { useRealtime } from "../../../hooks/useRealtime";
+import { useOnSectionRefresh } from "../../../hooks/useOnSectionRefresh";
 import { useSectionDataSync } from "../../../hooks/useSectionDataSync";
 import insforge from "../../../lib/insforge";
 import { notifyPartnerNewContent } from "../../../lib/notifyPartner";
@@ -71,6 +72,9 @@ export function ListaPage() {
   }, [group?.id]);
 
   useSectionDataSync(() => fetchItems({ silent: true }));
+  useOnSectionRefresh("lista", () => {
+    void fetchItems({ silent: true });
+  });
 
   useRealtime("lista_items", (payload) => {
     const msg = parseTableChangePayload(payload);
@@ -265,7 +269,7 @@ export function ListaPage() {
       <motion.button
         whileTap={{ scale: 0.92 }}
         onClick={openAdd}
-        className="fixed bottom-20 right-4 btn btn-primary btn-circle shadow-lg shadow-primary/30"
+        className="fixed z-40 bottom-[max(6.5rem,calc(env(safe-area-inset-bottom,0px)+4.5rem))] right-4 btn btn-primary btn-circle shadow-lg shadow-primary/30"
       >
         <Plus size={22} />
       </motion.button>

@@ -1,56 +1,68 @@
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Emitter, Manager,
 };
+use tauri::{Emitter, Manager};
 
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
-        .plugin(tauri_plugin_autostart::Builder::new().build())
+    let mut app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
-        .setup(|app| {
-            let show_item = MenuItem::with_id(app, "show", "Mostrar", true, None::<&str>)?;
-            let quit_item = MenuItem::with_id(app, "quit", "Salir", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&show_item, &quit_item])?;
+        .plugin(tauri_plugin_store::Builder::default().build());
 
-            let _tray = TrayIconBuilder::new()
-                .icon(app.default_window_icon().unwrap().clone())
-                .menu(&menu)
-                .tooltip("JNApp - Tu espacio juntos")
-                .on_menu_event(|app, event| match event.id.as_ref() {
-                    "show" => {
-                        if let Some(window) = app.get_webview_window("main") {
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                        }
-                    }
-                    "quit" => {
-                        app.exit(0);
-                    }
-                    _ => {}
-                })
-                .on_tray_icon_event(|tray, event| {
-                    if let TrayIconEvent::Click {
-                        button: MouseButton::Left,
-                        button_state: MouseButtonState::Up,
-                        ..
-                    } = event
-                    {
-                        let app = tray.app_handle();
-                        if let Some(window) = app.get_webview_window("main") {
-                            if window.is_visible().unwrap_or(false) {
-                                let _ = window.hide();
-                            } else {
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+    {
+        app = app.plugin(tauri_plugin_autostart::Builder::new().build());
+    }
+
+    let mut app = app
+        .setup(|app| {
+            #[cfg(not(any(target_os = "android", target_os = "ios")))]
+            {
+                let show_item = MenuItem::with_id(app, "show", "Mostrar", true, None::<&str>)?;
+                let quit_item = MenuItem::with_id(app, "quit", "Salir", true, None::<&str>)?;
+                let menu = Menu::with_items(app, &[&show_item, &quit_item])?;
+
+                let _tray = TrayIconBuilder::new()
+                    .icon(app.default_window_icon().unwrap().clone())
+                    .menu(&menu)
+                    .tooltip("JNApp - Tu espacio juntos")
+                    .on_menu_event(|app, event| match event.id.as_ref() {
+                        "show" => {
+                            if let Some(window) = app.get_webview_window("main") {
                                 let _ = window.show();
                                 let _ = window.set_focus();
                             }
                         }
-                    }
-                })
-                .build(app)?;
+                        "quit" => {
+                            app.exit(0);
+                        }
+                        _ => {}
+                    })
+                    .on_tray_icon_event(|tray, event| {
+                        if let TrayIconEvent::Click {
+                            button: MouseButton::Left,
+                            button_state: MouseButtonState::Up,
+                            ..
+                        } = event
+                        {
+                            let app = tray.app_handle();
+                            if let Some(window) = app.get_webview_window("main") {
+                                if window.is_visible().unwrap_or(false) {
+                                    let _ = window.hide();
+                                } else {
+                                    let _ = window.show();
+                                    let _ = window.set_focus();
+                                }
+                            }
+                        }
+                    })
+                    .build(app)?;
+            }
 
             // Poll tick from Rust so it still fires when the WebView throttles setInterval (minimized).
             let app_handle = app.handle().clone();
@@ -65,14 +77,34 @@ pub fn run() {
             });
 
             Ok(())
-        })
-        .on_window_event(|window, event| {
+        });
+
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+    {
+        app = app.on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
                 let _ = window.hide();
             }
-        })
-        .invoke_handler(tauri::generate_handler![])
+        });
+    }
+
+    app.invoke_handler(tauri::generate_handler![fcm_get_stored_token])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+/// Android: FCM token written by native code to `app_data_dir/fcm_token.txt`.
+#[tauri::command]
+fn fcm_get_stored_token(app: tauri::AppHandle) -> Option<String> {
+    #[cfg(target_os = "android")]
+    {
+        let path = app.path().app_data_dir().ok()?.join("fcm_token.txt");
+        return std::fs::read_to_string(path).ok();
+    }
+    #[cfg(not(target_os = "android"))]
+    {
+        let _ = app;
+        None
+    }
 }

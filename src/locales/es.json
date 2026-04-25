@@ -56,6 +56,7 @@
     "password": "Contraseña",
     "submit": "Entrar",
     "error": "Correo o contraseña incorrectos",
+    "oauthError": "No se pudo completar el inicio con Google. Inténtalo de nuevo.",
     "welcome": "¡Bienvenido!"
   },
   "profile": {
@@ -199,5 +200,10 @@
     "posterError": "Error al subir póster",
     "save": "Guardar cambios",
     "addBtn": "Agregar"
+  },
+  "a11y": {
+    "tapToScrollTop": "Volver arriba en esta pantalla",
+    "syncSection": "Actualizar esta pantalla",
+    "bottomNav": "Secciones principales"
   }
 }

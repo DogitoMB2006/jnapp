@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Modal } from "../../shared/Modal";
 import { useRealtime } from "../../../hooks/useRealtime";
+import { useOnSectionRefresh } from "../../../hooks/useOnSectionRefresh";
 import { useSectionDataSync } from "../../../hooks/useSectionDataSync";
 import insforge from "../../../lib/insforge";
 import { notifyPartnerNewContent } from "../../../lib/notifyPartner";
@@ -246,6 +247,9 @@ export function PeliculasPage() {
   }, [group?.id]);
 
   useSectionDataSync(() => fetchPeliculas({ silent: true }));
+  useOnSectionRefresh("peliculas", () => {
+    void fetchPeliculas({ silent: true });
+  });
 
   useRealtime("peliculas", (payload) => {
     const msg = parseTableChangePayload(payload);
@@ -454,7 +458,7 @@ export function PeliculasPage() {
           setForm({ title: "", description: "", genre: "", posterUrl: "" });
           setShowModal(true);
         }}
-        className="fixed bottom-20 right-4 btn btn-primary btn-circle shadow-lg shadow-primary/30"
+        className="fixed z-40 bottom-[max(6.5rem,calc(env(safe-area-inset-bottom,0px)+4.5rem))] right-4 btn btn-primary btn-circle shadow-lg shadow-primary/30"
       >
         <Plus size={22} />
       </motion.button>

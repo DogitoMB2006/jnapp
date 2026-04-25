@@ -15,6 +15,10 @@ dist-ssr
 .env.*
 !.env.example
 
+# Never commit Firebase service account keys
+*firebase-adminsdk*.json
+**/*-firebase-adminsdk-*.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -27,6 +31,8 @@ dist-ssr
 *.sw?
 
 # InsForge & AI agent skills
+tauri-skills/
+tauriskills/
 .insforge
 .agent
 .agents
@@ -41,3 +47,8 @@ dist-ssr
 .trae
 .windsurf
 schema.sql
+insforge/sql/rpc_partner_fcm_for_push.sql
+BUILD_ANDROID.md
+.cursor/rules/ALWAYS-CHECK-BUILD-ANDROID-WHEN-BUILDING-APK.mdc
+.gitignore
+.cursor/rules/Always-check-tauri-skills.mdc

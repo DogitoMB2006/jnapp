@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "705954210505",
+    "firebase_url": "https://dominos-c7d38-default-rtdb.firebaseio.com",
+    "project_id": "dominos-c7d38",
+    "storage_bucket": "dominos-c7d38.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:705954210505:android:b45ee14e945382155ce318",
+        "android_client_info": {
+          "package_name": "com.jesus.jnapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAesVb5rDfyJHtnvVRG7W3tmcecr6LKK3Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:705954210505:android:e3d45029f5bb45095ce318",
+        "android_client_info": {
+          "package_name": "com.jn"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAesVb5rDfyJHtnvVRG7W3tmcecr6LKK3Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

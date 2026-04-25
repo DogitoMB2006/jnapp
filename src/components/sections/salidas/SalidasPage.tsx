@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { ItemCard } from "../../shared/ItemCard";
 import { Modal } from "../../shared/Modal";
 import { useRealtime } from "../../../hooks/useRealtime";
+import { useOnSectionRefresh } from "../../../hooks/useOnSectionRefresh";
 import { useSectionDataSync } from "../../../hooks/useSectionDataSync";
 import insforge from "../../../lib/insforge";
 import { notifyPartnerNewContent } from "../../../lib/notifyPartner";
@@ -56,6 +57,9 @@ export function SalidasPage() {
   }, [group?.id]);
 
   useSectionDataSync(() => fetchSalidas({ silent: true }));
+  useOnSectionRefresh("salidas", () => {
+    void fetchSalidas({ silent: true });
+  });
 
   useRealtime("salidas", (payload) => {
     const msg = parseTableChangePayload(payload);
@@ -183,7 +187,8 @@ export function SalidasPage() {
 
       <motion.button whileTap={{ scale: 0.92 }}
         onClick={() => { setEditItem(null); setForm({ title: "", description: "", date: "", location: "" }); setShowModal(true); }}
-        className="fixed bottom-20 right-4 btn btn-primary btn-circle shadow-lg shadow-primary/30">
+        className="fixed z-40 bottom-[max(6.5rem,calc(env(safe-area-inset-bottom,0px)+4.5rem))] right-4 btn btn-primary btn-circle shadow-lg shadow-primary/30"
+      >
         <Plus size={22} />
       </motion.button>
 

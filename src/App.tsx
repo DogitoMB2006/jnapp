@@ -12,14 +12,15 @@ import { useInsforgeWakeOnForeground } from "./hooks/useInsforgeWakeOnForeground
 import { UpdateModal } from "./components/layout/UpdateModal";
 import { useAuthStore, registerClearGroup } from "./store/authStore";
 import { useGroupStore } from "./store/groupStore";
-
-const isTauriRuntime =
-  typeof window !== "undefined" && "__TAURI_INTERNALS__" in window
+import { isAnyTauri, isDesktopTauri } from "./lib/platform";
+import { initFirebaseWebAnalytics } from "./lib/firebaseClient";
+import { useAndroidFcmRegistration } from "./hooks/useAndroidFcmRegistration";
 const AUTOSTART_PREF = "jnapp-autostart-pref"
 
 function App() {
   const { user, loading } = useAuth();
   const { profile, fetchProfile } = useAuthStore();
+  useAndroidFcmRegistration(user?.id);
   const { group, loading: groupLoading, clearGroup } = useGroupStore();
   const [showRegister, setShowRegister] = useState(false);
   registerClearGroup(clearGroup);
@@ -29,13 +30,17 @@ function App() {
   useAutoUpdater(!!user);
 
   useEffect(() => {
+    void initFirebaseWebAnalytics();
+  }, []);
+
+  useEffect(() => {
     if (user && !profile) {
       fetchProfile(user.id);
     }
   }, [user]);
 
   useEffect(() => {
-    if (!isTauriRuntime) return
+    if (!isDesktopTauri) return
     if (localStorage.getItem(AUTOSTART_PREF) !== null) return
     void (async () => {
       const { enable } = await import("@tauri-apps/plugin-autostart");
@@ -70,7 +75,7 @@ function App() {
   return (
     <>
       {mainContent}
-      {isTauriRuntime && user ? <UpdateModal /> : null}
+      {isAnyTauri && user ? <UpdateModal /> : null}
       <Toaster
         position="top-center"
         toastOptions={{

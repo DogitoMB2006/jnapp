@@ -3,10 +3,12 @@ import { motion } from "framer-motion";
 import { Mail, Lock, Heart, Eye, EyeOff, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import insforge from "../../lib/insforge";
+import insforge from "../../lib/insforge"
+import { isAnyTauri } from "../../lib/platform"
+import { syncTauriSessionFromAuthData } from "../../lib/insforgeTauriSession"
 import { useAuthStore } from "../../store/authStore";
 import { useGroupStore } from "../../store/groupStore";
-import { CustomTitleBar } from "../layout/CustomTitleBar";
+import { CustomTitleBar } from "../layout/CustomTitleBar"
 
 interface LoginPageProps {
   onGoToRegister: () => void;
@@ -47,6 +49,9 @@ export function LoginPage({ onGoToRegister }: LoginPageProps) {
       return;
     }
 
+    if (isAnyTauri) {
+      await syncTauriSessionFromAuthData(insforge, data)
+    }
     setUser({ id: data.user.id, email: data.user.email });
     await Promise.all([fetchProfile(data.user.id), fetchGroup(data.user.id)]);
     toast.success(t("login.welcome"));
@@ -56,7 +61,6 @@ export function LoginPage({ onGoToRegister }: LoginPageProps) {
   const handleGoogleLogin = async () => {
     setOauthLoading(true);
     try {
-      const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
       const redirectTo =
         import.meta.env.VITE_INSFORGE_OAUTH_REDIRECT_URL ||
         (typeof window !== "undefined" ? window.location.origin : undefined);
@@ -64,21 +68,22 @@ export function LoginPage({ onGoToRegister }: LoginPageProps) {
       const { data, error } = await insforge.auth.signInWithOAuth({
         provider: "google",
         redirectTo,
-        skipBrowserRedirect: isTauri,
+        // Must stay in this WebView on desktop Tauri: opening the system browser sends the
+        // callback to localhost in Chrome while this window never receives insforge_code.
+        skipBrowserRedirect: false,
       });
 
       if (error) {
         throw new Error(error.message || t("register.errors.googleUnavailable"));
       }
-
-      if (!isTauri) return;
-      if (!data?.url) {
-        throw new Error(t("register.errors.googleUnavailable"));
+      // InsForge only assigns window.location when !isServerMode. Tauri uses isServerMode, so the
+      // SDK returns authUrl in data and expects the host to navigate (same as non-Tauri + skip true).
+      if (isAnyTauri && data?.url) {
+        window.location.href = data.url
+        return
       }
-
-      const { openUrl } = await import("@tauri-apps/plugin-opener");
-      await openUrl(data.url);
-      toast(t("register.googleBrowserNote"));
+      // Browser (non-Tauri): SDK set window.location to the provider
+      return;
     } catch (err) {
       const message =
         err instanceof Error && err.message
@@ -91,9 +96,9 @@ export function LoginPage({ onGoToRegister }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-base-100 flex flex-col overflow-hidden">
+    <div className="min-h-screen min-h-[100dvh] bg-base-100 flex flex-col overflow-hidden pt-[env(safe-area-inset-top,0px)]">
       <CustomTitleBar />
-      <div className="flex flex-1 flex-col items-center justify-center p-6 relative overflow-hidden">
+      <div className="flex flex-1 flex-col items-center justify-center p-6 sm:p-8 relative overflow-hidden">
       {/* Background decorative hearts */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {[...Array(6)].map((_, i) => (
@@ -142,12 +147,12 @@ export function LoginPage({ onGoToRegister }: LoginPageProps) {
 
         {/* Card */}
         <div className="card bg-base-200 shadow-xl border border-base-300">
-          <div className="card-body p-6">
+          <div className="card-body p-6 sm:p-7">
             <button
               type="button"
               onClick={handleGoogleLogin}
               disabled={oauthLoading || loading}
-              className="w-full h-10 rounded-xl flex items-center justify-center gap-3 font-semibold text-sm transition-colors mb-3"
+              className="w-full min-h-[2.75rem] h-12 rounded-xl flex items-center justify-center gap-3 font-semibold text-base transition-colors mb-3"
               style={{
                 background: "rgba(255,255,255,0.06)",
                 border: "1.5px solid rgba(255,255,255,0.1)",
@@ -167,19 +172,19 @@ export function LoginPage({ onGoToRegister }: LoginPageProps) {
             <form onSubmit={handleLogin} className="flex flex-col gap-4">
               <div className="form-control">
                 <label className="label pb-1">
-                  <span className="label-text text-xs font-medium">{t("login.email")}</span>
+                  <span className="label-text text-sm font-medium">{t("login.email")}</span>
                 </label>
                 <div className="relative">
                   <Mail
-                    size={16}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40"
+                    size={18}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base-content/40"
                   />
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder={t("login.emailPlaceholder")}
-                    className="input input-bordered w-full pl-9 input-sm h-10 bg-base-100 focus:outline-primary"
+                    className="input input-bordered w-full pl-10 pr-3 h-12 min-h-12 text-base bg-base-100 focus:outline-primary"
                     required
                   />
                 </div>
@@ -187,27 +192,28 @@ export function LoginPage({ onGoToRegister }: LoginPageProps) {
 
               <div className="form-control">
                 <label className="label pb-1">
-                  <span className="label-text text-xs font-medium">{t("login.password")}</span>
+                  <span className="label-text text-sm font-medium">{t("login.password")}</span>
                 </label>
                 <div className="relative">
                   <Lock
-                    size={16}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40"
+                    size={18}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base-content/40"
                   />
                   <input
                     type={showPass ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="input input-bordered w-full pl-9 pr-9 input-sm h-10 bg-base-100 focus:outline-primary"
+                    className="input input-bordered w-full pl-10 pr-11 h-12 min-h-12 text-base bg-base-100 focus:outline-primary"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPass(!showPass)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content p-1 min-w-[2.5rem] min-h-[2.5rem] flex items-center justify-center"
+                    aria-label={showPass ? "Hide password" : "Show password"}
                   >
-                    {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showPass ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
               </div>
@@ -215,13 +221,13 @@ export function LoginPage({ onGoToRegister }: LoginPageProps) {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn btn-primary w-full mt-2 gap-2"
+                className="btn btn-primary w-full min-h-12 h-12 text-base mt-2 gap-2"
               >
                 {loading ? (
-                  <span className="loading loading-spinner loading-sm" />
+                  <span className="loading loading-spinner loading-md" />
                 ) : (
                   <>
-                    <Heart size={16} className="fill-white" />
+                    <Heart size={20} className="fill-white" />
                     {t("login.submit")}
                   </>
                 )}

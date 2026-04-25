@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Camera, Save, LogOut, UserCircle, RefreshCw, CheckCircle, Monitor, Users, Copy, DoorOpen, Globe } from "lucide-react";
 import toast from "react-hot-toast";
@@ -9,13 +9,12 @@ import { useGroupStore } from "../../store/groupStore";
 import { Avatar } from "../shared/Avatar";
 import { useUpdaterStore } from "../../store/updaterStore";
 import { useLangStore } from "../../store/langStore";
-
-const isTauriRuntime =
-  typeof window !== "undefined" && "__TAURI_INTERNALS__" in window
+import { isDesktopTauri } from "../../lib/platform";
+import { useOnSectionRefresh } from "../../hooks/useOnSectionRefresh";
 const AUTOSTART_PREF = "jnapp-autostart-pref"
 
 export function ProfilePage() {
-  const { user, profile, setProfile, logout } = useAuthStore();
+  const { user, profile, setProfile, logout, fetchProfile } = useAuthStore();
   const { group, partnerId, leaveGroup } = useGroupStore();
   const { status: updateStatus, checkForUpdate, openModal, update } = useUpdaterStore();
   const { lang, setLang } = useLangStore();
@@ -31,24 +30,32 @@ export function ProfilePage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!isTauriRuntime) return
+    if (!isDesktopTauri) return
     void (async () => {
       const { isEnabled } = await import("@tauri-apps/plugin-autostart");
       setAutostart(await isEnabled());
     })();
   }, []);
 
+  const loadPartnerProfile = useCallback(async () => {
+    if (!partnerId) return
+    const { data } = await insforge.database
+      .from("profiles")
+      .select("display_name, username, avatar_url")
+      .eq("user_id", partnerId)
+      .single();
+    if (data) setPartnerProfile(data as typeof partnerProfile);
+  }, [partnerId]);
+
   useEffect(() => {
     if (!partnerId) return;
-    void (async () => {
-      const { data } = await insforge.database
-        .from("profiles")
-        .select("display_name, username, avatar_url")
-        .eq("user_id", partnerId)
-        .single();
-      if (data) setPartnerProfile(data as typeof partnerProfile);
-    })();
-  }, [partnerId]);
+    void loadPartnerProfile();
+  }, [partnerId, loadPartnerProfile]);
+
+  useOnSectionRefresh("perfil", () => {
+    if (user) void fetchProfile(user.id);
+    void loadPartnerProfile();
+  });
 
   const handleSave = async () => {
     if (!user) return;
@@ -133,7 +140,7 @@ export function ProfilePage() {
   };
 
   const handleAutostartChange = async (on: boolean) => {
-    if (!isTauriRuntime) return
+    if (!isDesktopTauri) return
     setAutostartBusy(true);
     try {
       const { enable, disable, isEnabled } = await import(
@@ -320,7 +327,7 @@ export function ProfilePage() {
         </motion.div>
       )}
 
-      {isTauriRuntime && (
+      {isDesktopTauri && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
