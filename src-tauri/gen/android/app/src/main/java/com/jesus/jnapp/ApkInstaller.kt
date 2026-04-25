@@ -68,10 +68,10 @@ class ApkInstaller(private val context: Context, private val webView: WebView) {
                 context.startActivity(intent)
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
+                    val msg = (e.message ?: "install failed")
+                        .replace("\\", "\\\\").replace("\"", "\\\"")
                     webView.evaluateJavascript(
-                        "window.__apkInstallError && window.__apkInstallError(${
-                            com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(e.message ?: "install failed")
-                        })",
+                        "window.__apkInstallError && window.__apkInstallError(\"$msg\")",
                         null
                     )
                 }
