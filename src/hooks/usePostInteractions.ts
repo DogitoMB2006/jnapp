@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import toast from "react-hot-toast"
 import insforge from "../lib/insforge"
 import { notifyPartnerInteraction } from "../lib/notifyPartner"
-import { useRealtime } from "./useRealtime"
 import type {
   PostComment,
   PostCommentNode,
@@ -94,52 +93,6 @@ export const usePostInteractions = ({
   useEffect(() => {
     void fetchAll()
   }, [fetchAll])
-
-  useRealtime("post_reactions", (payload) => {
-    if (!isEnabled) return
-    const row = payload as PostReaction & { op?: string }
-    if (row.target_type !== targetType || row.target_id !== targetId) return
-
-    const rowId = typeof row.id === "string" ? row.id : ""
-    if (!rowId) return
-
-    if (row.op === "DELETE") {
-      setReactions((prev) => prev.filter((item) => item.id !== rowId))
-      return
-    }
-    if (row.op === "INSERT") {
-      setReactions((prev) => (prev.some((item) => item.id === rowId) ? prev : [...prev, row]))
-      void loadProfiles([row.user_id])
-      return
-    }
-    if (row.op === "UPDATE") {
-      setReactions((prev) => prev.map((item) => (item.id === rowId ? row : item)))
-    }
-  })
-
-  useRealtime("post_comments", (payload) => {
-    if (!isEnabled) return
-    const row = payload as PostComment & { op?: string }
-    if (row.target_type !== targetType || row.target_id !== targetId) return
-
-    const rowId = typeof row.id === "string" ? row.id : ""
-    if (!rowId) return
-
-    if (row.op === "DELETE") {
-      setComments((prev) =>
-        prev.filter((item) => item.id !== rowId && item.parent_comment_id !== rowId),
-      )
-      return
-    }
-    if (row.op === "INSERT") {
-      setComments((prev) => (prev.some((item) => item.id === rowId) ? prev : [...prev, row]))
-      void loadProfiles([row.user_id])
-      return
-    }
-    if (row.op === "UPDATE") {
-      setComments((prev) => prev.map((item) => (item.id === rowId ? row : item)))
-    }
-  })
 
   const reactionsSummary = useMemo<ReactionSummary[]>(() => {
     const map = new Map<string, ReactionSummary>()
@@ -388,5 +341,6 @@ export const usePostInteractions = ({
     addComment,
     editComment,
     deleteComment,
+    refresh: fetchAll,
   }
 }

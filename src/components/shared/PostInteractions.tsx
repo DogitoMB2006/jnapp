@@ -157,6 +157,7 @@ export function PostInteractions({ targetType, targetId, groupId, userId }: Prop
     addComment,
     editComment,
     deleteComment,
+    refresh,
   } = usePostInteractions({
     targetType,
     targetId,
@@ -252,7 +253,7 @@ export function PostInteractions({ targetType, targetId, groupId, userId }: Prop
           </div>
 
           <button
-            onClick={() => setShowComments(true)}
+            onClick={() => { setShowComments(true); void refresh() }}
             className="btn btn-sm rounded-full min-h-11 px-3 btn-ghost ml-auto"
           >
             <MessageCircle size={16} />
