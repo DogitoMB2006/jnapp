@@ -16,7 +16,18 @@ export function formatDistanceToNow(dateStr: string): string {
 
 export function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return "";
-  return new Date(dateStr).toLocaleDateString("es-ES", {
+  // `YYYY-MM-DD` from <input type="date"> must be treated as local calendar date.
+  // Using `new Date("YYYY-MM-DD")` parses as UTC and can render one day earlier.
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+  const parsed = dateOnlyMatch
+    ? new Date(
+        Number(dateOnlyMatch[1]),
+        Number(dateOnlyMatch[2]) - 1,
+        Number(dateOnlyMatch[3]),
+      )
+    : new Date(dateStr);
+
+  return parsed.toLocaleDateString("es-ES", {
     day: "numeric",
     month: "long",
     year: "numeric",

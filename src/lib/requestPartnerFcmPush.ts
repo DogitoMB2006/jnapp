@@ -22,6 +22,9 @@ export const requestPartnerFcmPush = async (args: {
 }) => {
   const slug = (import.meta.env.VITE_PARTNER_FCM_FUNCTION_SLUG as string | undefined)?.trim()
   if (!slug) {
+    if (import.meta.env.DEV) {
+      console.warn("[requestPartnerFcmPush] missing VITE_PARTNER_FCM_FUNCTION_SLUG")
+    }
     return
   }
   try {
