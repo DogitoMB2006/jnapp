@@ -433,6 +433,7 @@ export function ProfilePage() {
       </motion.button>
 
       <AppVersion />
+      {isMobileTauri && <FcmDebug />}
     </div>
   );
 }
@@ -447,5 +448,25 @@ function AppVersion() {
     <p className="text-xs text-base-content/30 text-center select-none mt-1">
       v{version}
     </p>
+  )
+}
+
+function FcmDebug() {
+  const [result, setResult] = useState<string>("tap to check")
+  const check = async () => {
+    try {
+      const { invoke } = await import("@tauri-apps/api/core")
+      const token = await invoke<string | null>("fcm_get_stored_token")
+      setResult(token ? `token: ${token.slice(0, 24)}...` : "null / not found")
+    } catch (e) {
+      setResult(`error: ${String(e)}`)
+    }
+  }
+  return (
+    <button onClick={() => void check()}
+      className="text-xs text-base-content/20 text-center w-full mt-1 py-1"
+    >
+      FCM: {result}
+    </button>
   )
 }
