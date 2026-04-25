@@ -49,6 +49,7 @@ export const useAndroidFcmRegistration = (userId: string | undefined) => {
     return () => {
       cancelled = true
       window.clearInterval(id)
+      lastSent.current = null
     }
   }, [userId])
 }
