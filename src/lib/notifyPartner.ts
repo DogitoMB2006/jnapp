@@ -28,6 +28,7 @@ export const notifyPartnerNewContent = async (opts: {
   displayName: string
   section: PartnerNotifySection
   detail?: string
+  itemId?: string | null
 }) => {
   const { group, partnerId } = useGroupStore.getState()
 
@@ -47,6 +48,8 @@ export const notifyPartnerNewContent = async (opts: {
     type: opts.section,
     created_by: opts.actorUserId,
     group_id: group.id,
+    reference_id: opts.itemId ?? null,
+    reference_type: opts.section,
   }])
 
   if (error) {
@@ -57,6 +60,8 @@ export const notifyPartnerNewContent = async (opts: {
     targetUserId: partnerId,
     title: sectionName,
     body: message,
+    referenceId: opts.itemId ?? null,
+    referenceType: opts.section,
   })
 }
 
@@ -68,6 +73,7 @@ export const notifyPartnerInteraction = async (opts: {
   actorUserId: string
   type: "comment" | "reaction"
   targetType: string
+  targetId: string
   emoji?: string
 }) => {
   const { group, partnerId } = useGroupStore.getState()
@@ -92,6 +98,8 @@ export const notifyPartnerInteraction = async (opts: {
     type: opts.type,
     created_by: opts.actorUserId,
     group_id: group.id,
+    reference_id: opts.targetId,
+    reference_type: opts.targetType,
   }])
 
   if (error) {
@@ -103,5 +111,7 @@ export const notifyPartnerInteraction = async (opts: {
     targetUserId: partnerId,
     title,
     body: message,
+    referenceId: opts.targetId,
+    referenceType: opts.targetType,
   })
 }

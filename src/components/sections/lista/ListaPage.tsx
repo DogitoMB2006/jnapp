@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, ListChecks } from "lucide-react";
+import { Plus, ListChecks, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { ItemCard } from "../../shared/ItemCard";
 import { Modal } from "../../shared/Modal";
+import { AiIdeasModal } from "../../shared/AiIdeasModal";
 import { useRealtime } from "../../../hooks/useRealtime";
 import { useOnSectionRefresh } from "../../../hooks/useOnSectionRefresh";
 import { useSectionDataSync } from "../../../hooks/useSectionDataSync";
@@ -14,6 +15,7 @@ import { parseTableChangePayload } from "../../../lib/realtimePayload";
 import { isLikelyNotificationRealtimeRow } from "../../../lib/realtimeGuards";
 import { useAuthStore } from "../../../store/authStore";
 import { useGroupStore } from "../../../store/groupStore";
+import { useNavigationStore } from "../../../store/navigationStore";
 import type { ListaItem, Profile } from "../../../types";
 
 export function ListaPage() {
@@ -23,10 +25,31 @@ export function ListaPage() {
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showAiIdeas, setShowAiIdeas] = useState(false);
   const [editItem, setEditItem] = useState<ListaItem | null>(null);
   const [inputText, setInputText] = useState("");
   const [saving, setSaving] = useState(false);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const { t } = useTranslation();
+  const { pendingItemId, clearPendingItemId } = useNavigationStore();
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!pendingItemId) return;
+    setHighlightedId(pendingItemId);
+    clearPendingItemId();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!highlightedId || loading) return;
+    const el = document.querySelector(`[data-item-id="${highlightedId}"]`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    highlightTimerRef.current = setTimeout(() => setHighlightedId(null), 2500);
+    return () => {
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    };
+  }, [highlightedId, loading, items]);
 
   const fetchItems = async (opts?: { silent?: boolean }) => {
     if (!group) return;
@@ -131,6 +154,7 @@ export function ListaPage() {
       displayName: profile?.display_name || profile?.username || "Tu pareja",
       section: "lista",
       detail: text,
+      itemId: row.id,
     });
   };
 
@@ -195,6 +219,13 @@ export function ListaPage() {
     setShowModal(true);
   };
 
+  const useAiIdea = (idea: { title: string; description: string }) => {
+    setEditItem(null);
+    setInputText(`${idea.title}: ${idea.description}`);
+    setShowAiIdeas(false);
+    setShowModal(true);
+  };
+
   const pending = items.filter((i) => !i.completed);
   const done = items.filter((i) => i.completed);
 
@@ -212,9 +243,14 @@ export function ListaPage() {
         >
           <ListChecks size={40} className="text-base-content/20" />
           <p className="text-base-content/40 text-sm">{t("lista.empty")}</p>
-          <button onClick={openAdd} className="btn btn-primary btn-sm gap-2">
-            <Plus size={16} /> {t("lista.addSomething")}
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => setShowAiIdeas(true)} className="btn btn-ghost btn-sm gap-2 border border-white/10">
+              <Sparkles size={16} /> {t("aiIdeas.emptyButton")}
+            </button>
+            <button onClick={openAdd} className="btn btn-primary btn-sm gap-2">
+              <Plus size={16} /> {t("lista.addSomething")}
+            </button>
+          </div>
         </motion.div>
       ) : (
         <>
@@ -227,6 +263,8 @@ export function ListaPage() {
                 {pending.map((item) => (
                   <ItemCard
                     key={item.id}
+                    itemId={item.id}
+                    highlighted={item.id === highlightedId}
                     title={item.content}
                     creator={profiles[item.created_by]}
                     editedBy={item.edited_by ? profiles[item.edited_by] : undefined}
@@ -249,6 +287,8 @@ export function ListaPage() {
                 {done.map((item) => (
                   <ItemCard
                     key={item.id}
+                    itemId={item.id}
+                    highlighted={item.id === highlightedId}
                     title={item.content}
                     creator={profiles[item.created_by]}
                     editedBy={item.edited_by ? profiles[item.edited_by] : undefined}
@@ -273,6 +313,23 @@ export function ListaPage() {
       >
         <Plus size={22} />
       </motion.button>
+
+      <motion.button
+        whileTap={{ scale: 0.92 }}
+        onClick={() => setShowAiIdeas(true)}
+        className="fixed z-40 bottom-[max(10.5rem,calc(env(safe-area-inset-bottom,0px)+8.5rem))] right-4 btn btn-secondary btn-circle shadow-lg shadow-secondary/30"
+      >
+        <Sparkles size={20} />
+      </motion.button>
+
+      <AiIdeasModal
+        open={showAiIdeas}
+        section="lista"
+        existingTitles={items.map((item) => item.content)}
+        existingItems={items.map((item) => `${item.completed ? "completed" : "pending"}: ${item.content}`)}
+        onClose={() => setShowAiIdeas(false)}
+        onUse={useAiIdea}
+      />
 
       {/* Modal */}
       <Modal

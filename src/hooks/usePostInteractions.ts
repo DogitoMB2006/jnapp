@@ -193,7 +193,7 @@ export const usePostInteractions = ({
         .filter((item) => item.id !== optimisticId)
         .concat(prev.some((item) => item.id === created.id) ? [] : [created]),
     )
-    void notifyPartnerInteraction({ actorUserId: userId, type: "reaction", targetType, emoji })
+    void notifyPartnerInteraction({ actorUserId: userId, type: "reaction", targetType, targetId, emoji })
   }, [groupId, userId, targetId, reactions, targetType, fetchAll])
 
   const addComment = useCallback(async (content: string, parentCommentId?: string | null) => {
@@ -243,7 +243,7 @@ export const usePostInteractions = ({
         .concat(prev.some((item) => item.id === created.id) ? [] : [created]),
     )
     void loadProfiles([created.user_id])
-    void notifyPartnerInteraction({ actorUserId: userId, type: "comment", targetType })
+    void notifyPartnerInteraction({ actorUserId: userId, type: "comment", targetType, targetId })
     return true
   }, [groupId, userId, targetId, savingComment, targetType, loadProfiles])
 

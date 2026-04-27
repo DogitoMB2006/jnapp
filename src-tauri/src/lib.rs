@@ -89,9 +89,27 @@ pub fn run() {
         });
     }
 
-    app.invoke_handler(tauri::generate_handler![fcm_get_stored_token])
+    app.invoke_handler(tauri::generate_handler![fcm_get_stored_token, deep_link_consume_pending])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+/// Android: Pending deep-link JSON written by FcmMessagingService on notification tap.
+/// Returns the JSON string once and deletes the file so it only fires once.
+#[tauri::command]
+fn deep_link_consume_pending(app: tauri::AppHandle) -> Option<String> {
+    #[cfg(target_os = "android")]
+    {
+        let path = app.path().app_data_dir().ok()?.join("pending_deep_link.json");
+        let content = std::fs::read_to_string(&path).ok()?;
+        let _ = std::fs::remove_file(path);
+        return Some(content);
+    }
+    #[cfg(not(target_os = "android"))]
+    {
+        let _ = app;
+        None
+    }
 }
 
 /// Android: FCM token written by native code to `app_data_dir/fcm_token.txt`.

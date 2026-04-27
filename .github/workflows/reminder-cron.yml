@@ -1,0 +1,19 @@
+name: Daily Reminders
+
+on:
+  schedule:
+    # 14:00 UTC = ~8 AM Mexico City (CST/CDT)
+    - cron: "0 14 * * *"
+  workflow_dispatch: # allow manual trigger for testing
+
+jobs:
+  run-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger reminder-cron function
+        run: |
+          curl -s -X POST \
+            "https://qmf54uhk.functions.insforge.app/reminder-cron" \
+            -H "Content-Type: application/json" \
+            -d "{}" \
+            --fail-with-body

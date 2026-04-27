@@ -222,6 +222,25 @@
     "noComments": "No comments yet",
     "someone": "Your partner"
   },
+  "aiIdeas": {
+    "title": "AI ideas",
+    "subtitle": "Pick one, shuffle for more, or use it to fill the form.",
+    "button": "Ideas",
+    "emptyButton": "Get ideas",
+    "use": "Use this idea",
+    "shuffle": "Shuffle ideas",
+    "sections": {
+      "planes": "Plans for both of you",
+      "salidas": "Outing ideas",
+      "peliculas": "Movie picks",
+      "lista": "Useful list ideas"
+    }
+  },
+  "reminders": {
+    "notifTitle": "Reminder 📅",
+    "planes": "Tomorrow you have \"{{title}}\"! Don't forget your plan.",
+    "salidas": "Tomorrow is \"{{title}}\"! Get ready for your outing."
+  },
   "a11y": {
     "tapToScrollTop": "Jump to top of this screen",
     "syncSection": "Refresh this screen",

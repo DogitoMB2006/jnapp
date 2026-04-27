@@ -4,7 +4,21 @@ import { useLayoutEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useNotifications } from "../../hooks/useNotifications";
+import { useNavigationStore } from "../../store/navigationStore";
 import { formatDistanceToNow } from "../../lib/utils";
+import type { Notification, Section } from "../../types";
+
+const SECTION_TYPES = new Set<string>(["planes", "lista", "salidas", "peliculas"])
+
+function getNavTarget(n: Notification): { section: Section; itemId: string | null } | null {
+  if (SECTION_TYPES.has(n.type)) {
+    return { section: n.type as Section, itemId: n.reference_id }
+  }
+  if ((n.type === "comment" || n.type === "reaction" || n.type === "reminder") && n.reference_type && SECTION_TYPES.has(n.reference_type)) {
+    return { section: n.reference_type as Section, itemId: n.reference_id }
+  }
+  return null
+}
 
 const PANEL_W = 288
 
@@ -15,6 +29,7 @@ export function NotificationPanel() {
   const { notifications, unreadCount, markAsRead, markAllAsRead } =
     useNotifications();
   const { t } = useTranslation();
+  const { navigateTo } = useNavigationStore();
 
   const updatePanelPosition = () => {
     const el = anchorRef.current;
@@ -129,11 +144,23 @@ export function NotificationPanel() {
                       notifications.slice(0, 20).map((n) => (
                         <div
                           key={n.id}
-                          onClick={() => markAsRead(n.id)}
+                          onClick={() => {
+                            void markAsRead(n.id)
+                            const nav = getNavTarget(n)
+                            if (nav) {
+                              navigateTo(nav.section, nav.itemId)
+                              setOpen(false)
+                            }
+                          }}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" || e.key === " ") {
                               e.preventDefault()
                               void markAsRead(n.id)
+                              const nav = getNavTarget(n)
+                              if (nav) {
+                                navigateTo(nav.section, nav.itemId)
+                                setOpen(false)
+                              }
                             }
                           }}
                           role="button"

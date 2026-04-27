@@ -17,6 +17,8 @@ interface ItemCardProps {
   badge?: string;
   badgeColor?: string;
   children?: React.ReactNode;
+  itemId?: string;
+  highlighted?: boolean;
 }
 
 export function ItemCard({
@@ -33,6 +35,8 @@ export function ItemCard({
   badge,
   badgeColor = "badge-primary",
   children,
+  itemId,
+  highlighted,
 }: ItemCardProps) {
   return (
     <motion.div
@@ -41,13 +45,18 @@ export function ItemCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
+      data-item-id={itemId}
       className={`relative mb-3 rounded-2xl overflow-hidden transition-all duration-200 ${
         completed ? "opacity-50" : ""
       }`}
       style={{
         background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)",
-        border: "1px solid rgba(255,255,255,0.07)",
-        boxShadow: "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
+        border: highlighted
+          ? "1px solid rgba(255,45,107,0.6)"
+          : "1px solid rgba(255,255,255,0.07)",
+        boxShadow: highlighted
+          ? "0 4px 24px rgba(0,0,0,0.3), 0 0 0 3px rgba(255,45,107,0.18), inset 0 1px 0 rgba(255,255,255,0.05)"
+          : "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
       }}
     >
       {/* Left accent bar */}

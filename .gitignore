@@ -53,3 +53,4 @@ BUILD_ANDROID.md
 .gitignore
 .cursor/rules/Always-check-tauri-skills.mdc
 src/lib/postInteractions.schema.sql
+COLOR_PALETTE.md

@@ -16,13 +16,15 @@ import { useAuthStore, registerClearGroup } from "./store/authStore";
 import { useGroupStore } from "./store/groupStore";
 import { isDesktopTauri, isMobileTauri } from "./lib/platform";
 import { initFirebaseWebAnalytics } from "./lib/firebaseClient";
-import { useAndroidFcmRegistration } from "./hooks/useAndroidFcmRegistration";
+import { useAndroidFcmRegistration } from "./hooks/useAndroidFcmRegistration"
+import { useDeepLinkNavigation } from "./hooks/useDeepLinkNavigation";
 const AUTOSTART_PREF = "jnapp-autostart-pref"
 
 function App() {
   const { user, loading } = useAuth();
   const { profile, fetchProfile } = useAuthStore();
   useAndroidFcmRegistration(user?.id);
+  useDeepLinkNavigation(user?.id);
   const { group, loading: groupLoading, clearGroup } = useGroupStore();
   const [showRegister, setShowRegister] = useState(false);
   registerClearGroup(clearGroup);

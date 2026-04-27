@@ -34,6 +34,13 @@ class FcmMessagingService : FirebaseMessagingService() {
             ?: ""
         if (body.isBlank()) return
 
+        // Store deep-link so JS can navigate once the app opens
+        val referenceId = message.data["reference_id"]
+        val referenceType = message.data["reference_type"]
+        if (!referenceId.isNullOrBlank() && !referenceType.isNullOrBlank()) {
+            DeepLinkStore.write(applicationContext, referenceId, referenceType)
+        }
+
         // Android 13+: no tray notification without runtime permission
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val granted = ContextCompat.checkSelfPermission(

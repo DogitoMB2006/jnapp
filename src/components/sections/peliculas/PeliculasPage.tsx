@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Film, Check, ImagePlus, X, Eye, EyeOff, Pencil, Trash2 } from "lucide-react";
+import { Plus, Film, Check, ImagePlus, X, Eye, EyeOff, Pencil, Trash2, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Modal } from "../../shared/Modal";
+import { AiIdeasModal } from "../../shared/AiIdeasModal";
 import { useRealtime } from "../../../hooks/useRealtime";
 import { useOnSectionRefresh } from "../../../hooks/useOnSectionRefresh";
 import { useSectionDataSync } from "../../../hooks/useSectionDataSync";
@@ -13,6 +14,7 @@ import { parseTableChangePayload } from "../../../lib/realtimePayload";
 import { isLikelyNotificationRealtimeRow } from "../../../lib/realtimeGuards";
 import { useAuthStore } from "../../../store/authStore";
 import { useGroupStore } from "../../../store/groupStore";
+import { useNavigationStore } from "../../../store/navigationStore";
 import { Avatar } from "../../shared/Avatar";
 import { PostInteractions } from "../../shared/PostInteractions";
 import type { Pelicula, Profile } from "../../../types";
@@ -25,6 +27,7 @@ function MovieCard({
   onEdit,
   onDelete,
   onToggleWatched,
+  highlighted,
 }: {
   item: Pelicula;
   creator?: Profile;
@@ -33,6 +36,7 @@ function MovieCard({
   onEdit: () => void;
   onDelete: () => void;
   onToggleWatched: () => void;
+  highlighted?: boolean;
 }) {
   const { t } = useTranslation();
 
@@ -43,11 +47,14 @@ function MovieCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ type: "spring", stiffness: 380, damping: 28 }}
+      data-item-id={item.id}
       className="mb-4 rounded-2xl overflow-hidden"
       style={{
         background: "linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        boxShadow: "0 4px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)",
+        border: highlighted ? "1px solid rgba(255,45,107,0.6)" : "1px solid rgba(255,255,255,0.08)",
+        boxShadow: highlighted
+          ? "0 4px 28px rgba(0,0,0,0.35), 0 0 0 3px rgba(255,45,107,0.18), inset 0 1px 0 rgba(255,255,255,0.05)"
+          : "0 4px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)",
         opacity: item.watched ? 0.65 : 1,
       }}
     >
@@ -224,12 +231,33 @@ export function PeliculasPage() {
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showAiIdeas, setShowAiIdeas] = useState(false);
   const [editItem, setEditItem] = useState<Pelicula | null>(null);
   const [form, setForm] = useState({ title: "", description: "", genre: "", posterUrl: "" });
   const [saving, setSaving] = useState(false);
   const [uploadingPoster, setUploadingPoster] = useState(false);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const posterFileRef = useRef<HTMLInputElement>(null);
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { t } = useTranslation();
+  const { pendingItemId, clearPendingItemId } = useNavigationStore();
+
+  useEffect(() => {
+    if (!pendingItemId) return;
+    setHighlightedId(pendingItemId);
+    clearPendingItemId();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!highlightedId || loading) return;
+    const el = document.querySelector(`[data-item-id="${highlightedId}"]`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    highlightTimerRef.current = setTimeout(() => setHighlightedId(null), 2500);
+    return () => {
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    };
+  }, [highlightedId, loading, items]);
 
   const loadProfiles = async (items: Pelicula[]) => {
     const ids = [...new Set(items.flatMap((i) => [i.created_by, i.edited_by].filter(Boolean) as string[]))];
@@ -327,6 +355,7 @@ export function PeliculasPage() {
         displayName: profile?.display_name || profile?.username || "Tu pareja",
         section: "peliculas",
         detail: row.title,
+        itemId: row.id,
       });
     }
     toast.success(editItem ? t("peliculas.edited") : t("peliculas.added"));
@@ -392,6 +421,13 @@ export function PeliculasPage() {
     setShowModal(true);
   };
 
+  const useAiIdea = (idea: { title: string; description: string; genre?: string }) => {
+    setEditItem(null);
+    setForm({ title: idea.title, description: idea.description, genre: idea.genre || "", posterUrl: "" });
+    setShowAiIdeas(false);
+    setShowModal(true);
+  };
+
   const pending = items.filter((i) => !i.watched);
   const watched = items.filter((i) => i.watched);
 
@@ -409,9 +445,14 @@ export function PeliculasPage() {
         >
           <Film size={40} className="text-base-content/20" />
           <p className="text-base-content/40 text-sm">{t("peliculas.empty")}</p>
-          <button onClick={() => setShowModal(true)} className="btn btn-primary btn-sm gap-2">
-            <Plus size={16} /> {t("peliculas.add")}
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => setShowAiIdeas(true)} className="btn btn-ghost btn-sm gap-2 border border-white/10">
+              <Sparkles size={16} /> {t("aiIdeas.emptyButton")}
+            </button>
+            <button onClick={() => setShowModal(true)} className="btn btn-primary btn-sm gap-2">
+              <Plus size={16} /> {t("peliculas.add")}
+            </button>
+          </div>
         </motion.div>
       ) : (
         <>
@@ -431,6 +472,7 @@ export function PeliculasPage() {
                     creator={profiles[item.created_by]}
                     groupId={group?.id}
                     userId={user?.id}
+                    highlighted={item.id === highlightedId}
                     onEdit={() => openEdit(item)}
                     onDelete={() => handleDelete(item.id)}
                     onToggleWatched={() => handleToggleWatched(item)}
@@ -455,6 +497,7 @@ export function PeliculasPage() {
                     creator={profiles[item.created_by]}
                     groupId={group?.id}
                     userId={user?.id}
+                    highlighted={item.id === highlightedId}
                     onEdit={() => openEdit(item)}
                     onDelete={() => handleDelete(item.id)}
                     onToggleWatched={() => handleToggleWatched(item)}
@@ -478,6 +521,28 @@ export function PeliculasPage() {
       >
         <Plus size={22} />
       </motion.button>
+
+      <motion.button
+        whileTap={{ scale: 0.92 }}
+        onClick={() => setShowAiIdeas(true)}
+        className="fixed z-40 bottom-[max(10.5rem,calc(env(safe-area-inset-bottom,0px)+8.5rem))] right-4 btn btn-secondary btn-circle shadow-lg shadow-secondary/30"
+      >
+        <Sparkles size={20} />
+      </motion.button>
+
+      <AiIdeasModal
+        open={showAiIdeas}
+        section="peliculas"
+        existingTitles={items.map((item) => item.title)}
+        existingItems={items.map((item) => [
+          item.title,
+          item.genre ? `genre: ${item.genre}` : "",
+          item.description ? `description: ${item.description}` : "",
+          item.watched ? "watched" : "to watch",
+        ].filter(Boolean).join(" | "))}
+        onClose={() => setShowAiIdeas(false)}
+        onUse={useAiIdea}
+      />
 
       <Modal
         open={showModal}

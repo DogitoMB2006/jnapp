@@ -19,6 +19,8 @@ export const requestPartnerFcmPush = async (args: {
   targetUserId: string
   title: string
   body: string
+  referenceId?: string | null
+  referenceType?: string | null
 }) => {
   const slug = (import.meta.env.VITE_PARTNER_FCM_FUNCTION_SLUG as string | undefined)?.trim()
   if (!slug) {
@@ -33,6 +35,8 @@ export const requestPartnerFcmPush = async (args: {
         target_user_id: args.targetUserId,
         title: args.title,
         body: args.body,
+        reference_id: args.referenceId ?? null,
+        reference_type: args.referenceType ?? null,
       },
     })
     if (error) {

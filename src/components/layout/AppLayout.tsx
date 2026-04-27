@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { RefreshCw } from "lucide-react";
@@ -12,6 +12,7 @@ import { SalidasPage } from "../sections/salidas/SalidasPage";
 import { PeliculasPage } from "../sections/peliculas/PeliculasPage";
 import { ProfilePage } from "../profile/ProfilePage";
 import { useAuthStore } from "../../store/authStore";
+import { useNavigationStore } from "../../store/navigationStore";
 import { useSectionSwipe } from "../../hooks/useSectionSwipe";
 import { NAV_SECTION_ORDER } from "../../lib/sectionOrder";
 import { emitSectionRefresh } from "../../lib/sectionRefreshEvent";
@@ -22,6 +23,13 @@ export function AppLayout() {
   const [section, setSection] = useState<Section>("lista");
   const { profile } = useAuthStore();
   const { t } = useTranslation();
+  const { pendingSection, clearPendingSection } = useNavigationStore();
+
+  useEffect(() => {
+    if (!pendingSection) return;
+    setSection(pendingSection);
+    clearPendingSection();
+  }, [pendingSection, clearPendingSection]);
   const contentScrollRef = useRef<HTMLDivElement>(null);
   const prevSectionRef = useRef<Section>(section);
   const [slideDir, setSlideDir] = useState(0);
