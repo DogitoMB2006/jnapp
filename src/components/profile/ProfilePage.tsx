@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { getVersion } from "@tauri-apps/api/app";
 import { motion } from "framer-motion";
-import { Camera, Save, LogOut, UserCircle, RefreshCw, CheckCircle, Monitor, Users, Copy, DoorOpen, Globe } from "lucide-react";
+import { Camera, Save, LogOut, UserCircle, RefreshCw, CheckCircle, Check, Loader2, Monitor, Users, Copy, DoorOpen, Globe } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import insforge from "../../lib/insforge";
+import { normalizeUsername, isValidUsername } from "../../lib/username";
 import { useAuthStore } from "../../store/authStore";
 import { useGroupStore } from "../../store/groupStore";
 import { Avatar } from "../shared/Avatar";
@@ -22,15 +23,27 @@ export function ProfilePage() {
   const { status: androidUpdateStatus, updateInfo: androidUpdateInfo, checkForUpdate: androidCheckForUpdate, openModal: androidOpenModal } = useAndroidUpdaterStore();
   const { lang, setLang } = useLangStore();
   const { t } = useTranslation();
-  const [displayName, setDisplayName] = useState(profile?.display_name || "");
   const [username, setUsername] = useState(profile?.username || "");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [usernameCheckBusy, setUsernameCheckBusy] = useState(false)
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null)
   const [autostart, setAutostart] = useState(true);
   const [autostartBusy, setAutostartBusy] = useState(false);
   const [leavingGroup, setLeavingGroup] = useState(false);
   const [partnerProfile, setPartnerProfile] = useState<{ display_name: string | null; username: string | null; avatar_url: string | null } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const usernameCheckRequestRef = useRef(0)
+
+  const normalizedUsername = normalizeUsername(username)
+  const currentUsername = profile?.username || ""
+  const usernameChanged = normalizedUsername !== currentUsername
+  const usernameInvalid =
+    normalizedUsername.length > 0 && !isValidUsername(normalizedUsername)
+
+  useEffect(() => {
+    setUsername(profile?.username || "")
+  }, [profile?.username])
 
   useEffect(() => {
     if (!isDesktopTauri) return
@@ -60,32 +73,94 @@ export function ProfilePage() {
     void loadPartnerProfile();
   });
 
+  const checkUsernameAvailability = useCallback(async (candidate: string) => {
+    if (!user) return false
+
+    const requestId = ++usernameCheckRequestRef.current
+    setUsernameCheckBusy(true)
+
+    const { data, error } = await insforge.database
+      .from("profiles")
+      .select("user_id")
+      .eq("username", candidate)
+      .neq("user_id", user.id)
+      .limit(1)
+
+    if (requestId !== usernameCheckRequestRef.current) return false
+
+    setUsernameCheckBusy(false)
+    if (error) return false
+    return !data || data.length === 0
+  }, [user])
+
+  useEffect(() => {
+    if (!normalizedUsername) {
+      setUsernameAvailable(null)
+      setUsernameCheckBusy(false)
+      return
+    }
+
+    if (!usernameChanged) {
+      setUsernameAvailable(true)
+      setUsernameCheckBusy(false)
+      return
+    }
+
+    if (usernameInvalid) {
+      setUsernameAvailable(false)
+      setUsernameCheckBusy(false)
+      return
+    }
+
+    const timeout = setTimeout(() => {
+      void (async () => {
+        const available = await checkUsernameAvailability(normalizedUsername)
+        setUsernameAvailable(available)
+      })()
+    }, 350)
+
+    return () => clearTimeout(timeout)
+  }, [normalizedUsername, usernameChanged, usernameInvalid, checkUsernameAvailability])
+
   const handleSave = async () => {
     if (!user) return;
+    if (!normalizedUsername) {
+      toast.error(t("register.errors.emptyUsername"))
+      return
+    }
+    if (usernameInvalid) {
+      toast.error(t("register.errors.invalidUsername"))
+      return
+    }
+    if (usernameChanged) {
+      const available = await checkUsernameAvailability(normalizedUsername)
+      setUsernameAvailable(available)
+      if (!available) {
+        toast.error(t("register.errors.usernameTaken"))
+        return
+      }
+    }
+
     setSaving(true);
 
     if (!profile) {
       const { data, error } = await insforge.database.from("profiles").insert([{
         user_id: user.id,
-        display_name: displayName.trim() || null,
-        username: username.trim() || null,
+        display_name: normalizedUsername,
+        username: normalizedUsername,
         avatar_url: null,
       }]);
       if (!error && data) setProfile((data as typeof profile[])[0]);
     } else {
       const { data, error } = await insforge.database.from("profiles")
-        .update({ display_name: displayName.trim() || null, username: username.trim() || null, updated_at: new Date().toISOString() })
+        .update({ username: normalizedUsername, updated_at: new Date().toISOString() })
         .eq("user_id", user.id)
         .select("*")
         .single();
       if (!error && data) setProfile(data as typeof profile);
     }
 
-    if (!profile?.username && username.trim()) {
-      toast.success(t("profile.created"));
-    } else {
-      toast.success(t("profile.saved"));
-    }
+    toast.success(!profile?.username ? t("profile.created") : t("profile.saved"));
     setSaving(false);
   };
 
@@ -185,23 +260,35 @@ export function ProfilePage() {
           </div>
 
           <div className="form-control">
-            <label className="label py-0"><span className="label-text text-xs font-medium">{t("profile.displayName")}</span></label>
-            <input
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder={t("profile.displayNamePlaceholder")}
-              className="input input-bordered w-full bg-base-100 input-sm h-10 focus:outline-primary"
-            />
-          </div>
-
-          <div className="form-control">
             <label className="label py-0"><span className="label-text text-xs font-medium">{t("profile.username")}</span></label>
-            <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s/g, ""))}
-              placeholder="@usuario"
-              className="input input-bordered w-full bg-base-100 input-sm h-10 focus:outline-primary"
-            />
+            <div className="relative">
+              <input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="@usuario"
+                className="input input-bordered w-full bg-base-100 input-sm h-10 pr-10 focus:outline-primary"
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40">
+                {usernameCheckBusy ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : usernameAvailable && normalizedUsername ? (
+                  <Check size={14} className="text-success" />
+                ) : null}
+              </div>
+            </div>
+            <span className="label-text-alt text-base-content/50 mt-1">
+              {t("register.usernameRule")}
+            </span>
+            {usernameInvalid && (
+              <span className="label-text-alt text-error mt-1">
+                {t("register.errors.invalidUsername")}
+              </span>
+            )}
+            {!usernameInvalid && usernameChanged && !usernameCheckBusy && usernameAvailable === false && (
+              <span className="label-text-alt text-error mt-1">
+                {t("register.errors.usernameTaken")}
+              </span>
+            )}
           </div>
 
           <div className="form-control">
@@ -209,7 +296,11 @@ export function ProfilePage() {
             <input value={user?.email || ""} disabled className="input input-bordered w-full bg-base-100 input-sm h-10 opacity-50 cursor-not-allowed" />
           </div>
 
-          <button onClick={handleSave} disabled={saving} className="btn btn-primary w-full gap-2 mt-1">
+          <button
+            onClick={handleSave}
+            disabled={saving || !usernameChanged || usernameCheckBusy || usernameInvalid || !usernameAvailable}
+            className="btn btn-primary w-full gap-2 mt-1"
+          >
             {saving ? <span className="loading loading-spinner loading-sm" /> : <><Save size={16} /> {t("profile.save")}</>}
           </button>
         </div>

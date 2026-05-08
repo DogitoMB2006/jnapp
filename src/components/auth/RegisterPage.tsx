@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Mail, Eye, EyeOff, AtSign, Lock, ArrowLeft, ArrowRight,
@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import insforge from "../../lib/insforge"
 import { isAnyTauri } from "../../lib/platform"
 import { syncTauriSessionFromAuthData } from "../../lib/insforgeTauriSession"
+import { normalizeUsername, isValidUsername } from "../../lib/username"
 import { useAuthStore } from "../../store/authStore";
 import { useGroupStore } from "../../store/groupStore";
 import { CustomTitleBar } from "../layout/CustomTitleBar"
@@ -141,11 +142,58 @@ export function RegisterPage({ onGoToLogin }: RegisterPageProps) {
   const [showPass, setShowPass]       = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [busy, setBusy]               = useState(false);
+  const [usernameCheckBusy, setUsernameCheckBusy] = useState(false)
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null)
+  const checkRequestRef = useRef(0)
 
   const goTo = useCallback((next: Step, forward = true) => {
     setDir(forward ? 1 : -1);
     setStep(next);
   }, []);
+
+  const normalizedUsername = normalizeUsername(username)
+  const usernameInvalid =
+    normalizedUsername.length > 0 && !isValidUsername(normalizedUsername)
+
+  const checkUsernameAvailability = useCallback(async (candidate: string) => {
+    const requestId = ++checkRequestRef.current
+    setUsernameCheckBusy(true)
+
+    const { data, error } = await insforge.database
+      .from("profiles")
+      .select("user_id")
+      .eq("username", candidate)
+      .limit(1)
+
+    if (requestId !== checkRequestRef.current) return false
+
+    setUsernameCheckBusy(false)
+    if (error) return false
+    return !data || data.length === 0
+  }, [])
+
+  useEffect(() => {
+    if (!normalizedUsername) {
+      setUsernameAvailable(null)
+      setUsernameCheckBusy(false)
+      return
+    }
+
+    if (!isValidUsername(normalizedUsername)) {
+      setUsernameAvailable(false)
+      setUsernameCheckBusy(false)
+      return
+    }
+
+    const timeout = setTimeout(() => {
+      void (async () => {
+        const available = await checkUsernameAvailability(normalizedUsername)
+        setUsernameAvailable(available)
+      })()
+    }, 350)
+
+    return () => clearTimeout(timeout)
+  }, [normalizedUsername, checkUsernameAvailability])
 
   /* ---- Google OAuth ---- */
   const handleGoogle = async () => {
@@ -190,9 +238,19 @@ export function RegisterPage({ onGoToLogin }: RegisterPageProps) {
   };
 
   /* ---- Username step ---- */
-  const handleUsernameNext = () => {
-    if (!username.trim()) {
+  const handleUsernameNext = async () => {
+    if (!normalizedUsername) {
       toast.error(t("register.errors.emptyUsername")); return;
+    }
+    if (usernameInvalid) {
+      toast.error(t("register.errors.invalidUsername"))
+      return
+    }
+    const available = await checkUsernameAvailability(normalizedUsername)
+    setUsernameAvailable(available)
+    if (!available) {
+      toast.error(t("register.errors.usernameTaken"))
+      return
     }
     goTo("password");
   };
@@ -206,20 +264,29 @@ export function RegisterPage({ onGoToLogin }: RegisterPageProps) {
       toast.error(t("register.errors.passwordMismatch")); return;
     }
     setBusy(true);
-    const { data, error } = await insforge.auth.signUp({ email: email.trim(), password });
-    if (error) {
-      toast.error(error.message || t("register.errors.registrationFailed"));
-      setBusy(false); return;
-    }
-    if (data?.requireEmailVerification) {
-      goTo("verify");
-    } else if (data?.accessToken && data?.user) {
-      if (isAnyTauri) {
-        await syncTauriSessionFromAuthData(insforge, data)
+    try {
+      const { data, error } = await insforge.auth.signUp({ email: email.trim(), password });
+      if (error) {
+        toast.error(error.message || t("register.errors.registrationFailed"));
+        setBusy(false); return;
       }
-      await finishSignIn(data.user.id, data.user.email as string);
+      if (data?.requireEmailVerification) {
+        goTo("verify");
+      } else if (data?.accessToken && data?.user) {
+        if (isAnyTauri) {
+          await syncTauriSessionFromAuthData(insforge, data)
+        }
+        await finishSignIn(data.user.id, data.user.email as string);
+      }
+    } catch (err) {
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : t("register.errors.registrationFailed")
+      toast.error(message)
+    } finally {
+      setBusy(false)
     }
-    setBusy(false);
   };
 
   /* ---- Verify step ---- */
@@ -228,36 +295,48 @@ export function RegisterPage({ onGoToLogin }: RegisterPageProps) {
       toast.error(t("register.errors.shortCode")); return;
     }
     setBusy(true);
-    const { error: verifyErr } = await insforge.auth.verifyEmail({
-      email: email.trim(),
-      otp: code.replace(/\s/g, ""),
-    });
-    if (verifyErr) {
-      toast.error(verifyErr.message || t("register.errors.invalidCode"));
-      setBusy(false); return;
+    try {
+      const { error: verifyErr } = await insforge.auth.verifyEmail({
+        email: email.trim(),
+        otp: code.replace(/\s/g, ""),
+      });
+      if (verifyErr) {
+        toast.error(verifyErr.message || t("register.errors.invalidCode"));
+        setBusy(false); return;
+      }
+      const { data: signIn, error: signInErr } = await insforge.auth.signInWithPassword({
+        email: email.trim(), password,
+      });
+      if (signInErr || !signIn?.user) {
+        toast.success("Email verified! Please sign in.");
+        onGoToLogin(); setBusy(false); return;
+      }
+      if (isAnyTauri) {
+        await syncTauriSessionFromAuthData(insforge, signIn)
+      }
+      await finishSignIn(signIn.user.id, signIn.user.email as string);
+    } catch (err) {
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : t("register.errors.registrationFailed")
+      toast.error(message)
+    } finally {
+      setBusy(false);
     }
-    const { data: signIn, error: signInErr } = await insforge.auth.signInWithPassword({
-      email: email.trim(), password,
-    });
-    if (signInErr || !signIn?.user) {
-      toast.success("Email verified! Please sign in.");
-      onGoToLogin(); setBusy(false); return;
-    }
-    if (isAnyTauri) {
-      await syncTauriSessionFromAuthData(insforge, signIn)
-    }
-    await finishSignIn(signIn.user.id, signIn.user.email as string);
-    setBusy(false);
   };
 
   const finishSignIn = async (userId: string, userEmail: string) => {
     setUser({ id: userId, email: userEmail });
-    await insforge.database.from("profiles").insert([{
+    const { error } = await insforge.database.from("profiles").insert([{
       user_id: userId,
-      username: username.trim().toLowerCase().replace(/\s+/g, "_"),
-      display_name: username.trim(),
+      username: normalizedUsername,
+      display_name: normalizedUsername,
       avatar_url: null,
     }]);
+    if (error) {
+      throw new Error(error.message || t("register.errors.usernameTaken"))
+    }
     await Promise.all([fetchProfile(userId), fetchGroup(userId)]);
     toast.success(t("register.welcome"));
   };
@@ -381,15 +460,31 @@ export function RegisterPage({ onGoToLogin }: RegisterPageProps) {
                 autoFocus
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleUsernameNext()}
+                onKeyDown={(e) => e.key === "Enter" && void handleUsernameNext()}
                 placeholder={t("register.usernamePlaceholder")}
-                className="input input-bordered w-full pl-10 h-12 bg-base-100 focus:outline-primary rounded-xl text-sm"
+                className="input input-bordered w-full pl-10 pr-10 h-12 bg-base-100 focus:outline-primary rounded-xl text-sm"
               />
+              <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-base-content/40">
+                {usernameCheckBusy ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : usernameAvailable ? (
+                  <Check size={16} className="text-success" />
+                ) : null}
+              </div>
             </div>
+            <p className="text-xs text-base-content/45">
+              {t("register.usernameRule")}
+            </p>
+            {usernameInvalid && (
+              <p className="text-xs text-error">{t("register.errors.invalidUsername")}</p>
+            )}
+            {!usernameInvalid && normalizedUsername && !usernameCheckBusy && !usernameAvailable && (
+              <p className="text-xs text-error">{t("register.errors.usernameTaken")}</p>
+            )}
 
             <motion.button
               whileTap={{ scale: 0.97 }}
-              onClick={handleUsernameNext}
+              onClick={() => void handleUsernameNext()}
               className="w-full h-12 btn btn-primary rounded-2xl flex items-center justify-center gap-2 font-semibold"
             >
               {t("register.next")} <ArrowRight size={16} />

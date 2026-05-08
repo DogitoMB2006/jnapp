@@ -24,6 +24,7 @@
     "usernameTitle": "Your name",
     "usernameSubtitle": "How should we call you?",
     "usernamePlaceholder": "Display name",
+    "usernameRule": "3-20 chars. lowercase letters, numbers, underscores",
     "passwordTitle": "Set a password",
     "passwordSubtitle": "At least 6 characters",
     "passwordPlaceholder": "Password",
@@ -41,6 +42,8 @@
     "errors": {
       "invalidEmail": "Enter a valid email",
       "emptyUsername": "Enter a name",
+      "invalidUsername": "Username must be 3-20 chars, lowercase letters, numbers, or underscores",
+      "usernameTaken": "Username already taken",
       "shortPassword": "Password must be at least 6 characters",
       "passwordMismatch": "Passwords don't match",
       "shortCode": "Enter the 6-digit code",

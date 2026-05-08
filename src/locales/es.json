@@ -24,6 +24,7 @@
     "usernameTitle": "Tu nombre",
     "usernameSubtitle": "¿Cómo te llamamos?",
     "usernamePlaceholder": "Nombre para mostrar",
+    "usernameRule": "3-20 chars. letras minúsculas, números y guion bajo",
     "passwordTitle": "Crea una contraseña",
     "passwordSubtitle": "Al menos 6 caracteres",
     "passwordPlaceholder": "Contraseña",
@@ -41,6 +42,8 @@
     "errors": {
       "invalidEmail": "Ingresa un correo válido",
       "emptyUsername": "Ingresa un nombre",
+      "invalidUsername": "Usuario debe tener 3-20 chars, solo minúsculas, números o guion bajo",
+      "usernameTaken": "Nombre de usuario ya está en uso",
       "shortPassword": "La contraseña debe tener al menos 6 caracteres",
       "passwordMismatch": "Las contraseñas no coinciden",
       "shortCode": "Ingresa el código de 6 dígitos",
