@@ -14,6 +14,7 @@ import { useAndroidUpdaterStore } from "../../store/androidUpdaterStore";
 import { useLangStore } from "../../store/langStore";
 import { isDesktopTauri, isMobileTauri } from "../../lib/platform";
 import { useOnSectionRefresh } from "../../hooks/useOnSectionRefresh";
+import { StreakBadge } from "../streak/StreakBadge";
 const AUTOSTART_PREF = "jnapp-autostart-pref"
 
 export function ProfilePage() {
@@ -249,6 +250,9 @@ export function ProfilePage() {
         </button>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
       </motion.div>
+
+      {/* Streak badge */}
+      <StreakBadge />
 
       {/* Profile form */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}

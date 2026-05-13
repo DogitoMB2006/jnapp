@@ -18,6 +18,10 @@ import { isDesktopTauri, isMobileTauri } from "./lib/platform";
 import { initFirebaseWebAnalytics } from "./lib/firebaseClient";
 import { useAndroidFcmRegistration } from "./hooks/useAndroidFcmRegistration"
 import { useDeepLinkNavigation } from "./hooks/useDeepLinkNavigation";
+import { useStreak } from "./hooks/useStreak"
+import { useStreakStore } from "./store/streakStore"
+import { StreakAnimation } from "./components/streak/StreakAnimation"
+import { StreakBreakAnimation } from "./components/streak/StreakBreakAnimation"
 const AUTOSTART_PREF = "jnapp-autostart-pref"
 
 function App() {
@@ -25,7 +29,9 @@ function App() {
   const { profile, fetchProfile } = useAuthStore();
   useAndroidFcmRegistration(user?.id);
   useDeepLinkNavigation(user?.id);
+  useStreak();
   const { group, loading: groupLoading, clearGroup } = useGroupStore();
+  const { showAnimation, animationStreak, dismissAnimation, showBreakAnimation, breakAnimationFromStreak, dismissBreakAnimation } = useStreakStore();
   const [showRegister, setShowRegister] = useState(false);
   registerClearGroup(clearGroup);
 
@@ -80,6 +86,16 @@ function App() {
   return (
     <>
       {mainContent}
+      <StreakAnimation
+        streak={animationStreak}
+        visible={showAnimation}
+        onDismiss={dismissAnimation}
+      />
+      <StreakBreakAnimation
+        fromStreak={breakAnimationFromStreak}
+        visible={showBreakAnimation}
+        onDismiss={dismissBreakAnimation}
+      />
       {isDesktopTauri && user ? <UpdateModal /> : null}
       {isMobileTauri && user ? <AndroidUpdateModal /> : null}
       <Toaster
