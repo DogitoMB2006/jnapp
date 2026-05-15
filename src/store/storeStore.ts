@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import insforge from "../lib/insforge"
+import { healInsforgeConnection } from "../lib/insforgeConnectionHeal"
 import { applyTheme, DEFAULT_THEME } from "../lib/themes"
 import type { ThemeId } from "../types"
 
@@ -8,13 +9,28 @@ interface StoreState {
   /** Set of purchased item IDs (themes etc.) */
   purchases: Set<string>
   equippedTheme: ThemeId
+  /** Last `group_equipped.updated_at` applied — avoids out-of-order socket events. */
+  lastEquippedAt: string | null
   loading: boolean
 
   fetchStore: (groupId: string) => Promise<void>
   buyTheme: (groupId: string, themeId: ThemeId, cost: number) => Promise<void>
   equipTheme: (groupId: string, themeId: ThemeId) => Promise<void>
-  /** Called by realtime handler — apply theme locally without DB write. */
+  /** Partner equip or poll — only applies if `updatedAt` is newer. */
+  applyRemoteTheme: (themeId: ThemeId, updatedAt?: string | null) => void
+  /** Lightweight REST sync when realtime misses an update. */
+  refreshEquippedThemeFromDb: (groupId: string) => Promise<void>
+  /** @deprecated use applyRemoteTheme */
   syncTheme: (themeId: ThemeId) => void
+}
+
+const shouldApplyEquippedAt = (
+  incoming: string | null | undefined,
+  current: string | null
+): boolean => {
+  if (!incoming) return true
+  if (!current) return true
+  return incoming > current
 }
 
 /** Try to INSERT a row; if unique constraint fires, ignore — row already exists. */
@@ -33,6 +49,7 @@ export const useStoreStore = create<StoreState>()((set, get) => ({
   coins: 0,
   purchases: new Set<string>(["jnapp"]), // default always owned
   equippedTheme: DEFAULT_THEME.id,
+  lastEquippedAt: null,
   loading: true,
 
   fetchStore: async (groupId: string) => {
@@ -47,12 +64,18 @@ export const useStoreStore = create<StoreState>()((set, get) => ({
       const [coinsRes, purchasesRes, equippedRes] = await Promise.all([
         insforge.database.from("group_coins").select("amount").eq("group_id", groupId).single(),
         insforge.database.from("group_purchases").select("item_id").eq("group_id", groupId),
-        insforge.database.from("group_equipped").select("theme_id").eq("group_id", groupId).single(),
+        insforge.database
+          .from("group_equipped")
+          .select("theme_id, updated_at")
+          .eq("group_id", groupId)
+          .single(),
       ])
 
       const coins = (coinsRes.data as { amount: number } | null)?.amount ?? 0
       const boughtIds = ((purchasesRes.data as { item_id: string }[] | null) ?? []).map((r) => r.item_id)
-      const equippedTheme = ((equippedRes.data as { theme_id: string } | null)?.theme_id ?? "jnapp") as ThemeId
+      const equippedRow = equippedRes.data as { theme_id: string; updated_at?: string } | null
+      const equippedTheme = (equippedRow?.theme_id ?? "jnapp") as ThemeId
+      const lastEquippedAt = equippedRow?.updated_at ?? null
 
       applyTheme(equippedTheme)
 
@@ -60,6 +83,7 @@ export const useStoreStore = create<StoreState>()((set, get) => ({
         coins,
         purchases: new Set(["jnapp", ...boughtIds]),
         equippedTheme,
+        lastEquippedAt,
         loading: false,
       })
     } catch (e) {
@@ -95,19 +119,44 @@ export const useStoreStore = create<StoreState>()((set, get) => ({
   },
 
   equipTheme: async (groupId: string, themeId: ThemeId) => {
-    // UPDATE — row guaranteed to exist after fetchStore
+    const updatedAt = new Date().toISOString()
     const { error } = await insforge.database
       .from("group_equipped")
-      .update({ theme_id: themeId, updated_at: new Date().toISOString() })
+      .update({ theme_id: themeId, updated_at: updatedAt })
       .eq("group_id", groupId)
     if (error) throw new Error((error as { message?: string }).message ?? "equip_failed")
 
     applyTheme(themeId)
-    set({ equippedTheme: themeId })
+    set({ equippedTheme: themeId, lastEquippedAt: updatedAt })
+
+    if (!insforge.realtime.isConnected) {
+      void healInsforgeConnection()
+    }
+  },
+
+  applyRemoteTheme: (themeId: ThemeId, updatedAt?: string | null) => {
+    const { lastEquippedAt, equippedTheme } = get()
+    if (!shouldApplyEquippedAt(updatedAt, lastEquippedAt)) return
+    if (themeId === equippedTheme && updatedAt === lastEquippedAt) return
+    applyTheme(themeId)
+    set({
+      equippedTheme: themeId,
+      lastEquippedAt: updatedAt ?? lastEquippedAt,
+    })
+  },
+
+  refreshEquippedThemeFromDb: async (groupId: string) => {
+    const { data, error } = await insforge.database
+      .from("group_equipped")
+      .select("theme_id, updated_at")
+      .eq("group_id", groupId)
+      .single()
+    if (error || !data) return
+    const row = data as { theme_id: string; updated_at?: string }
+    get().applyRemoteTheme(row.theme_id as ThemeId, row.updated_at ?? null)
   },
 
   syncTheme: (themeId: ThemeId) => {
-    applyTheme(themeId)
-    set({ equippedTheme: themeId })
+    get().applyRemoteTheme(themeId, null)
   },
 }))

@@ -16,8 +16,10 @@ import { useAuthStore } from "../../store/authStore";
 import { useGroupStore } from "../../store/groupStore";
 import { useNavigationStore } from "../../store/navigationStore";
 import { useStoreStore } from "../../store/storeStore";
+import { useGroupThemeSync } from "../../hooks/useGroupThemeSync";
 import { useRealtime } from "../../hooks/useRealtime";
 import { useSectionSwipe } from "../../hooks/useSectionSwipe";
+import { parseTableChangePayload } from "../../lib/realtimePayload";
 import { NAV_SECTION_ORDER } from "../../lib/sectionOrder";
 import { emitSectionRefresh } from "../../lib/sectionRefreshEvent";
 import { lightHaptic } from "../../lib/mobileHaptics";
@@ -36,20 +38,39 @@ export function AppLayout() {
     if (group?.id) void fetchStore(group.id)
   }, [group?.id, fetchStore])
 
-  // Real-time theme sync — when partner equips a different theme, reload so CSS re-cascades cleanly
+  useGroupThemeSync(group?.id)
+
+  // Sync coins — when partner buys something, shared pool decreases
   useRealtime(
-    "group_equipped",
+    group?.id ? "group_coins" : "__none__",
     (payload) => {
-      const row = payload as { group_id?: string; theme_id?: string } | null
-      if (!row?.theme_id || row.group_id !== group?.id) return
-      // Compare against what WE currently have equipped — if same, we applied it, skip reload
-      const current = useStoreStore.getState().equippedTheme
-      if (row.theme_id !== current) {
-        window.location.reload()
+      const msg = parseTableChangePayload(payload)
+      if (!msg) return
+      const row = msg.record
+      if (row.group_id !== group?.id) return
+      if (typeof row.amount === "number") {
+        useStoreStore.setState({ coins: row.amount })
       }
     },
-    { events: ["INSERT", "UPDATE"] }
-  );
+    { events: ["UPDATE", "coins_change"] }
+  )
+
+  // Sync purchases — when partner buys a theme, mark it owned here too
+  useRealtime(
+    group?.id ? "group_purchases" : "__none__",
+    (payload) => {
+      const msg = parseTableChangePayload(payload)
+      if (!msg) return
+      const row = msg.record
+      if (row.group_id !== group?.id) return
+      if (typeof row.item_id === "string") {
+        useStoreStore.setState((s) => ({
+          purchases: new Set([...s.purchases, row.item_id as string]),
+        }))
+      }
+    },
+    { events: ["INSERT", "purchase_change"] }
+  )
 
   useEffect(() => {
     if (!pendingSection) return;
