@@ -13,10 +13,10 @@ interface ThemeCardProps {
 }
 
 const RARITY_LABELS: Record<string, { en: string; es: string; color: string }> = {
-  common:    { en: "Common",    es: "Común",       color: "#86efac" },
-  uncommon:  { en: "Uncommon",  es: "Poco común",  color: "#67e8f9" },
-  epic:      { en: "Epic",      es: "Épico",        color: "#c084fc" },
-  legendary: { en: "Legendary", es: "Legendario",  color: "#fbbf24" },
+  common:    { en: "Common",    es: "Común",      color: "#86efac" },
+  uncommon:  { en: "Uncommon",  es: "Poco común", color: "#67e8f9" },
+  epic:      { en: "Epic",      es: "Épico",       color: "#c084fc" },
+  legendary: { en: "Legendary", es: "Legendario", color: "#fbbf24" },
 }
 
 export function ThemeCard({ theme, owned, equipped, onBuy, onEquip, index }: ThemeCardProps) {
@@ -26,12 +26,25 @@ export function ThemeCard({ theme, owned, equipped, onBuy, onEquip, index }: The
   const rarity = RARITY_LABELS[theme.rarity] ?? RARITY_LABELS.common
   const rarityLabel = lang === "en" ? rarity.en : rarity.es
 
+  // Whole-card action
+  function handleCardPress() {
+    if (equipped) return      // already active, nothing to do
+    if (owned) onEquip()
+    else onBuy()
+  }
+
+  const isInteractive = !equipped   // only interactive if not already equipped
+
   return (
-    <motion.div
+    <motion.button
+      type="button"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.07, type: "spring", stiffness: 300, damping: 28 }}
-      className="relative rounded-2xl overflow-hidden border transition-all duration-200"
+      whileTap={isInteractive ? { scale: 0.97 } : {}}
+      onClick={handleCardPress}
+      disabled={equipped}
+      className="w-full text-left relative rounded-2xl overflow-hidden border transition-all duration-200 disabled:cursor-default"
       style={{
         background: `linear-gradient(145deg, ${theme.preview.bg} 0%, color-mix(in srgb, ${theme.preview.bg} 80%, ${theme.preview.primary} 20%) 100%)`,
         borderColor: equipped
@@ -92,52 +105,36 @@ export function ThemeCard({ theme, owned, equipped, onBuy, onEquip, index }: The
           )}
         </div>
 
-        {/* Action button */}
-        {theme.cost === 0 ? (
-          <button
-            type="button"
-            onClick={onEquip}
-            disabled={equipped}
-            className="w-full rounded-xl py-2 text-xs font-bold transition-all duration-150 active:scale-95 disabled:opacity-50 disabled:cursor-default"
-            style={
-              equipped
-                ? { background: `${theme.preview.primary}20`, color: theme.preview.primary }
-                : { background: theme.preview.primary, color: "#fff" }
-            }
+        {/* CTA label (purely visual — card itself is the button) */}
+        {equipped ? (
+          <div
+            className="w-full rounded-xl py-2 text-xs font-bold text-center"
+            style={{ background: `${theme.preview.primary}20`, color: theme.preview.primary }}
           >
-            {equipped
-              ? lang === "en" ? "Equipped" : "Equipado"
-              : lang === "en" ? "Equip" : "Equipar"}
-          </button>
+            {lang === "en" ? "Equipped" : "Equipado"}
+          </div>
         ) : owned ? (
-          <button
-            type="button"
-            onClick={onEquip}
-            disabled={equipped}
-            className="w-full rounded-xl py-2 text-xs font-bold transition-all duration-150 active:scale-95 disabled:opacity-50 disabled:cursor-default"
-            style={
-              equipped
-                ? { background: `${theme.preview.primary}20`, color: theme.preview.primary }
-                : { background: theme.preview.primary, color: "#fff" }
-            }
+          <div
+            className="w-full rounded-xl py-2 text-xs font-bold text-center"
+            style={{ background: theme.preview.primary, color: "#fff" }}
           >
-            {equipped
-              ? lang === "en" ? "Equipped" : "Equipado"
-              : lang === "en" ? "Equip" : "Equipar"}
-          </button>
+            {lang === "en" ? "Equip" : "Equipar"}
+          </div>
         ) : (
-          <button
-            type="button"
-            onClick={onBuy}
-            className="w-full flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all duration-150 active:scale-95"
-            style={{ background: `${theme.preview.primary}22`, color: theme.preview.primary, border: `1px solid ${theme.preview.primary}40` }}
+          <div
+            className="w-full flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold"
+            style={{
+              background: `${theme.preview.primary}22`,
+              color: theme.preview.primary,
+              border: `1px solid ${theme.preview.primary}40`,
+            }}
           >
             <Lock size={11} strokeWidth={2.5} />
             <Sparkles size={11} strokeWidth={2} />
             {theme.cost} {lang === "en" ? "coins" : "monedas"}
-          </button>
+          </div>
         )}
       </div>
-    </motion.div>
+    </motion.button>
   )
 }

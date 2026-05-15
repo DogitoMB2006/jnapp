@@ -17,6 +17,18 @@ interface StoreState {
   syncTheme: (themeId: ThemeId) => void
 }
 
+/** Try to INSERT a row; if unique constraint fires, ignore — row already exists. */
+async function ensureRow(table: string, row: Record<string, unknown>) {
+  const { error } = await insforge.database.from(table).insert(row)
+  if (error) {
+    const msg = (error as { message?: string }).message ?? ""
+    // 23505 = unique_violation — row exists, that's fine
+    if (!msg.includes("23505") && !msg.includes("duplicate") && !msg.includes("unique")) {
+      console.warn(`[storeStore] ensureRow ${table}:`, msg)
+    }
+  }
+}
+
 export const useStoreStore = create<StoreState>()((set, get) => ({
   coins: 0,
   purchases: new Set<string>(["jnapp"]), // default always owned
@@ -26,15 +38,11 @@ export const useStoreStore = create<StoreState>()((set, get) => ({
   fetchStore: async (groupId: string) => {
     set({ loading: true })
     try {
-      // Ensure coins row exists
-      await insforge.database
-        .from("group_coins")
-        .upsert({ group_id: groupId, amount: 0 }, { onConflict: "group_id", ignoreDuplicates: true })
-
-      // Ensure equipped row exists
-      await insforge.database
-        .from("group_equipped")
-        .upsert({ group_id: groupId, theme_id: "jnapp" }, { onConflict: "group_id", ignoreDuplicates: true })
+      // Ensure rows exist — silently ignore duplicate errors
+      await Promise.all([
+        ensureRow("group_coins", { group_id: groupId, amount: 0 }),
+        ensureRow("group_equipped", { group_id: groupId, theme_id: "jnapp" }),
+      ])
 
       const [coinsRes, purchasesRes, equippedRes] = await Promise.all([
         insforge.database.from("group_coins").select("amount").eq("group_id", groupId).single(),
@@ -65,33 +73,34 @@ export const useStoreStore = create<StoreState>()((set, get) => ({
     if (coins < cost) throw new Error("not_enough_coins")
     if (purchases.has(themeId)) throw new Error("already_owned")
 
+    const newAmount = coins - cost
+
     // Deduct coins
     const { error: coinsErr } = await insforge.database
       .from("group_coins")
-      .update({ amount: coins - cost, updated_at: new Date().toISOString() })
+      .update({ amount: newAmount, updated_at: new Date().toISOString() })
       .eq("group_id", groupId)
-    if (coinsErr) throw new Error(coinsErr.message)
+    if (coinsErr) throw new Error((coinsErr as { message?: string }).message ?? "coins_update_failed")
 
     // Record purchase
     const { error: purchaseErr } = await insforge.database
       .from("group_purchases")
       .insert({ group_id: groupId, item_id: themeId, item_type: "theme" })
-    if (purchaseErr) throw new Error(purchaseErr.message)
+    if (purchaseErr) throw new Error((purchaseErr as { message?: string }).message ?? "purchase_failed")
 
     set((s) => ({
-      coins: coins - cost,
+      coins: newAmount,
       purchases: new Set([...s.purchases, themeId]),
     }))
   },
 
   equipTheme: async (groupId: string, themeId: ThemeId) => {
+    // UPDATE — row guaranteed to exist after fetchStore
     const { error } = await insforge.database
       .from("group_equipped")
-      .upsert(
-        { group_id: groupId, theme_id: themeId, updated_at: new Date().toISOString() },
-        { onConflict: "group_id" }
-      )
-    if (error) throw new Error(error.message)
+      .update({ theme_id: themeId, updated_at: new Date().toISOString() })
+      .eq("group_id", groupId)
+    if (error) throw new Error((error as { message?: string }).message ?? "equip_failed")
 
     applyTheme(themeId)
     set({ equippedTheme: themeId })
