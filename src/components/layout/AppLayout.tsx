@@ -129,7 +129,7 @@ export function AppLayout() {
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             className="shrink-0"
           >
-            <img src="/icono.png" alt="JNApp" className="w-9 h-9" />
+            <img src="/icono.png" alt="Planivy" className="w-9 h-9" />
           </motion.div>
           <button
             type="button"

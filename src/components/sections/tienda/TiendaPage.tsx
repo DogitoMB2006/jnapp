@@ -1,10 +1,12 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Palette } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { CoinDisplay } from "./components/CoinDisplay"
 import { ThemesSection } from "./themes/ThemesSection"
 import { useStoreStore } from "../../../store/storeStore"
+import { preloadAd } from "../../../lib/admob"
+import { isMobileTauri } from "../../../lib/platform"
 
 type StoreTab = "themes"
 
@@ -17,6 +19,10 @@ export function TiendaPage() {
   const lang = i18n.language === "en" ? "en" : "es"
   const { loading } = useStoreStore()
   const [activeTab, setActiveTab] = useState<StoreTab>("themes")
+
+  useEffect(() => {
+    if (isMobileTauri) preloadAd()
+  }, [])
 
   return (
     <div className="flex flex-col gap-5">

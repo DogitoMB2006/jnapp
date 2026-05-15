@@ -8,6 +8,7 @@ import android.webkit.WebView
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import com.google.android.gms.ads.MobileAds
 import com.google.firebase.messaging.FirebaseMessaging
 
 class MainActivity : TauriActivity() {
@@ -28,6 +29,7 @@ class MainActivity : TauriActivity() {
                 requestNotifPerm.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
+        MobileAds.initialize(this)
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (!task.isSuccessful) return@addOnCompleteListener
             val t = task.result ?: return@addOnCompleteListener
@@ -37,5 +39,6 @@ class MainActivity : TauriActivity() {
 
     override fun onWebViewCreate(webView: WebView) {
         webView.addJavascriptInterface(ApkInstaller(this, webView), "JNApkInstaller")
+        webView.addJavascriptInterface(AdMobBridge(this, webView), "JNAdMob")
     }
 }

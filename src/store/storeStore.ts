@@ -22,6 +22,8 @@ interface StoreState {
   refreshEquippedThemeFromDb: (groupId: string) => Promise<void>
   /** @deprecated use applyRemoteTheme */
   syncTheme: (themeId: ThemeId) => void
+  /** Add coins earned from an ad to the shared group pool. */
+  earnCoins: (groupId: string, amount: number) => Promise<void>
 }
 
 const shouldApplyEquippedAt = (
@@ -158,5 +160,15 @@ export const useStoreStore = create<StoreState>()((set, get) => ({
 
   syncTheme: (themeId: ThemeId) => {
     get().applyRemoteTheme(themeId, null)
+  },
+
+  earnCoins: async (groupId: string, amount: number) => {
+    const newAmount = get().coins + amount
+    const { error } = await insforge.database
+      .from("group_coins")
+      .update({ amount: newAmount, updated_at: new Date().toISOString() })
+      .eq("group_id", groupId)
+    if (error) throw new Error((error as { message?: string }).message ?? "earn_failed")
+    set({ coins: newAmount })
   },
 }))

@@ -16,7 +16,7 @@
     "perfil": "My Profile"
   },
   "register": {
-    "methodTitle": "Join JNApp",
+    "methodTitle": "Join Planivy",
     "methodSubtitle": "Create your account",
     "withGoogle": "Continue with Google",
     "withEmail": "Continue with Email",
@@ -40,7 +40,7 @@
     "noAccount": "Don't have an account?",
     "signIn": "Sign in",
     "googleBrowserNote": "Complete sign-in in your browser",
-    "welcome": "Welcome to JNApp!",
+    "welcome": "Welcome to Planivy!",
     "errors": {
       "invalidEmail": "Enter a valid email",
       "emptyUsername": "Enter a name",
@@ -89,7 +89,7 @@
     },
     "autostart": {
       "title": "Start with Windows",
-      "description": "JNApp can open when you turn on your computer. You can disable it here.",
+      "description": "Planivy can open when you turn on your computer. You can disable it here.",
       "label": "Launch when Windows starts",
       "error": "Could not change Windows startup setting"
     },
