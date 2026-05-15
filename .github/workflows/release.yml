@@ -29,8 +29,8 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: `v${process.env.PACKAGE_VERSION}`,
-              name: `JNApp v${process.env.PACKAGE_VERSION}`,
-              body: 'Nueva versión de JNApp. Descarga el instalador de abajo.',
+              name: `Planivy v${process.env.PACKAGE_VERSION}`,
+              body: 'Nueva versión de Planivy. Descarga el instalador de abajo.',
               draft: true,
               prerelease: false
             })
@@ -75,7 +75,6 @@ jobs:
           VITE_INSFORGE_ANON_KEY: ${{ secrets.VITE_INSFORGE_ANON_KEY }}
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
-          tagName: ${{ github.ref_name }}
           includeUpdaterJson: true
           updaterJsonPreferNsis: true
 
