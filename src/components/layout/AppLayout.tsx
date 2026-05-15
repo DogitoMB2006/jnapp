@@ -21,7 +21,7 @@ import { useSectionSwipe } from "../../hooks/useSectionSwipe";
 import { NAV_SECTION_ORDER } from "../../lib/sectionOrder";
 import { emitSectionRefresh } from "../../lib/sectionRefreshEvent";
 import { lightHaptic } from "../../lib/mobileHaptics";
-import type { Section, ThemeId } from "../../types";
+import type { Section } from "../../types";
 
 export function AppLayout() {
   const [section, setSection] = useState<Section>("lista");
@@ -29,20 +29,23 @@ export function AppLayout() {
   const { t } = useTranslation();
   const { group } = useGroupStore();
   const { pendingSection, clearPendingSection } = useNavigationStore();
-  const { fetchStore, syncTheme } = useStoreStore();
+  const { fetchStore } = useStoreStore();
 
   // Bootstrap store when group is known
   useEffect(() => {
     if (group?.id) void fetchStore(group.id)
   }, [group?.id, fetchStore])
 
-  // Real-time theme sync — when partner equips a theme, apply it here too
+  // Real-time theme sync — when partner equips a different theme, reload so CSS re-cascades cleanly
   useRealtime(
     "group_equipped",
     (payload) => {
       const row = payload as { group_id?: string; theme_id?: string } | null
-      if (row?.group_id === group?.id && row?.theme_id) {
-        syncTheme(row.theme_id as ThemeId)
+      if (!row?.theme_id || row.group_id !== group?.id) return
+      // Compare against what WE currently have equipped — if same, we applied it, skip reload
+      const current = useStoreStore.getState().equippedTheme
+      if (row.theme_id !== current) {
+        window.location.reload()
       }
     },
     { events: ["INSERT", "UPDATE"] }
