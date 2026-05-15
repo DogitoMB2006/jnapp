@@ -6,5 +6,6 @@ export const NAV_SECTION_ORDER: readonly Section[] = [
   "lista",
   "salidas",
   "peliculas",
+  "tienda",
   "perfil",
 ] as const

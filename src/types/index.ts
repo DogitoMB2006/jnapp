@@ -121,4 +121,40 @@ export interface GroupMember {
   joined_at: string;
 }
 
-export type Section = "planes" | "lista" | "salidas" | "peliculas" | "perfil";
+export type Section = "planes" | "lista" | "salidas" | "peliculas" | "tienda" | "perfil";
+
+// ─── Store / Themes ────────────────────────────────────────────────────────────
+
+export type ThemeId = "jnapp" | "jnapp-aurora" | "jnapp-sakura" | "jnapp-ocean"
+
+export type ThemeRarity = "common" | "uncommon" | "epic" | "legendary"
+
+export interface ThemeDef {
+  id: ThemeId
+  nameEn: string
+  nameEs: string
+  rarity: ThemeRarity
+  /** 0 = free (default) */
+  cost: number
+  preview: {
+    bg: string
+    primary: string
+    secondary: string
+    accent: string
+    text: string
+  }
+}
+
+export interface GroupPurchase {
+  id: string
+  group_id: string
+  item_id: string
+  item_type: string
+  purchased_at: string
+}
+
+export interface GroupEquipped {
+  group_id: string
+  theme_id: ThemeId
+  updated_at: string
+}

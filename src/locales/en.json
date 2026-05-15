@@ -4,6 +4,7 @@
     "lista": "List",
     "salidas": "Outings",
     "peliculas": "Movies",
+    "tienda": "Store",
     "perfil": "Profile"
   },
   "sections": {
@@ -11,6 +12,7 @@
     "lista": "To-Do List",
     "salidas": "Outings",
     "peliculas": "Movies to Watch",
+    "tienda": "Store",
     "perfil": "My Profile"
   },
   "register": {
@@ -123,6 +125,9 @@
     "daysInARow": "days in a row",
     "vs": "vs",
     "record": "record",
+    "atRecord": "Personal best",
+    "emptyTitle": "No streak yet",
+    "emptyHint": "Open the app together each day to start your flame.",
     "progressToRecord": "Progress toward record",
     "milestoneBlue20": "Blue tier at 20!",
     "milestoneCyan50": "Cyan tier at 50!",

@@ -4,6 +4,7 @@
     "lista": "Lista",
     "salidas": "Salidas",
     "peliculas": "Películas",
+    "tienda": "Tienda",
     "perfil": "Perfil"
   },
   "sections": {
@@ -11,6 +12,7 @@
     "lista": "Lista para Hacer",
     "salidas": "Salidas",
     "peliculas": "Películas para Ver",
+    "tienda": "Tienda",
     "perfil": "Mi Perfil"
   },
   "register": {
@@ -123,6 +125,9 @@
     "daysInARow": "días seguidos",
     "vs": "vs",
     "record": "récord",
+    "atRecord": "Mejor marca",
+    "emptyTitle": "Sin racha aún",
+    "emptyHint": "Abran la app juntos cada día para encender la llama.",
     "progressToRecord": "Progreso hacia récord",
     "milestoneBlue20": "¡Azul a los 20!",
     "milestoneCyan50": "¡Cian a los 50!",

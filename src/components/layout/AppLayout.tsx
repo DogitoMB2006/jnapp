@@ -10,20 +10,43 @@ import { PlanesPage } from "../sections/planes/PlanesPage";
 import { ListaPage } from "../sections/lista/ListaPage";
 import { SalidasPage } from "../sections/salidas/SalidasPage";
 import { PeliculasPage } from "../sections/peliculas/PeliculasPage";
+import { TiendaPage } from "../sections/tienda/TiendaPage";
 import { ProfilePage } from "../profile/ProfilePage";
 import { useAuthStore } from "../../store/authStore";
+import { useGroupStore } from "../../store/groupStore";
 import { useNavigationStore } from "../../store/navigationStore";
+import { useStoreStore } from "../../store/storeStore";
+import { useRealtime } from "../../hooks/useRealtime";
 import { useSectionSwipe } from "../../hooks/useSectionSwipe";
 import { NAV_SECTION_ORDER } from "../../lib/sectionOrder";
 import { emitSectionRefresh } from "../../lib/sectionRefreshEvent";
 import { lightHaptic } from "../../lib/mobileHaptics";
-import type { Section } from "../../types";
+import type { Section, ThemeId } from "../../types";
 
 export function AppLayout() {
   const [section, setSection] = useState<Section>("lista");
   const { profile } = useAuthStore();
   const { t } = useTranslation();
+  const { group } = useGroupStore();
   const { pendingSection, clearPendingSection } = useNavigationStore();
+  const { fetchStore, syncTheme } = useStoreStore();
+
+  // Bootstrap store when group is known
+  useEffect(() => {
+    if (group?.id) void fetchStore(group.id)
+  }, [group?.id, fetchStore])
+
+  // Real-time theme sync — when partner equips a theme, apply it here too
+  useRealtime(
+    "group_equipped",
+    (payload) => {
+      const row = payload as { group_id?: string; theme_id?: string } | null
+      if (row?.group_id === group?.id && row?.theme_id) {
+        syncTheme(row.theme_id as ThemeId)
+      }
+    },
+    { events: ["INSERT", "UPDATE"] }
+  );
 
   useEffect(() => {
     if (!pendingSection) return;
@@ -138,6 +161,7 @@ export function AppLayout() {
             {section === "lista" && <ListaPage />}
             {section === "salidas" && <SalidasPage />}
             {section === "peliculas" && <PeliculasPage />}
+            {section === "tienda" && <TiendaPage />}
             {section === "perfil" && <ProfilePage />}
           </motion.div>
         </AnimatePresence>
