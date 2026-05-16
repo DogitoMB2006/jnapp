@@ -66,7 +66,7 @@ function App() {
         <CustomTitleBar />
         <div className="flex flex-1 items-center justify-center">
           <div className="flex flex-col items-center gap-3">
-            <img src="/icono.png" alt="JNApp" className="w-12 h-12 animate-bounce-gentle" />
+            <img src="/icono.png" alt="Planivy" className="w-12 h-12 animate-bounce-gentle" />
             <span className="loading loading-dots loading-md text-primary" />
           </div>
         </div>

@@ -30,7 +30,7 @@ pub fn run() {
                 let _tray = TrayIconBuilder::new()
                     .icon(app.default_window_icon().unwrap().clone())
                     .menu(&menu)
-                    .tooltip("JNApp - Tu espacio juntos")
+                    .tooltip("Planivy - Tu espacio juntos")
                     .on_menu_event(|app, event| match event.id.as_ref() {
                         "show" => {
                             if let Some(window) = app.get_webview_window("main") {

@@ -22,10 +22,10 @@ class JnappApplication : Application() {
         }
         val ch = NotificationChannel(
             FcmMessagingService.CHANNEL_ID,
-            "JNApp push",
+            "Planivy push",
             NotificationManager.IMPORTANCE_HIGH
         )
-        ch.description = "General push notifications for JNApp"
+        ch.description = "General push notifications for Planivy"
         (getSystemService(NOTIFICATION_SERVICE) as NotificationManager)
             .createNotificationChannel(ch)
     }

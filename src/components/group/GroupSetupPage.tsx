@@ -54,8 +54,8 @@ export function GroupSetupPage() {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center gap-2"
           >
-            <img src="/icono.png" alt="JNApp" className="w-14 h-14" />
-            <h1 className="text-xl font-bold text-base-content">JNApp</h1>
+            <img src="/icono.png" alt="Planivy" className="w-14 h-14" />
+            <h1 className="text-xl font-bold text-base-content">Planivy</h1>
             <p className="text-sm text-base-content/50 text-center">
               {t("groupSetup.tagline")}
             </p>

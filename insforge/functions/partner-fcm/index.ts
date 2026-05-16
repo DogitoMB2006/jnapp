@@ -62,7 +62,7 @@ export default async function handler(req: Request): Promise<Response> {
     return json({ error: "Invalid JSON" }, 400)
   }
   const targetId = body.target_user_id?.trim()
-  const title = String(body.title ?? "JNApp").slice(0, 200)
+  const title = String(body.title ?? "Planivy").slice(0, 200)
   const text = String(body.body ?? "").slice(0, 4000)
   console.log("[partner-fcm] target:", targetId, "title:", title)
   if (!targetId?.length) {

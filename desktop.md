@@ -1,4 +1,4 @@
-# JNApp — Desktop Release Process
+# Planivy — Desktop Release Process
 
 ## How It Works
 
@@ -75,8 +75,8 @@ https://github.com/DogitoMB2006/jnapp/releases
 ```
 
 Artifacts produced:
-- `JNApp_1.23.0_x64_en-US.msi` — Windows MSI installer
-- `JNApp_1.23.0_x64-setup.exe` — Windows NSIS installer
+- `Planivy_1.23.0_x64_en-US.msi` — Windows MSI installer
+- `Planivy_1.23.0_x64-setup.exe` — Windows NSIS installer
 - `latest.json` — auto-updater manifest (signed)
 
 ---

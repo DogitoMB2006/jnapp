@@ -102,6 +102,27 @@
     "logout": "Sign out",
     "loggedOut": "See you soon"
   },
+  "store": {
+    "title": "Store",
+    "tagline": "Customize your shared space",
+    "coins": "Coins",
+    "categoriesLabel": "Store categories",
+    "categories": {
+      "themes": "Themes",
+      "decor": "Decor",
+      "gifts": "Gifts",
+      "boosts": "Boosts"
+    },
+    "comingSoon": "Soon",
+    "themesHint": "Themes apply for both of you in real time.",
+    "yourSpace": "Your space now",
+    "collection": "Theme collection",
+    "equipped": "Equipped",
+    "equip": "Equip",
+    "on": "Active",
+    "coinsPrice": "{{count}} coins",
+    "loading": "Loading store…"
+  },
   "groupSetup": {
     "tagline": "Your space together",
     "intro": "To get started, create a group or join your partner's",

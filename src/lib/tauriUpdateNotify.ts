@@ -33,7 +33,7 @@ export const sendUpdateAvailableNotification = async (version: string) => {
   }
   if (!granted) return
   await sendNotification({
-    title: "JNApp — nueva versión",
-    body: `v${version} disponible. Abre JNApp para instalar la actualización.`,
+    title: "Planivy — nueva versión",
+    body: `v${version} disponible. Abre Planivy para instalar la actualización.`,
   })
 }

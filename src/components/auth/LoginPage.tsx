@@ -135,10 +135,10 @@ export function LoginPage({ onGoToRegister }: LoginPageProps) {
             transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
             className="mb-3"
           >
-            <img src="/icono.png" alt="JNApp" className="w-20 h-20 drop-shadow-lg" />
+            <img src="/icono.png" alt="Planivy" className="w-20 h-20 drop-shadow-lg" />
           </motion.div>
           <h1 className="text-2xl font-extrabold text-base-content tracking-tight">
-            JNApp
+            Planivy
           </h1>
           <p className="text-base-content/50 text-sm mt-1 flex items-center gap-1">
             {t("login.tagline")} <Heart size={12} className="text-primary fill-primary" />

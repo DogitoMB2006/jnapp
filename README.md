@@ -1,2 +1,2 @@
 
-# jnapp
+# Planivy

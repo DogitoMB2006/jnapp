@@ -61,8 +61,8 @@ export async function sendAndroidUpdateNotification(version: string): Promise<vo
   }
   if (!granted) return
   await sendNotification({
-    title: "JNApp — nueva versión disponible",
-    body: `v${version} disponible. Toca para abrir JNApp y descargar.`,
+    title: "Planivy — nueva versión disponible",
+    body: `v${version} disponible. Toca para abrir Planivy y descargar.`,
     channelId: "jnapp_push",
   })
 }

@@ -640,13 +640,13 @@ export function RegisterPage({ onGoToLogin }: RegisterPageProps) {
         >
           <motion.img
             src="/icono.png"
-            alt="JNApp"
+            alt="Planivy"
             className="w-14 h-14 drop-shadow-lg"
             animate={{ scale: [1, 1.08, 1] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
           />
           <span className="text-base font-extrabold text-base-content/70 tracking-widest text-xs uppercase">
-            JNApp
+            Planivy
           </span>
         </motion.div>
 

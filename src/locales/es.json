@@ -102,6 +102,27 @@
     "logout": "Cerrar sesión",
     "loggedOut": "Hasta pronto"
   },
+  "store": {
+    "title": "Tienda",
+    "tagline": "Personaliza su espacio compartido",
+    "coins": "Monedas",
+    "categoriesLabel": "Categorías de la tienda",
+    "categories": {
+      "themes": "Temas",
+      "decor": "Decoración",
+      "gifts": "Regalos",
+      "boosts": "Boosts"
+    },
+    "comingSoon": "Pronto",
+    "themesHint": "Los temas se aplican para los dos en tiempo real.",
+    "yourSpace": "Su espacio ahora",
+    "collection": "Colección de temas",
+    "equipped": "Equipado",
+    "equip": "Equipar",
+    "on": "Activo",
+    "coinsPrice": "{{count}} monedas",
+    "loading": "Cargando tienda…"
+  },
   "groupSetup": {
     "tagline": "Tu espacio juntos",
     "intro": "Para comenzar, crea un grupo o únete al de tu pareja",

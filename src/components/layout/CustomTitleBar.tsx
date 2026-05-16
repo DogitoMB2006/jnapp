@@ -106,7 +106,7 @@ export const CustomTitleBar = () => {
       >
         <img src="/icono.png" alt="" className="h-5 w-5 opacity-90" draggable={false} />
         <span className="truncate text-xs font-semibold tracking-tight text-base-content/80">
-          JNApp
+          Planivy
         </span>
       </div>
 

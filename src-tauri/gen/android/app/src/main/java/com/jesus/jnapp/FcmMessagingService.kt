@@ -28,7 +28,7 @@ class FcmMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(message: RemoteMessage) {
         val title = message.data["title"]
             ?: message.notification?.title
-            ?: "JNApp"
+            ?: "Planivy"
         val body = message.data["body"]
             ?: message.notification?.body
             ?: ""
