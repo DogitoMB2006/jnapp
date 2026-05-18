@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from "react"
+import { memo, useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent } from "react"
 import { AnimatePresence, motion, useAnimationControls } from "framer-motion"
 import { usePrefersReducedMotion } from "../../lib/motion"
 import { MessageCircle, SmilePlus, Send, Pencil, Trash2, Reply } from "lucide-react"
@@ -6,6 +6,12 @@ import { useTranslation } from "react-i18next"
 import { Modal } from "./Modal"
 import { Avatar } from "./Avatar"
 import { usePostInteractions } from "../../hooks/usePostInteractions"
+import {
+  getCommentBubbleAppearance,
+  getCommentBubbleClassName,
+} from "../../lib/commentBubbleStyle"
+import { useDiamondStore } from "../../store/diamondStore"
+import { AnimatedBubbleFrame } from "../sections/tienda/decorations/AnimatedBubbleFrame"
 import type { PostCommentNode, PostTargetType } from "../../types"
 
 type Props = {
@@ -23,6 +29,15 @@ const formatTime = (iso: string) =>
     minute: "2-digit",
   })
 
+const resolveAuthorDecorId = (
+  node: PostCommentNode,
+  isMine: boolean,
+  myEquippedDecorId: string | null,
+): string | null => {
+  if (isMine) return myEquippedDecorId ?? node.author?.equipped_decor ?? null
+  return node.author?.equipped_decor ?? null
+}
+
 const CommentNode = memo(function CommentNode({
   node,
   depth,
@@ -38,6 +53,7 @@ const CommentNode = memo(function CommentNode({
   activeActionId,
   onActiveActionIdChange,
   animateEnter = true,
+  myEquippedDecorId,
 }: {
   node: PostCommentNode
   depth: number
@@ -53,11 +69,14 @@ const CommentNode = memo(function CommentNode({
   activeActionId: string | null
   onActiveActionIdChange: (commentId: string | null) => void
   animateEnter?: boolean
+  myEquippedDecorId: string | null
 }) {
   const { t } = useTranslation()
   const reducedMotion = usePrefersReducedMotion()
   const indent = Math.min(depth * 10, 24)
   const isMine = currentUserId === node.user_id
+  const authorDecorId = resolveAuthorDecorId(node, isMine, myEquippedDecorId)
+  const bubble = authorDecorId ? getCommentBubbleAppearance(authorDecorId, isMine) : null
   const isEditing = editingId === node.id
   const showActions = activeActionId === node.id
   const bubbleControls = useAnimationControls()
@@ -89,6 +108,117 @@ const CommentNode = memo(function CommentNode({
     })
   }
 
+  const bubbleHandlers = {
+    animate: bubbleControls,
+    onPointerDown: (event: PointerEvent) => event.stopPropagation(),
+    onClick: (event: MouseEvent) => {
+      event.stopPropagation()
+      if (isEditing) return
+      bounceBubble()
+      onActiveActionIdChange(showActions ? null : node.id)
+    },
+    onContextMenu: (event: MouseEvent) => {
+      event.preventDefault()
+      event.stopPropagation()
+      if (isEditing) return
+      bounceBubble()
+      onActiveActionIdChange(showActions ? null : node.id)
+    },
+  }
+
+  const nameClassName = [
+    "min-w-0 truncate text-sm font-bold tracking-[-0.01em]",
+    isEditing || !bubble
+      ? "text-base-content"
+      : bubble.animated
+        ? bubble.labelClassName
+        : "",
+  ]
+    .filter(Boolean)
+    .join(" ")
+
+  const timeClassName = [
+    "shrink-0 text-[10px] font-medium",
+    isEditing || !bubble
+      ? "text-base-content/50"
+      : bubble.animated
+        ? bubble.metaClassName
+        : bubble
+          ? "opacity-60"
+          : "text-base-content/50",
+  ]
+    .filter(Boolean)
+    .join(" ")
+
+  const messageClassName = [
+    "mt-1.5 whitespace-pre-wrap break-words text-[15px] leading-relaxed",
+    isEditing || !bubble
+      ? "text-base-content/90"
+      : bubble.animated
+        ? bubble.messageClassName
+        : bubble
+          ? ""
+          : "text-base-content/90",
+  ]
+    .filter(Boolean)
+    .join(" ")
+
+  const bubbleInner = (
+    <>
+      <motion.div className="flex items-center justify-between gap-2">
+        <span
+          className={nameClassName}
+          style={isEditing || !bubble || bubble.animated ? undefined : bubble.textStyle}
+        >
+          {displayName}
+        </span>
+        <span
+          className={timeClassName}
+          style={isEditing || !bubble || bubble.animated ? undefined : bubble.textStyle}
+        >
+          {formatTime(node.created_at)}
+        </span>
+      </motion.div>
+
+      {isEditing ? (
+        <motion.div
+          className="mt-3 rounded-2xl border border-base-300 bg-base-100 p-3 shadow-lg shadow-black/25"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <textarea
+            value={editingValue}
+            onChange={(e) => onEditingValueChange(e.target.value)}
+            className="textarea w-full min-h-24 rounded-xl border border-base-300 bg-base-200 text-base-content placeholder:text-base-content/45 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+          <motion.div className="mt-2 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => onSaveEdit(node.id)}
+              className="btn btn-primary min-h-12 rounded-2xl px-4"
+            >
+              {t("postInteractions.save")}
+            </button>
+            <button
+              type="button"
+              onClick={onCancelEdit}
+              className="btn btn-ghost min-h-12 rounded-2xl border border-base-300 bg-base-200/80 px-4 text-base-content"
+            >
+              {t("postInteractions.cancel")}
+            </button>
+          </motion.div>
+        </motion.div>
+      ) : (
+        <p
+          className={messageClassName}
+          style={!bubble || bubble.animated || isEditing ? undefined : bubble.textStyle}
+        >
+          {node.content}
+        </p>
+      )}
+    </>
+  )
+
   return (
     <motion.div
       className="w-full"
@@ -101,65 +231,23 @@ const CommentNode = memo(function CommentNode({
         {depth > 0 ? <div className="absolute -left-2 top-2 h-[calc(100%-8px)] w-px bg-primary/20" /> : null}
         <Avatar profile={node.author} size="sm" className="mt-1 shrink-0" />
         <div className="relative min-w-0 flex-1">
-          <motion.div
-            animate={bubbleControls}
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={(event) => {
-              event.stopPropagation()
-              if (isEditing) return
-              bounceBubble()
-              onActiveActionIdChange(showActions ? null : node.id)
-            }}
-            onContextMenu={(event) => {
-              event.preventDefault()
-              event.stopPropagation()
-              if (isEditing) return
-              bounceBubble()
-              onActiveActionIdChange(showActions ? null : node.id)
-            }}
-            className={`rounded-[22px] border px-4 py-3 shadow-lg shadow-black/10 transition-colors duration-200 ${
-              isMine
-                ? "rounded-tr-md border-primary/25 bg-primary/20"
-                : "rounded-tl-md border-white/10 bg-base-200/85"
-            }`}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="min-w-0 truncate text-sm font-bold tracking-[-0.01em] text-base-content">
-                {displayName}
-              </span>
-              <span className="shrink-0 text-[10px] font-medium text-base-content/45">
-                {formatTime(node.created_at)}
-              </span>
-            </div>
-
-            {isEditing ? (
-              <div className="mt-3">
-                <textarea
-                  value={editingValue}
-                  onChange={(e) => onEditingValueChange(e.target.value)}
-                  className="textarea textarea-bordered w-full min-h-24 rounded-2xl bg-base-100/70 text-base"
-                />
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => onSaveEdit(node.id)}
-                    className="btn btn-primary min-h-12 rounded-2xl px-4"
-                  >
-                    {t("postInteractions.save")}
-                  </button>
-                  <button
-                    onClick={onCancelEdit}
-                    className="btn btn-ghost min-h-12 rounded-2xl px-4"
-                  >
-                    {t("postInteractions.cancel")}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <p className="mt-1.5 whitespace-pre-wrap break-words text-[15px] leading-relaxed text-base-content/90">
-                {node.content}
-              </p>
-            )}
-          </motion.div>
+          {bubble?.animated ? (
+            <AnimatedBubbleFrame
+              isMine={isMine}
+              reducedMotion={reducedMotion}
+              {...bubbleHandlers}
+            >
+              {bubbleInner}
+            </AnimatedBubbleFrame>
+          ) : (
+            <motion.div
+              {...bubbleHandlers}
+              className={bubble ? bubble.className : getCommentBubbleClassName(isMine)}
+              style={bubble?.style}
+            >
+              {bubbleInner}
+            </motion.div>
+          )}
 
           <AnimatePresence>
             {showActions ? (
@@ -236,6 +324,8 @@ const CommentNode = memo(function CommentNode({
               onReply={onReply}
               activeActionId={activeActionId}
               onActiveActionIdChange={onActiveActionIdChange}
+              animateEnter={false}
+              myEquippedDecorId={myEquippedDecorId}
             />
           ))}
         </div>
@@ -246,6 +336,7 @@ const CommentNode = memo(function CommentNode({
 
 export function PostInteractions({ targetType, targetId, groupId, userId }: Props) {
   const { t } = useTranslation()
+  const myEquippedDecorId = useDiamondStore((s) => s.equippedDecor)
   const rootRef = useRef<HTMLDivElement>(null)
   const [inView, setInView] = useState(false)
   const [showEmojiMenu, setShowEmojiMenu] = useState(false)
@@ -426,6 +517,7 @@ export function PostInteractions({ targetType, targetId, groupId, userId }: Prop
                   activeActionId={activeActionCommentId}
                   onActiveActionIdChange={setActiveActionCommentId}
                   animateEnter={animateComments}
+                  myEquippedDecorId={myEquippedDecorId}
                 />
               ))
             ) : (

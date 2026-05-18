@@ -1,21 +1,20 @@
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Play, CheckCircle, Coins, Clock } from "lucide-react"
+import { X, Play, CheckCircle, Gem, Clock } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import toast from "react-hot-toast"
 import {
-  watchRewardedAd,
-  preloadAd,
-  getCoinAdViewsRecent,
-  getCoinAdCooldownMs,
-  coinAdsAvailable,
-  AD_COINS,
-  COIN_AD_LIMIT,
-} from "../../../../lib/admob"
-import { useStoreStore } from "../../../../store/storeStore"
-import { useGroupStore } from "../../../../store/groupStore"
+  watchDiamondAd,
+  getDiamondAdViewsRecent,
+  getDiamondAdCooldownMs,
+  diamondAdsAvailable,
+  DIAMOND_AD_LIMIT,
+  DIAMOND_PER_AD,
+} from "../../../../lib/diamonds"
+import { preloadAd } from "../../../../lib/admob"
+import { useDiamondStore } from "../../../../store/diamondStore"
 
-interface EarnCoinsModalProps {
+interface EarnDiamondsModalProps {
   isOpen: boolean
   onClose: () => void
   userId: string
@@ -30,25 +29,27 @@ function formatMs(ms: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`
 }
 
-export function EarnCoinsModal({ isOpen, onClose, userId }: EarnCoinsModalProps) {
+export function EarnDiamondsModal({ isOpen, onClose, userId }: EarnDiamondsModalProps) {
   const { i18n } = useTranslation()
   const lang = i18n.language === "en" ? "en" : "es"
-  const group = useGroupStore((s) => s.group)
-  const { earnCoins } = useStoreStore()
+  const { earnDiamonds } = useDiamondStore()
 
   const [watching, setWatching] = useState(false)
-  const [viewsRecent, setViewsRecent] = useState(() => getCoinAdViewsRecent(userId))
-  const [cooldownMs, setCooldownMs] = useState(() => getCoinAdCooldownMs(userId))
+  const [viewsRecent, setViewsRecent] = useState(() => getDiamondAdViewsRecent(userId))
+  const [cooldownMs, setCooldownMs] = useState(() => getDiamondAdCooldownMs(userId))
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  // Refresh countdown every second when at limit
   useEffect(() => {
     if (!isOpen) return
-    setViewsRecent(getCoinAdViewsRecent(userId))
-    setCooldownMs(getCoinAdCooldownMs(userId))
+    setViewsRecent(getDiamondAdViewsRecent(userId))
+    setCooldownMs(getDiamondAdCooldownMs(userId))
 
     tickRef.current = setInterval(() => {
-      setViewsRecent(getCoinAdViewsRecent(userId))
-      setCooldownMs(getCoinAdCooldownMs(userId))
+      const views = getDiamondAdViewsRecent(userId)
+      const cd = getDiamondAdCooldownMs(userId)
+      setViewsRecent(views)
+      setCooldownMs(cd)
     }, 1000)
 
     return () => {
@@ -56,19 +57,20 @@ export function EarnCoinsModal({ isOpen, onClose, userId }: EarnCoinsModalProps)
     }
   }, [isOpen, userId])
 
-  const canWatch = coinAdsAvailable(userId)
+  const canWatch = diamondAdsAvailable(userId)
 
   async function handleWatchAd() {
-    if (!group || watching || !canWatch) return
+    if (watching || !canWatch) return
     setWatching(true)
     try {
-      await watchRewardedAd(userId)
-      await earnCoins(group.id, AD_COINS)
-      setViewsRecent(getCoinAdViewsRecent(userId))
-      setCooldownMs(getCoinAdCooldownMs(userId))
+      await watchDiamondAd(userId)
+      await earnDiamonds(userId, DIAMOND_PER_AD)
+      setViewsRecent(getDiamondAdViewsRecent(userId))
+      setCooldownMs(getDiamondAdCooldownMs(userId))
       toast.success(
-        lang === "en" ? `+${AD_COINS} coins earned!` : `+${AD_COINS} monedas ganadas!`,
-        { icon: "🪙" },
+        lang === "en"
+          ? `+${DIAMOND_PER_AD} diamond earned! 💎`
+          : `+${DIAMOND_PER_AD} diamante ganado! 💎`
       )
       preloadAd()
     } catch (e: unknown) {
@@ -76,7 +78,7 @@ export function EarnCoinsModal({ isOpen, onClose, userId }: EarnCoinsModalProps)
       if (msg === "ad_not_ready") {
         toast(
           lang === "en" ? "Ad not ready, try again" : "Anuncio no listo, intenta de nuevo",
-          { icon: "⏳" },
+          { icon: "⏳" }
         )
       } else if (msg !== "limit_reached") {
         toast.error(lang === "en" ? "Ad failed, try again" : "Error con el anuncio")
@@ -103,20 +105,21 @@ export function EarnCoinsModal({ isOpen, onClose, userId }: EarnCoinsModalProps)
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.97 }}
             transition={{ type: "spring", stiffness: 380, damping: 30 }}
-            className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-lg rounded-t-3xl bg-base-200 border-t border-warning/20 p-6 pb-[max(1.5rem,env(safe-area-inset-bottom,0px))]"
+            className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-lg rounded-t-3xl bg-base-200 border-t border-sky-500/15 p-6 pb-[max(1.5rem,env(safe-area-inset-bottom,0px))]"
           >
+            {/* Header */}
             <div className="flex items-center justify-between mb-6">
-              <motion.div>
+              <div>
                 <h3 className="font-bold text-base-content text-lg flex items-center gap-2">
-                  <Coins size={18} className="text-warning" strokeWidth={2.5} />
-                  {lang === "en" ? "Earn Coins" : "Ganar Monedas"}
+                  <Gem size={18} className="text-sky-400" strokeWidth={2.5} />
+                  {lang === "en" ? "Earn Diamonds" : "Ganar Diamantes"}
                 </h3>
                 <p className="text-xs text-base-content/40 mt-0.5">
                   {lang === "en"
-                    ? `Watch ads to earn coins · resets every 3h`
-                    : `Mira anuncios para ganar monedas · se reinicia cada 3h`}
+                    ? `Watch ads to earn diamonds · resets every 3h`
+                    : `Mira anuncios para ganar diamantes · se reinicia cada 3h`}
                 </p>
-              </motion.div>
+              </div>
               <button
                 type="button"
                 onClick={onClose}
@@ -126,51 +129,52 @@ export function EarnCoinsModal({ isOpen, onClose, userId }: EarnCoinsModalProps)
               </button>
             </div>
 
+            {/* Slot dots */}
             <div className="flex items-center justify-center gap-4 mb-6">
-              {Array.from({ length: COIN_AD_LIMIT }).map((_, i) => {
+              {Array.from({ length: DIAMOND_AD_LIMIT }).map((_, i) => {
                 const watched = i < viewsRecent
                 return (
-                  <motion.div key={i} className="flex flex-col items-center gap-1.5">
+                  <div key={i} className="flex flex-col items-center gap-1.5">
                     <div
                       className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 ${
                         watched
-                          ? "bg-warning/15 border border-warning/35"
+                          ? "bg-sky-500/15 border border-sky-500/30"
                           : "bg-base-300 border border-base-300"
                       }`}
                     >
                       {watched ? (
-                        <CheckCircle size={22} className="text-warning" />
+                        <CheckCircle size={22} className="text-sky-400" />
                       ) : (
                         <span className="text-xs font-bold text-base-content/30">{i + 1}</span>
                       )}
                     </div>
                     <span className="text-[10px] text-base-content/30 font-medium">
-                      {watched ? `+${AD_COINS}` : `🪙${AD_COINS}`}
+                      {watched ? `+${DIAMOND_PER_AD}💎` : `💎${DIAMOND_PER_AD}`}
                     </span>
-                  </motion.div>
+                  </div>
                 )
               })}
             </div>
 
+            {/* Status text */}
             <p className="text-center text-sm text-base-content/50 mb-5">
-              {viewsRecent < COIN_AD_LIMIT ? (
+              {viewsRecent < DIAMOND_AD_LIMIT ? (
                 lang === "en"
-                  ? `${COIN_AD_LIMIT - viewsRecent} ad${COIN_AD_LIMIT - viewsRecent > 1 ? "s" : ""} remaining this window`
-                  : `${COIN_AD_LIMIT - viewsRecent} anuncio${COIN_AD_LIMIT - viewsRecent > 1 ? "s" : ""} restante${COIN_AD_LIMIT - viewsRecent > 1 ? "s" : ""} esta ventana`
+                  ? `${DIAMOND_AD_LIMIT - viewsRecent} ad${DIAMOND_AD_LIMIT - viewsRecent > 1 ? "s" : ""} remaining this window`
+                  : `${DIAMOND_AD_LIMIT - viewsRecent} anuncio${DIAMOND_AD_LIMIT - viewsRecent > 1 ? "s" : ""} restante${DIAMOND_AD_LIMIT - viewsRecent > 1 ? "s" : ""} esta ventana`
               ) : cooldownMs > 0 ? (
                 <span className="flex items-center justify-center gap-1.5">
-                  <Clock size={13} className="text-warning/70" />
+                  <Clock size={13} className="text-sky-400/60" />
                   {lang === "en"
                     ? `Resets in ${formatMs(cooldownMs)}`
                     : `Se reinicia en ${formatMs(cooldownMs)}`}
                 </span>
               ) : (
-                lang === "en"
-                  ? "Slots refreshed! Watch another ad."
-                  : "¡Espacios disponibles! Mira otro anuncio."
+                lang === "en" ? "Slots refreshed! Watch another ad." : "¡Espacios disponibles! Mira otro anuncio."
               )}
             </p>
 
+            {/* Watch button */}
             <button
               type="button"
               onClick={handleWatchAd}
@@ -178,9 +182,9 @@ export function EarnCoinsModal({ isOpen, onClose, userId }: EarnCoinsModalProps)
               className="w-full flex items-center justify-center gap-2 rounded-2xl py-3.5 font-bold text-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-40 disabled:cursor-default"
               style={{
                 background: canWatch
-                  ? "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)"
+                  ? "linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)"
                   : undefined,
-                color: canWatch ? "#1a1000" : undefined,
+                color: canWatch ? "#0c1a2e" : undefined,
               }}
             >
               {watching ? (
@@ -189,13 +193,11 @@ export function EarnCoinsModal({ isOpen, onClose, userId }: EarnCoinsModalProps)
                 <Play size={16} strokeWidth={2.5} fill="currentColor" />
               )}
               {watching
-                ? lang === "en"
-                  ? "Loading..."
-                  : "Cargando..."
+                ? lang === "en" ? "Loading..." : "Cargando..."
                 : canWatch
                   ? lang === "en"
-                    ? `Watch Ad · +${AD_COINS} coins`
-                    : `Ver anuncio · +${AD_COINS} monedas`
+                    ? `Watch Ad · +${DIAMOND_PER_AD} 💎`
+                    : `Ver anuncio · +${DIAMOND_PER_AD} 💎`
                   : lang === "en"
                     ? "Come back later"
                     : "Vuelve más tarde"}

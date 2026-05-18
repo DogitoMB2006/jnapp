@@ -1,28 +1,23 @@
 import { isMobileTauri } from "./platform"
 
-export const AD_COINS = 10
-export const COIN_AD_LIMIT = 3
-export const COIN_AD_WINDOW_MS = 3 * 60 * 60 * 1000 // 3 hours
-
-/** @deprecated Use COIN_AD_LIMIT */
-export const MAX_ADS_PER_DAY = COIN_AD_LIMIT
+export const DIAMOND_PER_AD = 1
+export const DIAMOND_AD_LIMIT = 3
+export const DIAMOND_AD_WINDOW_MS = 3 * 60 * 60 * 1000 // 3 hours
 
 interface JNAdMob {
   showRewardedAd: () => void
   preload: () => void
 }
-
 interface AdMobWindow extends Window {
   JNAdMob?: JNAdMob
   __admobCallback?: (success: boolean, error: string | null) => void
 }
-
 declare const window: AdMobWindow
 
-// ─── 3-hour rolling window tracking ───────────────────────────────────────────
+// ─── 3-hour rolling window tracking ──────────────────────────────────────────
 
 function viewsKey(userId: string): string {
-  return `coin_ad_views_${userId}`
+  return `diamond_ad_views_${userId}`
 }
 
 function getAdTimestamps(userId: string): number[] {
@@ -35,34 +30,24 @@ function getAdTimestamps(userId: string): number[] {
 }
 
 function getRecentTimestamps(userId: string): number[] {
-  const cutoff = Date.now() - COIN_AD_WINDOW_MS
+  const cutoff = Date.now() - DIAMOND_AD_WINDOW_MS
   return getAdTimestamps(userId).filter((t) => t > cutoff)
 }
 
-export function getCoinAdViewsRecent(userId: string): number {
+export function getDiamondAdViewsRecent(userId: string): number {
   return getRecentTimestamps(userId).length
 }
 
-/** @deprecated Use getCoinAdViewsRecent */
-export function getAdViewsToday(userId: string): number {
-  return getCoinAdViewsRecent(userId)
-}
-
-/** Ms until the oldest slot expires (next coin ad available). 0 if slots free. */
-export function getCoinAdCooldownMs(userId: string): number {
+/** Ms until the oldest slot expires (i.e. next diamond ad available). 0 if slots free. */
+export function getDiamondAdCooldownMs(userId: string): number {
   const recent = getRecentTimestamps(userId)
-  if (recent.length < COIN_AD_LIMIT) return 0
+  if (recent.length < DIAMOND_AD_LIMIT) return 0
   const oldest = Math.min(...recent)
-  return Math.max(0, oldest + COIN_AD_WINDOW_MS - Date.now())
+  return Math.max(0, oldest + DIAMOND_AD_WINDOW_MS - Date.now())
 }
 
-export function coinAdsAvailable(userId: string): boolean {
-  return isMobileTauri && getCoinAdViewsRecent(userId) < COIN_AD_LIMIT
-}
-
-/** @deprecated Use coinAdsAvailable */
-export function adsAvailable(userId: string): boolean {
-  return coinAdsAvailable(userId)
+export function diamondAdsAvailable(userId: string): boolean {
+  return isMobileTauri && getDiamondAdViewsRecent(userId) < DIAMOND_AD_LIMIT
 }
 
 function recordAdView(userId: string): void {
@@ -73,22 +58,16 @@ function recordAdView(userId: string): void {
 
 // ─── Ad bridge ────────────────────────────────────────────────────────────────
 
-/**
- * Show a rewarded ad. Resolves when the user earns the reward.
- * Rejects with an Error if the ad isn't ready, fails, or limit reached.
- */
-export function watchRewardedAd(userId: string): Promise<void> {
+export function watchDiamondAd(userId: string): Promise<void> {
   return new Promise((resolve, reject) => {
     if (!window.JNAdMob) {
       reject(new Error("not_available"))
       return
     }
-
-    if (getCoinAdViewsRecent(userId) >= COIN_AD_LIMIT) {
+    if (getDiamondAdViewsRecent(userId) >= DIAMOND_AD_LIMIT) {
       reject(new Error("limit_reached"))
       return
     }
-
     window.__admobCallback = (success: boolean, error: string | null) => {
       window.__admobCallback = undefined
       if (success) {
@@ -98,12 +77,6 @@ export function watchRewardedAd(userId: string): Promise<void> {
         reject(new Error(error ?? "ad_failed"))
       }
     }
-
     window.JNAdMob.showRewardedAd()
   })
-}
-
-/** Preload next ad (call after the store tab mounts on mobile). */
-export function preloadAd(): void {
-  window.JNAdMob?.preload()
 }

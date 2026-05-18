@@ -17,6 +17,7 @@ import { useAuthStore } from "../../store/authStore";
 import { useGroupStore } from "../../store/groupStore";
 import { useNavigationStore } from "../../store/navigationStore";
 import { useStoreStore } from "../../store/storeStore";
+import { useDiamondStore } from "../../store/diamondStore";
 import { useGroupThemeSync } from "../../hooks/useGroupThemeSync";
 import { useRealtime } from "../../hooks/useRealtime";
 import { useSectionSwipe } from "../../hooks/useSectionSwipe";
@@ -33,11 +34,18 @@ export function AppLayout() {
   const pendingSection = useNavigationStore((s) => s.pendingSection);
   const clearPendingSection = useNavigationStore((s) => s.clearPendingSection);
   const fetchStore = useStoreStore((s) => s.fetchStore);
+  const user = useAuthStore((s) => s.user);
+  const fetchDiamonds = useDiamondStore((s) => s.fetchDiamonds);
 
   // Bootstrap store when group is known
   useEffect(() => {
     if (group?.id) void fetchStore(group.id)
   }, [group?.id, fetchStore])
+
+  // Bootstrap diamonds (user-individual, not group-scoped)
+  useEffect(() => {
+    if (user?.id) void fetchDiamonds(user.id)
+  }, [user?.id, fetchDiamonds])
 
   useGroupThemeSync(group?.id)
 

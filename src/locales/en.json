@@ -121,7 +121,25 @@
     "equip": "Equip",
     "on": "Active",
     "coinsPrice": "{{count}} coins",
-    "loading": "Loading store…"
+    "loading": "Loading store…",
+    "diamonds": "Diamonds",
+    "diamondsPrice": "{{count}} 💎",
+    "earnCoinsHint": "Watch ads to earn coins · resets every 3h",
+    "decor": {
+      "hint": "Decorations style your chat bubbles. Yours forever — even if you change partners.",
+      "bubbleStyles": "Bubble styles",
+      "owned": "Owned",
+      "equip": "Equip",
+      "equipped": "Equipped",
+      "buy": "Buy",
+      "needMore": "Need more 💎",
+      "unlocked": "Decoration unlocked! 💎",
+      "applied": "Style applied!",
+      "notEnough": "Not enough diamonds",
+      "buyFail": "Purchase failed",
+      "equipFail": "Failed to equip",
+      "animated": "Animated"
+    }
   },
   "groupSetup": {
     "tagline": "Your space together",

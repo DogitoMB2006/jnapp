@@ -2,10 +2,10 @@ import { motion } from "framer-motion"
 import { Palette, Sparkles, Gift, Zap } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-export type StoreCategoryId = "themes"
+export type StoreCategoryId = "themes" | "decor"
 
 type CategoryDef = {
-  id: StoreCategoryId | "decor" | "gifts" | "boosts"
+  id: StoreCategoryId | "gifts" | "boosts"
   labelKey: string
   icon: typeof Palette
   available: boolean
@@ -13,7 +13,7 @@ type CategoryDef = {
 
 const CATEGORIES: CategoryDef[] = [
   { id: "themes", labelKey: "store.categories.themes", icon: Palette, available: true },
-  { id: "decor", labelKey: "store.categories.decor", icon: Sparkles, available: false },
+  { id: "decor", labelKey: "store.categories.decor", icon: Sparkles, available: true },
   { id: "gifts", labelKey: "store.categories.gifts", icon: Gift, available: false },
   { id: "boosts", labelKey: "store.categories.boosts", icon: Zap, available: false },
 ]

@@ -67,16 +67,18 @@ export const usePostInteractions = ({
     [targetType, targetId],
   )
 
-  const loadProfiles = useCallback(async (ids: string[]) => {
+  const loadProfiles = useCallback(async (ids: string[], options?: { force?: boolean }) => {
     const uniqueIds = [...new Set(ids.filter(Boolean))]
     if (!uniqueIds.length) return
-    const missingIds = uniqueIds.filter((id) => !profilesRef.current[id])
-    if (!missingIds.length) return
+    const idsToLoad = options?.force
+      ? uniqueIds
+      : uniqueIds.filter((id) => !profilesRef.current[id])
+    if (!idsToLoad.length) return
 
     const { data, error } = await insforge.database
       .from("profiles")
       .select("*")
-      .in("user_id", missingIds)
+      .in("user_id", idsToLoad)
     if (error || !data) return
 
     const next: Record<string, Profile> = {}
@@ -99,6 +101,8 @@ export const usePostInteractions = ({
       setComments(cached.comments)
       setProfiles(cached.profiles)
       setHasLoaded(true)
+      const authorIds = [...new Set(cached.comments.map((row) => row.user_id))]
+      void loadProfiles(authorIds, { force: true })
       return
     }
 
@@ -143,14 +147,12 @@ export const usePostInteractions = ({
     if (!commentRes.error && commentRes.data) {
       nextComments = commentRes.data as PostComment[]
       setComments(nextComments)
-      const ids = nextComments.map((row) => row.user_id)
-      const uniqueIds = [...new Set(ids.filter(Boolean))]
-      const missingIds = uniqueIds.filter((id) => !nextProfiles[id])
-      if (missingIds.length) {
+      const ids = [...new Set(nextComments.map((row) => row.user_id).filter(Boolean))]
+      if (ids.length) {
         const { data, error } = await insforge.database
           .from("profiles")
           .select("*")
-          .in("user_id", missingIds)
+          .in("user_id", ids)
         if (!error && data) {
           ;(data as Profile[]).forEach((profile) => {
             nextProfiles[profile.user_id] = profile
@@ -163,7 +165,7 @@ export const usePostInteractions = ({
     syncCache(nextReactions, nextComments, nextProfiles)
     setHasLoaded(true)
     setLoading(false)
-  }, [isEnabled, targetType, targetId, syncCache])
+  }, [isEnabled, targetType, targetId, syncCache, loadProfiles])
 
   const ensureLoaded = useCallback(async () => {
     if (hasLoaded && !loading) return

@@ -1,10 +1,17 @@
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { ShoppingBag } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { CoinDisplay } from "./CoinDisplay"
+import { DiamondDisplay } from "./DiamondDisplay"
+import type { StoreCategoryId } from "./StoreCategoryRail"
 
-export function StoreHeader() {
+interface StoreHeaderProps {
+  activeTab: StoreCategoryId
+}
+
+export function StoreHeader({ activeTab }: StoreHeaderProps) {
   const { t } = useTranslation()
+  const showDiamonds = activeTab === "decor"
 
   return (
     <motion.header
@@ -31,7 +38,29 @@ export function StoreHeader() {
       </p>
 
       <div className="relative mt-4">
-        <CoinDisplay variant="pill" />
+        <AnimatePresence mode="wait">
+          {showDiamonds ? (
+            <motion.div
+              key="diamond"
+              initial={{ opacity: 0, y: 6, scale: 0.92 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -6, scale: 0.92 }}
+              transition={{ type: "spring", stiffness: 340, damping: 26 }}
+            >
+              <DiamondDisplay />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="coin"
+              initial={{ opacity: 0, y: 6, scale: 0.92 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -6, scale: 0.92 }}
+              transition={{ type: "spring", stiffness: 340, damping: 26 }}
+            >
+              <CoinDisplay variant="pill" />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.header>
   )

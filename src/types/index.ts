@@ -6,6 +6,8 @@ export interface Profile {
   avatar_url: string | null;
   /** FCM device token (Android), optional column in `profiles` */
   fcm_token?: string | null;
+  /** Equipped chat bubble decoration id (visible to partner) */
+  equipped_decor?: string | null;
   created_at: string;
   updated_at: string;
 }

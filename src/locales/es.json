@@ -121,7 +121,25 @@
     "equip": "Equipar",
     "on": "Activo",
     "coinsPrice": "{{count}} monedas",
-    "loading": "Cargando tienda…"
+    "loading": "Cargando tienda…",
+    "diamonds": "Diamantes",
+    "diamondsPrice": "{{count}} 💎",
+    "earnCoinsHint": "Mira anuncios para ganar monedas · se reinicia cada 3h",
+    "decor": {
+      "hint": "Las decoraciones personalizan tus burbujas de chat. Son tuyas para siempre, incluso si cambias de pareja.",
+      "bubbleStyles": "Estilos de burbuja",
+      "owned": "Tuya",
+      "equip": "Equipar",
+      "equipped": "Equipado",
+      "buy": "Comprar",
+      "needMore": "Faltan 💎",
+      "unlocked": "¡Decoración desbloqueada! 💎",
+      "applied": "¡Estilo aplicado!",
+      "notEnough": "No tienes suficientes diamantes",
+      "buyFail": "Error al comprar",
+      "equipFail": "Error al equipar",
+      "animated": "Animado"
+    }
   },
   "groupSetup": {
     "tagline": "Tu espacio juntos",

@@ -1,0 +1,272 @@
+/* Nebula Pulse — premium animated chat bubble */
+
+.bubble-nebula {
+  --nebula-tail-mine: 18px 18px 4px 18px;
+  --nebula-tail-theirs: 18px 18px 18px 4px;
+  position: relative;
+  isolation: isolate;
+  padding: 2px;
+  border-radius: var(--nebula-tail-mine);
+  overflow: visible;
+}
+
+.bubble-nebula[data-tail="theirs"] {
+  border-radius: var(--nebula-tail-theirs);
+}
+
+.bubble-nebula__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.bubble-nebula__ring::before {
+  content: "";
+  position: absolute;
+  inset: -120%;
+  background: conic-gradient(
+    from 0deg,
+    #22d3ee 0%,
+    #818cf8 18%,
+    #c026d3 38%,
+    #fb7185 55%,
+    #fbbf24 72%,
+    #34d399 88%,
+    #22d3ee 100%
+  );
+  animation: nebula-ring-spin 4s linear infinite;
+}
+
+.bubble-nebula__glow {
+  position: absolute;
+  inset: -6px;
+  border-radius: inherit;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 90% 70% at 15% 10%, rgba(34, 211, 238, 0.45), transparent 58%),
+    radial-gradient(ellipse 80% 60% at 88% 92%, rgba(192, 38, 211, 0.42), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(251, 191, 36, 0.12), transparent 70%);
+  animation: nebula-glow-breathe 5s ease-in-out infinite;
+  filter: blur(8px);
+}
+
+.bubble-nebula__body {
+  position: relative;
+  z-index: 2;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    #07040f 0%,
+    #12081f 28%,
+    #0a1628 52%,
+    #1a0a24 78%,
+    #06030c 100%
+  );
+  background-size: 240% 240%;
+  animation: nebula-mesh-drift 9s ease-in-out infinite;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -12px 32px rgba(0, 0, 0, 0.35),
+    0 8px 28px rgba(88, 28, 135, 0.35);
+}
+
+.bubble-nebula[data-tail="mine"] .bubble-nebula__body {
+  border-radius: 16px 16px 3px 16px;
+}
+
+.bubble-nebula[data-tail="theirs"] .bubble-nebula__body {
+  border-radius: 16px 16px 16px 3px;
+}
+
+.bubble-nebula__particles {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.bubble-nebula__particle {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff, rgba(255, 255, 255, 0.2) 40%, transparent 70%);
+  box-shadow: 0 0 8px currentColor;
+  animation: nebula-particle-float 6s ease-in-out infinite;
+}
+
+.bubble-nebula__particle--1 {
+  width: 5px;
+  height: 5px;
+  top: 18%;
+  left: 12%;
+  color: #67e8f9;
+  animation-delay: 0s;
+  animation-duration: 5.2s;
+}
+
+.bubble-nebula__particle--2 {
+  width: 3px;
+  height: 3px;
+  top: 62%;
+  left: 78%;
+  color: #f0abfc;
+  animation-delay: -1.4s;
+  animation-duration: 6.8s;
+}
+
+.bubble-nebula__particle--3 {
+  width: 4px;
+  height: 4px;
+  top: 38%;
+  left: 55%;
+  color: #fde68a;
+  animation-delay: -2.8s;
+  animation-duration: 7.4s;
+}
+
+.bubble-nebula__particle--4 {
+  width: 2px;
+  height: 2px;
+  top: 78%;
+  left: 28%;
+  color: #a5b4fc;
+  animation-delay: -0.6s;
+  animation-duration: 5.8s;
+}
+
+.bubble-nebula__shimmer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.07) 48%,
+    rgba(255, 255, 255, 0.14) 50%,
+    rgba(255, 255, 255, 0.07) 52%,
+    transparent 62%
+  );
+  background-size: 220% 100%;
+  animation: nebula-shimmer-sweep 7s ease-in-out infinite;
+}
+
+.bubble-nebula__label {
+  color: #f5f3ff;
+  text-shadow: 0 0 14px rgba(167, 139, 250, 0.45);
+}
+
+.bubble-nebula__meta {
+  color: rgba(233, 213, 255, 0.55);
+}
+
+.bubble-nebula__message {
+  background: linear-gradient(90deg, #faf5ff 0%, #e9d5ff 30%, #a5f3fc 55%, #fbcfe8 85%, #faf5ff 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: nebula-text-shine 8s linear infinite;
+}
+
+@keyframes nebula-ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes nebula-glow-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes nebula-mesh-drift {
+  0%,
+  100% {
+    background-position: 0% 40%;
+  }
+  50% {
+    background-position: 100% 60%;
+  }
+}
+
+@keyframes nebula-particle-float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.35;
+  }
+  33% {
+    transform: translate(6px, -8px) scale(1.2);
+    opacity: 1;
+  }
+  66% {
+    transform: translate(-4px, 4px) scale(0.85);
+    opacity: 0.6;
+  }
+}
+
+@keyframes nebula-shimmer-sweep {
+  0%,
+  100% {
+    background-position: 180% 0;
+  }
+  50% {
+    background-position: -80% 0;
+  }
+}
+
+@keyframes nebula-text-shine {
+  to {
+    background-position: 200% center;
+  }
+}
+
+.bubble-nebula--static .bubble-nebula__ring::before,
+.bubble-nebula--static .bubble-nebula__glow,
+.bubble-nebula--static .bubble-nebula__body,
+.bubble-nebula--static .bubble-nebula__particle,
+.bubble-nebula--static .bubble-nebula__shimmer,
+.bubble-nebula--static .bubble-nebula__message {
+  animation: none;
+  color: #f0e8ff;
+  background: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+}
+
+.bubble-nebula--static .bubble-nebula__ring::before {
+  transform: rotate(120deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bubble-nebula__ring::before,
+  .bubble-nebula__glow,
+  .bubble-nebula__body,
+  .bubble-nebula__particle,
+  .bubble-nebula__shimmer,
+  .bubble-nebula__message {
+    animation: none;
+    color: #f0e8ff;
+    background: none;
+    -webkit-background-clip: unset;
+    background-clip: unset;
+  }
+
+  .bubble-nebula__ring::before {
+    transform: rotate(120deg);
+  }
+}
