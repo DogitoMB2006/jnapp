@@ -1,5 +1,14 @@
 {
   "mcpServers": {
+    "tauri": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@hypothesi/tauri-mcp-server@latest"
+      ]
+    },
     "insforge": {
       "command": "cmd",
       "args": [

@@ -15,6 +15,12 @@
       "source": "JuliusBrussee/caveman",
       "sourceType": "github",
       "computedHash": "3468ac41877d388fc19d902ed9d442cd36609bd9e8d16205c41b362f481ea731"
+    },
+    "tauri-mcp-cli": {
+      "source": "hypothesi/mcp-server-tauri",
+      "sourceType": "github",
+      "skillPath": "packages/cli/skills/tauri-mcp-cli/SKILL.md",
+      "computedHash": "6cab14dbb973c1f4cdeb2739841ddd9c5db5d7d546743fd9771082e252e7fde3"
     }
   }
 }
