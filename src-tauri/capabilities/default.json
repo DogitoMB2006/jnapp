@@ -22,6 +22,7 @@
     "process:default",
     "process:allow-restart",
     "allow-fcm-get-stored-token",
-    "store:default"
+    "store:default",
+    "mcp-bridge:default"
   ]
 }

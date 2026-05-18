@@ -1,7 +1,7 @@
 {
   "name": "jnapp",
   "private": true,
-  "version": "1.25.0",
+  "version": "1.26.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -21,6 +21,7 @@
     "firebase": "^11.10.0",
     "framer-motion": "^12.38.0",
     "i18next": "^26.0.6",
+    "install-mcp": "^1.10.2",
     "lucide-react": "^1.8.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

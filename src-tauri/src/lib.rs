@@ -19,6 +19,19 @@ pub fn run() {
         app = app.plugin(tauri_plugin_autostart::Builder::new().build());
     }
 
+    // MCP Bridge: dev-only WebSocket server for @hypothesi/tauri-mcp-server (desktop)
+    #[cfg(all(
+        debug_assertions,
+        not(any(target_os = "android", target_os = "ios"))
+    ))]
+    {
+        app = app.plugin(
+            tauri_plugin_mcp_bridge::Builder::new()
+                .bind_address("127.0.0.1")
+                .build(),
+        );
+    }
+
     let mut app = app
         .setup(|app| {
             #[cfg(not(any(target_os = "android", target_os = "ios")))]
