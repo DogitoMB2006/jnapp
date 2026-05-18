@@ -86,16 +86,20 @@ function App() {
   return (
     <>
       {mainContent}
-      <StreakAnimation
-        streak={animationStreak}
-        visible={showAnimation}
-        onDismiss={dismissAnimation}
-      />
-      <StreakBreakAnimation
-        fromStreak={breakAnimationFromStreak}
-        visible={showBreakAnimation}
-        onDismiss={dismissBreakAnimation}
-      />
+      {showAnimation ? (
+        <StreakAnimation
+          streak={animationStreak}
+          visible
+          onDismiss={dismissAnimation}
+        />
+      ) : null}
+      {showBreakAnimation ? (
+        <StreakBreakAnimation
+          fromStreak={breakAnimationFromStreak}
+          visible
+          onDismiss={dismissBreakAnimation}
+        />
+      ) : null}
       {isDesktopTauri && user ? <UpdateModal /> : null}
       {isMobileTauri && user ? <AndroidUpdateModal /> : null}
       <Toaster

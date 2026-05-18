@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, ListChecks, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
@@ -19,8 +19,9 @@ import { useNavigationStore } from "../../../store/navigationStore";
 import type { ListaItem, Profile } from "../../../types";
 
 export function ListaPage() {
-  const { user, profile } = useAuthStore();
-  const { group } = useGroupStore();
+  const user = useAuthStore((s) => s.user);
+  const profile = useAuthStore((s) => s.profile);
+  const group = useGroupStore((s) => s.group);
   const [items, setItems] = useState<ListaItem[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
@@ -185,7 +186,7 @@ export function ListaPage() {
     setSaving(false);
   };
 
-  const handleToggle = async (item: ListaItem) => {
+  const handleToggle = useCallback(async (item: ListaItem) => {
     const { data } = await insforge.database
       .from("lista_items")
       .update({ completed: !item.completed })
@@ -195,9 +196,17 @@ export function ListaPage() {
     if (row) {
       setItems((prev) => prev.map((i) => (i.id === row.id ? row : i)));
     }
-  };
+  }, []);
 
-  const handleDelete = async (id: string) => {
+  const handleToggleById = useCallback(
+    (id: string) => {
+      const item = items.find((i) => i.id === id);
+      if (item) void handleToggle(item);
+    },
+    [items, handleToggle],
+  );
+
+  const handleDelete = useCallback(async (id: string) => {
     setItems((prev) => prev.filter((i) => i.id !== id));
     toast.success(t("lista.deleted"));
     const { error } = await insforge.database.from("lista_items").delete().eq("id", id);
@@ -205,13 +214,28 @@ export function ListaPage() {
       toast.error(t("lista.deleteError"));
       await fetchItems({ silent: true });
     }
-  };
+  }, [t]);
 
-  const openEdit = (item: ListaItem) => {
+  const openEdit = useCallback((item: ListaItem) => {
     setEditItem(item);
     setInputText(item.content);
     setShowModal(true);
-  };
+  }, []);
+
+  const handleEditById = useCallback(
+    (id: string) => {
+      const item = items.find((i) => i.id === id);
+      if (item) openEdit(item);
+    },
+    [items, openEdit],
+  );
+
+  const handleDeleteById = useCallback(
+    (id: string) => {
+      void handleDelete(id);
+    },
+    [handleDelete],
+  );
 
   const openAdd = () => {
     setEditItem(null);
@@ -270,9 +294,9 @@ export function ListaPage() {
                     editedBy={item.edited_by ? profiles[item.edited_by] : undefined}
                     lastEditedAt={item.last_edited_at}
                     completed={item.completed}
-                    onToggle={() => handleToggle(item)}
-                    onEdit={() => openEdit(item)}
-                    onDelete={() => handleDelete(item.id)}
+                    onToggle={handleToggleById}
+                    onEdit={handleEditById}
+                    onDelete={handleDeleteById}
                   />
                 ))}
               </AnimatePresence>
@@ -294,9 +318,9 @@ export function ListaPage() {
                     editedBy={item.edited_by ? profiles[item.edited_by] : undefined}
                     lastEditedAt={item.last_edited_at}
                     completed={item.completed}
-                    onToggle={() => handleToggle(item)}
-                    onEdit={() => openEdit(item)}
-                    onDelete={() => handleDelete(item.id)}
+                    onToggle={handleToggleById}
+                    onEdit={handleEditById}
+                    onDelete={handleDeleteById}
                   />
                 ))}
               </AnimatePresence>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Map, CalendarDays, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
@@ -21,8 +21,9 @@ import { formatDate } from "../../../lib/utils";
 import type { Plan, Profile } from "../../../types";
 
 export function PlanesPage() {
-  const { user, profile } = useAuthStore();
-  const { group } = useGroupStore();
+  const user = useAuthStore((s) => s.user);
+  const profile = useAuthStore((s) => s.profile);
+  const group = useGroupStore((s) => s.group);
   const [items, setItems] = useState<Plan[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
@@ -153,7 +154,7 @@ export function PlanesPage() {
     setSaving(false);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     setItems((prev) => prev.filter((i) => i.id !== id));
     toast.success(t("planes.deleted"));
     const { error } = await insforge.database.from("planes").delete().eq("id", id);
@@ -161,12 +162,27 @@ export function PlanesPage() {
       toast.error(t("planes.deleteError"));
       await fetchPlanes({ silent: true });
     }
-  };
+  }, [t]);
 
-  const openEdit = (item: Plan) => {
+  const openEdit = useCallback((item: Plan) => {
     setEditItem(item); setForm({ title: item.title, description: item.description || "", date: item.date || "" });
     setShowModal(true);
-  };
+  }, []);
+
+  const handleEditById = useCallback(
+    (id: string) => {
+      const item = items.find((i) => i.id === id);
+      if (item) openEdit(item);
+    },
+    [items, openEdit],
+  );
+
+  const handleDeleteById = useCallback(
+    (id: string) => {
+      void handleDelete(id);
+    },
+    [handleDelete],
+  );
 
   const useAiIdea = (idea: { title: string; description: string }) => {
     setEditItem(null);
@@ -201,8 +217,8 @@ export function PlanesPage() {
               creator={profiles[item.created_by]}
               editedBy={item.edited_by ? profiles[item.edited_by] : undefined}
               lastEditedAt={item.last_edited_at}
-              onEdit={() => openEdit(item)}
-              onDelete={() => handleDelete(item.id)}
+              onEdit={handleEditById}
+              onDelete={handleDeleteById}
             >
               {item.date && (
                 <div className="flex items-center gap-1 mt-1">

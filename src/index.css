@@ -68,3 +68,29 @@ input, textarea {
 .animate-bounce-gentle {
   animation: bounce-gentle 2s ease-in-out infinite;
 }
+
+@keyframes theme-card-ambient {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.88; }
+}
+
+.theme-card-ambient {
+  animation: theme-card-ambient 3.2s ease-in-out infinite;
+}
+
+@keyframes theme-preview-ambient {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--theme-primary) 0%, transparent); }
+  50% { box-shadow: 0 0 28px 2px color-mix(in srgb, var(--theme-primary) 28%, transparent); }
+}
+
+.theme-preview-ambient {
+  animation: theme-preview-ambient 3.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-card-ambient,
+  .theme-preview-ambient,
+  .animate-bounce-gentle {
+    animation: none;
+  }
+}

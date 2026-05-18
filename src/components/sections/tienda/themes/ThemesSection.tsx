@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 import toast from "react-hot-toast"
 import { ThemeCard } from "./ThemeCard"
 import { ALL_THEMES } from "../../../../lib/themes"
+import { useShallow } from "zustand/react/shallow"
 import { useStoreStore } from "../../../../store/storeStore"
 import { useGroupStore } from "../../../../store/groupStore"
 import type { ThemeDef } from "../../../../types"
@@ -12,8 +13,16 @@ import type { ThemeDef } from "../../../../types"
 export function ThemesSection() {
   const { t, i18n } = useTranslation()
   const lang = i18n.language === "en" ? "en" : "es"
-  const { group } = useGroupStore()
-  const { coins, purchases, equippedTheme, buyTheme, equipTheme } = useStoreStore()
+  const group = useGroupStore((s) => s.group)
+  const { coins, purchases, equippedTheme, buyTheme, equipTheme } = useStoreStore(
+    useShallow((s) => ({
+      coins: s.coins,
+      purchases: s.purchases,
+      equippedTheme: s.equippedTheme,
+      buyTheme: s.buyTheme,
+      equipTheme: s.equipTheme,
+    })),
+  )
   const [busy, setBusy] = useState<string | null>(null)
 
   const equipped = ALL_THEMES.find((th) => th.id === equippedTheme) ?? ALL_THEMES[0]

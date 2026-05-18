@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Film, Check, ImagePlus, X, Eye, EyeOff, Pencil, Trash2, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
@@ -17,9 +17,10 @@ import { useGroupStore } from "../../../store/groupStore";
 import { useNavigationStore } from "../../../store/navigationStore";
 import { Avatar } from "../../shared/Avatar";
 import { PostInteractions } from "../../shared/PostInteractions";
+import { springSnappy } from "../../../lib/motion";
 import type { Pelicula, Profile } from "../../../types";
 
-function MovieCard({
+const MovieCard = memo(function MovieCard({
   item,
   creator,
   groupId,
@@ -33,20 +34,19 @@ function MovieCard({
   creator?: Profile;
   groupId?: string;
   userId?: string;
-  onEdit: () => void;
-  onDelete: () => void;
-  onToggleWatched: () => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+  onToggleWatched: (id: string) => void;
   highlighted?: boolean;
 }) {
   const { t } = useTranslation();
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, y: 14 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ type: "spring", stiffness: 380, damping: 28 }}
+      exit={{ opacity: 0, y: 6 }}
+      transition={springSnappy}
       data-item-id={item.id}
       className="mb-4 rounded-2xl overflow-hidden"
       style={{
@@ -175,7 +175,7 @@ function MovieCard({
           <div className="flex items-center gap-1">
             <motion.button
               whileTap={{ scale: 0.85 }}
-              onClick={onToggleWatched}
+              onClick={() => onToggleWatched(item.id)}
               className="flex items-center gap-1 font-semibold"
               style={{
                 background: item.watched
@@ -196,7 +196,7 @@ function MovieCard({
 
             <motion.button
               whileTap={{ scale: 0.88 }}
-              onClick={onEdit}
+              onClick={() => onEdit(item.id)}
               className="btn btn-ghost btn-xs btn-circle"
               style={{ color: "rgba(255,255,255,0.3)" }}
             >
@@ -204,7 +204,7 @@ function MovieCard({
             </motion.button>
             <motion.button
               whileTap={{ scale: 0.88 }}
-              onClick={onDelete}
+              onClick={() => onDelete(item.id)}
               className="btn btn-ghost btn-xs btn-circle hover:text-error"
               style={{ color: "rgba(255,255,255,0.3)" }}
             >
@@ -222,11 +222,12 @@ function MovieCard({
       </div>
     </motion.div>
   );
-}
+});
 
 export function PeliculasPage() {
-  const { user, profile } = useAuthStore();
-  const { group } = useGroupStore();
+  const user = useAuthStore((s) => s.user);
+  const profile = useAuthStore((s) => s.profile);
+  const group = useGroupStore((s) => s.group);
   const [items, setItems] = useState<Pelicula[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
@@ -363,7 +364,7 @@ export function PeliculasPage() {
     setSaving(false);
   };
 
-  const handleToggleWatched = async (item: Pelicula) => {
+  const handleToggleWatched = useCallback(async (item: Pelicula) => {
     const { data } = await insforge.database
       .from("peliculas")
       .update({ watched: !item.watched })
@@ -374,7 +375,15 @@ export function PeliculasPage() {
       setItems((prev) => prev.map((i) => (i.id === row.id ? row : i)));
     }
     if (!item.watched) toast.success(t("peliculas.markedWatched"));
-  };
+  }, [t]);
+
+  const handleToggleWatchedById = useCallback(
+    (id: string) => {
+      const item = items.find((i) => i.id === id);
+      if (item) void handleToggleWatched(item);
+    },
+    [items, handleToggleWatched],
+  );
 
   const handlePosterUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -400,7 +409,7 @@ export function PeliculasPage() {
     e.target.value = "";
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     setItems((prev) => prev.filter((i) => i.id !== id));
     toast.success(t("peliculas.deleted"));
     const { error } = await insforge.database.from("peliculas").delete().eq("id", id);
@@ -408,9 +417,9 @@ export function PeliculasPage() {
       toast.error(t("peliculas.deleteError"));
       await fetchPeliculas({ silent: true });
     }
-  };
+  }, [t]);
 
-  const openEdit = (item: Pelicula) => {
+  const openEdit = useCallback((item: Pelicula) => {
     setEditItem(item);
     setForm({
       title: item.title,
@@ -419,7 +428,22 @@ export function PeliculasPage() {
       posterUrl: item.poster_url || "",
     });
     setShowModal(true);
-  };
+  }, []);
+
+  const handleEditById = useCallback(
+    (id: string) => {
+      const item = items.find((i) => i.id === id);
+      if (item) openEdit(item);
+    },
+    [items, openEdit],
+  );
+
+  const handleDeleteById = useCallback(
+    (id: string) => {
+      void handleDelete(id);
+    },
+    [handleDelete],
+  );
 
   const useAiIdea = (idea: { title: string; description: string; genre?: string }) => {
     setEditItem(null);
@@ -473,9 +497,9 @@ export function PeliculasPage() {
                     groupId={group?.id}
                     userId={user?.id}
                     highlighted={item.id === highlightedId}
-                    onEdit={() => openEdit(item)}
-                    onDelete={() => handleDelete(item.id)}
-                    onToggleWatched={() => handleToggleWatched(item)}
+                    onEdit={handleEditById}
+                    onDelete={handleDeleteById}
+                    onToggleWatched={handleToggleWatchedById}
                   />
                 ))}
               </AnimatePresence>
@@ -498,9 +522,9 @@ export function PeliculasPage() {
                     groupId={group?.id}
                     userId={user?.id}
                     highlighted={item.id === highlightedId}
-                    onEdit={() => openEdit(item)}
-                    onDelete={() => handleDelete(item.id)}
-                    onToggleWatched={() => handleToggleWatched(item)}
+                    onEdit={handleEditById}
+                    onDelete={handleDeleteById}
+                    onToggleWatched={handleToggleWatchedById}
                   />
                 ))}
               </AnimatePresence>

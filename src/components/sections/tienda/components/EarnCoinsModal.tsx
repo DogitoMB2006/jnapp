@@ -23,7 +23,7 @@ interface EarnCoinsModalProps {
 export function EarnCoinsModal({ isOpen, onClose, userId }: EarnCoinsModalProps) {
   const { i18n } = useTranslation()
   const lang = i18n.language === "en" ? "en" : "es"
-  const { group } = useGroupStore()
+  const group = useGroupStore((s) => s.group)
   const { earnCoins } = useStoreStore()
 
   const [watching, setWatching] = useState(false)

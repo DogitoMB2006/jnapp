@@ -28,9 +28,9 @@ export const useGroupThemeSync = (groupId: string | undefined) => {
     },
     {
       enabled: !!groupId,
-      fastPollMs: 800,
-      slowPollMs: 4_000,
-      backgroundPollMs: 2_000,
+      fastPollMs: 650,
+      slowPollMs: 12_000,
+      backgroundPollMs: 4_000,
     }
   )
 

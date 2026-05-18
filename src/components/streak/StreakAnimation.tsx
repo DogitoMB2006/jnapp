@@ -25,10 +25,12 @@ function FireSVG({
 }) {
   const id = `fg-${primary.replace("#", "")}`
   return (
-    <div
+    <motion.div
       style={{
         filter: `drop-shadow(0 0 28px ${glow}) drop-shadow(0 0 56px ${glow})`,
       }}
+      animate={{ scale: [1, 1.05, 1], opacity: [0.9, 1, 0.9] }}
+      transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
     >
       <svg
         width={size}
@@ -60,59 +62,18 @@ function FireSVG({
           </radialGradient>
         </defs>
 
-        {/* Outer flame */}
-        <motion.path
+        <path
           d="M50 128C24 128 8 112 8 90C8 68 22 54 32 42C26 58 34 68 42 74C34 58 38 40 46 26C42 40 50 52 58 60C64 48 62 30 54 16C72 32 92 56 92 90C92 112 76 128 50 128Z"
           fill={`url(#${id}-outer)`}
-          animate={{
-            d: [
-              "M50 128C24 128 8 112 8 90C8 68 22 54 32 42C26 58 34 68 42 74C34 58 38 40 46 26C42 40 50 52 58 60C64 48 62 30 54 16C72 32 92 56 92 90C92 112 76 128 50 128Z",
-              "M50 128C26 128 8 110 8 90C8 68 24 56 30 44C28 60 36 70 44 72C36 56 40 38 48 24C44 38 52 50 60 58C66 46 63 28 56 14C74 30 92 56 92 90C92 112 74 128 50 128Z",
-              "M50 128C22 128 8 113 8 90C8 68 20 52 34 40C28 56 36 66 44 72C36 58 40 42 46 28C42 42 50 54 57 63C63 50 62 32 53 18C70 34 92 58 92 90C92 112 76 128 50 128Z",
-              "M50 128C24 128 8 112 8 90C8 68 22 54 32 42C26 58 34 68 42 74C34 58 38 40 46 26C42 40 50 52 58 60C64 48 62 30 54 16C72 32 92 56 92 90C92 112 76 128 50 128Z",
-            ],
-          }}
-          transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
         />
-
-        {/* Middle flame */}
-        <motion.path
+        <path
           d="M50 112C32 112 20 100 20 84C20 68 30 60 36 52C34 62 40 70 46 74C40 62 42 50 46 40C44 50 52 58 58 64C62 56 60 44 56 34C66 44 80 62 80 84C80 100 68 112 50 112Z"
           fill={`url(#${id}-mid)`}
-          animate={{
-            d: [
-              "M50 112C32 112 20 100 20 84C20 68 30 60 36 52C34 62 40 70 46 74C40 62 42 50 46 40C44 50 52 58 58 64C62 56 60 44 56 34C66 44 80 62 80 84C80 100 68 112 50 112Z",
-              "M50 112C30 112 20 102 20 84C20 66 32 58 38 50C36 62 42 70 48 72C42 62 44 48 48 38C46 50 54 60 60 66C64 56 62 42 58 32C68 42 80 60 80 84C80 102 68 112 50 112Z",
-              "M50 112C34 112 20 98 20 84C20 70 28 62 34 54C32 64 38 72 44 76C38 64 40 52 44 42C42 52 50 60 56 66C60 58 58 46 54 36C64 46 80 64 80 84C80 100 66 112 50 112Z",
-              "M50 112C32 112 20 100 20 84C20 68 30 60 36 52C34 62 40 70 46 74C40 62 42 50 46 40C44 50 52 58 58 64C62 56 60 44 56 34C66 44 80 62 80 84C80 100 68 112 50 112Z",
-            ],
-          }}
-          transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut", delay: 0.15 }}
         />
-
-        {/* Inner hot core */}
-        <motion.ellipse
-          cx="50"
-          cy="94"
-          rx="14"
-          ry="20"
-          fill={`url(#${id}-inner)`}
-          animate={{ rx: [14, 12, 15, 14], ry: [20, 22, 19, 20], cy: [94, 93, 95, 94] }}
-          transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut", delay: 0.05 }}
-        />
-
-        {/* White hot center glow */}
-        <motion.ellipse
-          cx="50"
-          cy="98"
-          rx="7"
-          ry="10"
-          fill={`url(#${id}-core)`}
-          animate={{ rx: [7, 6, 8, 7], ry: [10, 11, 9, 10] }}
-          transition={{ duration: 0.6, repeat: Infinity, ease: "easeInOut" }}
-        />
+        <ellipse cx="50" cy="94" rx="14" ry="20" fill={`url(#${id}-inner)`} />
+        <ellipse cx="50" cy="98" rx="7" ry="10" fill={`url(#${id}-core)`} />
       </svg>
-    </div>
+    </motion.div>
   )
 }
 

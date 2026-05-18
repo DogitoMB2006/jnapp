@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react"
+import { memo, useEffect, useMemo, useRef, useState } from "react"
 import { AnimatePresence, motion, useAnimationControls } from "framer-motion"
+import { usePrefersReducedMotion } from "../../lib/motion"
 import { MessageCircle, SmilePlus, Send, Pencil, Trash2, Reply } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Modal } from "./Modal"
@@ -22,7 +23,7 @@ const formatTime = (iso: string) =>
     minute: "2-digit",
   })
 
-function CommentNode({
+const CommentNode = memo(function CommentNode({
   node,
   depth,
   currentUserId,
@@ -36,6 +37,7 @@ function CommentNode({
   onReply,
   activeActionId,
   onActiveActionIdChange,
+  animateEnter = true,
 }: {
   node: PostCommentNode
   depth: number
@@ -50,8 +52,10 @@ function CommentNode({
   onReply: (node: PostCommentNode) => void
   activeActionId: string | null
   onActiveActionIdChange: (commentId: string | null) => void
+  animateEnter?: boolean
 }) {
   const { t } = useTranslation()
+  const reducedMotion = usePrefersReducedMotion()
   const indent = Math.min(depth * 10, 24)
   const isMine = currentUserId === node.user_id
   const isEditing = editingId === node.id
@@ -89,9 +93,9 @@ function CommentNode({
     <motion.div
       className="w-full"
       style={{ paddingLeft: `${indent}px` }}
-      initial={{ opacity: 0, y: 10, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ type: "spring", damping: 24, stiffness: 360 }}
+      initial={animateEnter && !reducedMotion ? { opacity: 0, y: 8 } : false}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="group relative flex gap-2.5">
         {depth > 0 ? <div className="absolute -left-2 top-2 h-[calc(100%-8px)] w-px bg-primary/20" /> : null}
@@ -238,10 +242,23 @@ function CommentNode({
       ) : null}
     </motion.div>
   )
-}
+})
 
 export function PostInteractions({ targetType, targetId, groupId, userId }: Props) {
   const { t } = useTranslation()
+  const rootRef = useRef<HTMLDivElement>(null)
+  const [inView, setInView] = useState(false)
+  const [showEmojiMenu, setShowEmojiMenu] = useState(false)
+  const [customEmoji, setCustomEmoji] = useState("")
+  const [showComments, setShowComments] = useState(false)
+  const [commentInput, setCommentInput] = useState("")
+  const [replyTarget, setReplyTarget] = useState<PostCommentNode | null>(null)
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
+  const [editingCommentValue, setEditingCommentValue] = useState("")
+  const [activeActionCommentId, setActiveActionCommentId] = useState<string | null>(null)
+
+  const shouldLoad = inView || showComments || showEmojiMenu
+
   const {
     defaultEmojis,
     reactionsSummary,
@@ -252,22 +269,32 @@ export function PostInteractions({ targetType, targetId, groupId, userId }: Prop
     addComment,
     editComment,
     deleteComment,
+    ensureLoaded,
     refresh,
   } = usePostInteractions({
     targetType,
     targetId,
     groupId,
     userId,
+    shouldLoad,
   })
 
-  const [showEmojiMenu, setShowEmojiMenu] = useState(false)
-  const [customEmoji, setCustomEmoji] = useState("")
-  const [showComments, setShowComments] = useState(false)
-  const [commentInput, setCommentInput] = useState("")
-  const [replyTarget, setReplyTarget] = useState<PostCommentNode | null>(null)
-  const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
-  const [editingCommentValue, setEditingCommentValue] = useState("")
-  const [activeActionCommentId, setActiveActionCommentId] = useState<string | null>(null)
+  useEffect(() => {
+    if (shouldLoad) void ensureLoaded()
+  }, [shouldLoad, ensureLoaded])
+
+  useEffect(() => {
+    const el = rootRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) setInView(true)
+      },
+      { rootMargin: "120px 0px", threshold: 0.01 },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   const replyTargetName = useMemo(
     () =>
@@ -322,9 +349,11 @@ export function PostInteractions({ targetType, targetId, groupId, userId }: Prop
     }
   }
 
+  const animateComments = commentTree.length <= 10
+
   return (
     <>
-      <div className="mt-4 border-t border-white/10 pt-3">
+      <motion.div ref={rootRef} className="mt-4 border-t border-white/10 pt-3">
         {reactionsSummary.length > 0 ? (
           <div className="mb-2 flex flex-wrap gap-2">
             {reactionsSummary.map((item) => (
@@ -347,7 +376,10 @@ export function PostInteractions({ targetType, targetId, groupId, userId }: Prop
 
         <div className="grid grid-cols-2 gap-2">
           <motion.button
-            onClick={() => setShowEmojiMenu((prev) => !prev)}
+            onClick={() => {
+              setShowEmojiMenu((prev) => !prev)
+              void ensureLoaded()
+            }}
             whileTap={{ scale: 0.92 }}
             className="btn btn-sm min-h-12 w-full rounded-full border border-white/10 bg-base-200/70 px-3 shadow-sm"
           >
@@ -368,7 +400,7 @@ export function PostInteractions({ targetType, targetId, groupId, userId }: Prop
             </span>
           </motion.button>
         </div>
-      </div>
+      </motion.div>
 
       <Modal open={showComments} onClose={() => setShowComments(false)} title={t("postInteractions.commentsTitle")}>
         <div
@@ -393,6 +425,7 @@ export function PostInteractions({ targetType, targetId, groupId, userId }: Prop
                   onReply={(target) => setReplyTarget(target)}
                   activeActionId={activeActionCommentId}
                   onActiveActionIdChange={setActiveActionCommentId}
+                  animateEnter={animateComments}
                 />
               ))
             ) : (

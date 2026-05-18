@@ -101,7 +101,7 @@ export function LoginPage({ onGoToRegister }: LoginPageProps) {
       <div className="flex flex-1 flex-col items-center justify-center p-6 sm:p-8 relative overflow-hidden">
       {/* Background decorative hearts */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {[...Array(6)].map((_, i) => (
+        {[...Array(2)].map((_, i) => (
           <motion.div
             key={i}
             className="absolute text-primary/10"
@@ -131,11 +131,12 @@ export function LoginPage({ onGoToRegister }: LoginPageProps) {
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <motion.div
-            animate={{ scale: [1, 1.12, 1] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             className="mb-3"
           >
-            <img src="/icono.png" alt="Planivy" className="w-20 h-20 drop-shadow-lg" />
+            <img src="/icono.png" alt="Planivy" className="w-20 h-20 drop-shadow-lg" loading="lazy" decoding="async" />
           </motion.div>
           <h1 className="text-2xl font-extrabold text-base-content tracking-tight">
             Planivy

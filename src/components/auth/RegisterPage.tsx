@@ -613,7 +613,7 @@ export function RegisterPage({ onGoToLogin }: RegisterPageProps) {
           }}
         />
         {/* Floating hearts */}
-        {[...Array(4)].map((_, i) => (
+        {[...Array(2)].map((_, i) => (
           <motion.div
             key={i}
             className="absolute text-primary/8 select-none"
@@ -642,8 +642,11 @@ export function RegisterPage({ onGoToLogin }: RegisterPageProps) {
             src="/icono.png"
             alt="Planivy"
             className="w-14 h-14 drop-shadow-lg"
-            animate={{ scale: [1, 1.08, 1] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            loading="lazy"
+            decoding="async"
           />
           <span className="text-base font-extrabold text-base-content/70 tracking-widest text-xs uppercase">
             Planivy
@@ -689,11 +692,11 @@ export function RegisterPage({ onGoToLogin }: RegisterPageProps) {
                     <motion.div
                       key={n}
                       animate={{
-                        width: n === stepNum ? 20 : 6,
+                        scaleX: n === stepNum ? 1 : 0.35,
                         opacity: n <= stepNum ? 1 : 0.25,
                       }}
                       transition={spring}
-                      className="h-1.5 rounded-full bg-primary"
+                      className="h-1.5 w-5 origin-left rounded-full bg-primary"
                     />
                   ))}
                 </div>

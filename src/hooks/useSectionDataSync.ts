@@ -1,11 +1,11 @@
 import { useEffect, useRef } from "react"
 import insforge from "../lib/insforge"
 
-/** Tab in background — aggressive; browsers may still clamp (often ≥1s). */
-const POLL_MS_BACKGROUND = 400
+/** Tab in background — safety net only; browsers may still clamp (often ≥1s). */
+const POLL_MS_BACKGROUND = 4_000
 
-/** Tab visible + WebSocket connected — safety net when events are delayed. */
-const POLL_MS_VISIBLE_CONNECTED = 2_500
+/** Tab visible + WebSocket connected — light safety poll. */
+const POLL_MS_VISIBLE_CONNECTED = 12_000
 
 /** Tab visible + WebSocket down — REST catch-up. */
 const POLL_MS_VISIBLE_DISCONNECTED = 650

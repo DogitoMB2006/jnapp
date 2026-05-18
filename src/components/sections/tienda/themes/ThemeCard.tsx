@@ -1,6 +1,8 @@
+import { memo } from "react"
 import { motion } from "framer-motion"
 import { Check, Coins, Lock, Sparkles } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { staggerDelay, springSnappy, tapScale } from "../../../../lib/motion"
 import type { ThemeDef } from "../../../../types"
 
 interface ThemeCardProps {
@@ -20,61 +22,44 @@ const RARITY_LABELS: Record<string, { en: string; es: string; color: string }> =
   legendary: { en: "Legendary", es: "Legendario", color: "#fbbf24" },
 }
 
-const ThemePreviewMock = ({ theme }: { theme: ThemeDef }) => {
+const ThemePreviewMock = ({
+  theme,
+  ambient,
+}: {
+  theme: ThemeDef
+  ambient: boolean
+}) => {
   const { primary, secondary, accent, bg, text } = theme.preview
   return (
-    <motion.div
-      className="relative mx-auto w-full max-w-[220px] overflow-hidden rounded-[1.35rem] border border-white/10 shadow-lg"
+    <div
+      className={`relative mx-auto w-full max-w-[220px] overflow-hidden rounded-[1.35rem] border border-white/10 shadow-lg transition-transform duration-200 hover:scale-[1.02] ${
+        ambient ? "theme-preview-ambient" : ""
+      }`}
       style={{
         background: `linear-gradient(160deg, ${bg} 0%, color-mix(in srgb, ${bg} 70%, ${primary} 30%) 100%)`,
         aspectRatio: "9 / 14",
+        ["--theme-primary" as string]: primary,
       }}
-      whileHover={{ scale: 1.02 }}
-      transition={{ type: "spring", stiffness: 400, damping: 28 }}
     >
       <motion.div
         aria-hidden
-        className="absolute -right-6 -top-6 h-24 w-24 rounded-full opacity-60 blur-2xl"
+        className="absolute -right-4 -top-4 h-16 w-16 rounded-full opacity-40"
         style={{ background: primary }}
-        animate={{ opacity: [0.35, 0.65, 0.35] }}
-        transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
       />
-      <div className="relative flex items-center justify-between px-3 pt-2.5">
-        <motion.div
-          className="h-1.5 w-1.5 rounded-full"
-          style={{ background: primary }}
-          animate={{ scale: [1, 1.2, 1] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        />
-        <motion.div
-          className="h-1.5 w-1.5 rounded-full"
-          style={{ background: secondary }}
-          animate={{ scale: [1, 1.2, 1] }}
-          transition={{ duration: 2, repeat: Infinity, delay: 0.3 }}
-        />
-        <motion.div
-          className="h-1.5 w-1.5 rounded-full"
-          style={{ background: accent }}
-          animate={{ scale: [1, 1.2, 1] }}
-          transition={{ duration: 2, repeat: Infinity, delay: 0.6 }}
-        />
-      </div>
+      <motion.div className="relative flex items-center justify-between px-3 pt-2.5">
+        <div className="h-1.5 w-1.5 rounded-full" style={{ background: primary }} />
+        <motion.div className="h-1.5 w-1.5 rounded-full" style={{ background: secondary }} />
+        <motion.div className="h-1.5 w-1.5 rounded-full" style={{ background: accent }} />
+      </motion.div>
       <motion.div
         className="relative mx-3 mt-2 rounded-xl px-2.5 py-2"
         style={{ background: `${primary}22`, border: `1px solid ${primary}33` }}
-        animate={{ y: [0, -2, 0] }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
       >
         <div className="h-1 w-8 rounded-full opacity-80" style={{ background: text }} />
-        <motion.div
-          className="mt-1.5 h-1 w-full rounded-full opacity-40"
-          style={{ background: text }}
-          animate={{ opacity: [0.25, 0.5, 0.25] }}
-          transition={{ duration: 2.5, repeat: Infinity }}
-        />
+        <div className="mt-1.5 h-1 w-full rounded-full opacity-35" style={{ background: text }} />
         <div className="mt-1 h-1 w-2/3 rounded-full opacity-25" style={{ background: text }} />
       </motion.div>
-      <div className="absolute bottom-3 left-3 right-3 flex gap-1">
+      <motion.div className="absolute bottom-3 left-3 right-3 flex gap-1">
         {[primary, secondary, accent].map((c, i) => (
           <div
             key={i}
@@ -82,12 +67,12 @@ const ThemePreviewMock = ({ theme }: { theme: ThemeDef }) => {
             style={{ background: c }}
           />
         ))}
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   )
 }
 
-export function ThemeCard({
+export const ThemeCard = memo(function ThemeCard({
   theme,
   owned,
   equipped,
@@ -101,6 +86,7 @@ export function ThemeCard({
   const name = lang === "en" ? theme.nameEn : theme.nameEs
   const rarity = RARITY_LABELS[theme.rarity] ?? RARITY_LABELS.common
   const rarityLabel = lang === "en" ? rarity.en : rarity.es
+  const showAmbient = featured || equipped
 
   const handleCardPress = () => {
     if (equipped) return
@@ -112,35 +98,33 @@ export function ThemeCard({
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.06, type: "spring", stiffness: 300, damping: 28 }}
+      transition={{ ...springSnappy, delay: staggerDelay(index) }}
       className={`relative overflow-hidden rounded-3xl border bg-base-200/30 backdrop-blur-sm transition-shadow duration-300 ${
         equipped
-          ? "border-primary/50 shadow-[0_0_40px_rgba(255,45,107,0.15)]"
-          : "border-base-300/80 hover:border-base-content/15 hover:shadow-xl hover:shadow-black/20"
+          ? "border-primary/50 shadow-[0_0_32px_rgba(255,45,107,0.12)]"
+          : "border-base-300/80 hover:border-base-content/15 hover:shadow-lg hover:shadow-black/15"
       } ${featured ? "p-5" : "p-4"}`}
     >
-      {equipped && (
-        <motion.div
+      {showAmbient && (
+        <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-gradient-to-b via-transparent to-transparent"
+          className="pointer-events-none absolute inset-0 theme-card-ambient"
           style={{
-            background: `linear-gradient(to bottom, color-mix(in srgb, ${theme.preview.primary} 12%, transparent), transparent)`,
+            background: `linear-gradient(to bottom, color-mix(in srgb, ${theme.preview.primary} 10%, transparent), transparent)`,
           }}
-          animate={{ opacity: [0.5, 0.9, 0.5] }}
-          transition={{ duration: 3, repeat: Infinity }}
         />
       )}
 
-      <div className={`relative flex flex-col gap-4 ${featured ? "sm:flex-row sm:items-center sm:gap-6" : ""}`}>
-        <div className={featured ? "sm:flex-1 flex justify-center" : "flex justify-center pt-1"}>
-          <ThemePreviewMock theme={theme} />
-        </div>
+      <motion.div className={`relative flex flex-col gap-4 ${featured ? "sm:flex-row sm:items-center sm:gap-6" : ""}`}>
+        <motion.div className={featured ? "sm:flex-1 flex justify-center" : "flex justify-center pt-1"}>
+          <ThemePreviewMock theme={theme} ambient={showAmbient} />
+        </motion.div>
 
-        <div className={`relative flex flex-col gap-3 ${featured ? "sm:flex-1 sm:min-w-0" : ""}`}>
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
+        <motion.div className={`relative flex flex-col gap-3 ${featured ? "sm:flex-1 sm:min-w-0" : ""}`}>
+          <motion.div className="flex items-start justify-between gap-2">
+            <motion.div className="min-w-0">
               <h3 className="font-bold text-base text-base-content truncate">{name}</h3>
               <span
                 className="mt-1 inline-block rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
@@ -151,24 +135,21 @@ export function ThemeCard({
               >
                 {rarityLabel}
               </span>
-            </div>
+            </motion.div>
             {equipped && (
               <span className="flex shrink-0 items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-[10px] font-bold text-primary">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
-                </span>
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
                 {t("store.on")}
               </span>
             )}
-          </div>
+          </motion.div>
 
           <motion.button
             type="button"
-            whileTap={isInteractive ? { scale: 0.98 } : {}}
+            {...(isInteractive ? tapScale : {})}
             onClick={handleCardPress}
             disabled={equipped}
-            className={`w-full rounded-2xl py-3 text-sm font-bold transition-all duration-200 disabled:cursor-default ${
+            className={`w-full rounded-2xl py-3 text-sm font-bold transition-colors duration-200 disabled:cursor-default ${
               equipped
                 ? "bg-base-300/50 text-base-content/50"
                 : owned
@@ -192,8 +173,8 @@ export function ThemeCard({
               </span>
             )}
           </motion.button>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </motion.article>
   )
-}
+})

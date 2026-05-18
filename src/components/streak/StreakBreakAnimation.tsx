@@ -43,7 +43,11 @@ function DyingFireSVG({
   const id = `df-${Math.round(fadeRatio * 100)}`
 
   return (
-    <div style={{ opacity, filter: `drop-shadow(0 0 ${18 - fadeRatio * 14}px ${col1})` }}>
+    <motion.div
+      style={{ opacity, filter: `drop-shadow(0 0 ${18 - fadeRatio * 14}px ${col1})` }}
+      animate={{ scale: [1, 1.03, 1], y: [0, -2, 0] }}
+      transition={{ duration: 1.6 + fadeRatio, repeat: Infinity, ease: "easeInOut" }}
+    >
       <svg
         width={size}
         height={size * 1.3}
@@ -64,64 +68,25 @@ function DyingFireSVG({
           </linearGradient>
         </defs>
 
-        {/* Outer flame — shrinks as ratio increases */}
-        <motion.path
+        <path
           d="M50 126C24 126 8 110 8 88C8 66 22 52 32 40C26 56 34 66 42 72C34 56 38 38 46 24C42 38 50 50 58 58C64 46 62 28 54 14C72 30 92 54 92 88C92 110 76 126 50 126Z"
           fill={`url(#${id}-outer)`}
-          animate={{
-            d: [
-              "M50 126C24 126 8 110 8 88C8 66 22 52 32 40C26 56 34 66 42 72C34 56 38 38 46 24C42 38 50 50 58 58C64 46 62 28 54 14C72 30 92 54 92 88C92 110 76 126 50 126Z",
-              "M50 126C26 126 9 109 9 88C9 67 23 53 33 41C28 57 35 67 43 71C36 57 39 39 47 25C43 39 51 51 59 59C65 47 63 29 55 15C73 31 91 55 91 88C91 110 74 126 50 126Z",
-              "M50 126C24 126 8 110 8 88C8 66 22 52 32 40C26 56 34 66 42 72C34 56 38 38 46 24C42 38 50 50 58 58C64 46 62 28 54 14C72 30 92 54 92 88C92 110 76 126 50 126Z",
-            ],
-          }}
-          transition={{
-            duration: 1.8 + fadeRatio * 0.8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
         />
-
-        {/* Inner core */}
-        <motion.ellipse
+        <ellipse
           cx="50"
           cy="96"
           rx={13 - fadeRatio * 5}
           ry={18 - fadeRatio * 8}
           fill={`url(#${id}-inner)`}
-          animate={{
-            ry: [18 - fadeRatio * 8, 20 - fadeRatio * 8, 17 - fadeRatio * 8, 18 - fadeRatio * 8],
-          }}
-          transition={{ duration: 1.2 + fadeRatio, repeat: Infinity, ease: "easeInOut" }}
         />
-
-        {/* Smoke wisps when dying (fadeRatio > 0.5) */}
         {fadeRatio > 0.4 && (
           <>
-            <motion.ellipse
-              cx="44"
-              cy="14"
-              rx="4"
-              ry="6"
-              fill="#6B7280"
-              opacity={fadeRatio - 0.4}
-              animate={{ cy: [14, 6, 14], rx: [4, 6, 4], opacity: [fadeRatio - 0.4, 0, fadeRatio - 0.4] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
-            />
-            <motion.ellipse
-              cx="56"
-              cy="18"
-              rx="3"
-              ry="5"
-              fill="#4B5563"
-              opacity={fadeRatio - 0.4}
-              animate={{ cy: [18, 8, 18], rx: [3, 5, 3], opacity: [fadeRatio - 0.4, 0, fadeRatio - 0.4] }}
-              transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut", delay: 0.3 }}
-            />
+            <ellipse cx="44" cy="14" rx="4" ry="6" fill="#6B7280" opacity={fadeRatio - 0.4} />
+            <ellipse cx="56" cy="18" rx="3" ry="5" fill="#4B5563" opacity={(fadeRatio - 0.4) * 0.85} />
           </>
         )}
       </svg>
-    </div>
+    </motion.div>
   )
 }
 

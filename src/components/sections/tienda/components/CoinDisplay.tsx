@@ -13,8 +13,8 @@ type CoinDisplayProps = {
 export function CoinDisplay({ variant = "default" }: CoinDisplayProps) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language === "en" ? "en" : "es"
-  const { coins } = useStoreStore()
-  const { user } = useAuthStore()
+  const coins = useStoreStore((s) => s.coins)
+  const user = useAuthStore((s) => s.user)
   const [modalOpen, setModalOpen] = useState(false)
 
   const isPill = variant === "pill"

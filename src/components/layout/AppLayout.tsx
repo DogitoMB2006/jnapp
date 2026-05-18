@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { crossfadeTransition } from "../../lib/motion";
 import { useTranslation } from "react-i18next";
 import { RefreshCw } from "lucide-react";
 import { BottomNav } from "./BottomNav";
@@ -20,18 +21,18 @@ import { useGroupThemeSync } from "../../hooks/useGroupThemeSync";
 import { useRealtime } from "../../hooks/useRealtime";
 import { useSectionSwipe } from "../../hooks/useSectionSwipe";
 import { parseTableChangePayload } from "../../lib/realtimePayload";
-import { NAV_SECTION_ORDER } from "../../lib/sectionOrder";
 import { emitSectionRefresh } from "../../lib/sectionRefreshEvent";
 import { lightHaptic } from "../../lib/mobileHaptics";
 import type { Section } from "../../types";
 
 export function AppLayout() {
   const [section, setSection] = useState<Section>("lista");
-  const { profile } = useAuthStore();
+  const profile = useAuthStore((s) => s.profile);
   const { t } = useTranslation();
-  const { group } = useGroupStore();
-  const { pendingSection, clearPendingSection } = useNavigationStore();
-  const { fetchStore } = useStoreStore();
+  const group = useGroupStore((s) => s.group);
+  const pendingSection = useNavigationStore((s) => s.pendingSection);
+  const clearPendingSection = useNavigationStore((s) => s.clearPendingSection);
+  const fetchStore = useStoreStore((s) => s.fetchStore);
 
   // Bootstrap store when group is known
   useEffect(() => {
@@ -78,8 +79,6 @@ export function AppLayout() {
     clearPendingSection();
   }, [pendingSection, clearPendingSection]);
   const contentScrollRef = useRef<HTMLDivElement>(null);
-  const prevSectionRef = useRef<Section>(section);
-  const [slideDir, setSlideDir] = useState(0);
   const swipe = useSectionSwipe(section, setSection);
 
   const scrollContentToTop = useCallback(() => {
@@ -90,18 +89,6 @@ export function AppLayout() {
     emitSectionRefresh(section);
     lightHaptic();
   }, [section]);
-
-  useLayoutEffect(() => {
-    const prev = prevSectionRef.current
-    const a = NAV_SECTION_ORDER.indexOf(prev)
-    const b = NAV_SECTION_ORDER.indexOf(section)
-    if (a >= 0 && b >= 0) {
-      setSlideDir(b > a ? 1 : b < a ? -1 : 0)
-    } else {
-      setSlideDir(0)
-    }
-    prevSectionRef.current = section
-  }, [section])
 
   const handleTabRequest = useCallback(
     (id: Section) => {
@@ -116,20 +103,18 @@ export function AppLayout() {
     [section, scrollContentToTop],
   );
 
-  const enterX = slideDir * 36
-  const exitX = enterX === 0 ? 0 : -enterX * 0.9
-
   return (
     <div className="flex flex-col h-screen bg-base-100 overflow-hidden select-none">
       <CustomTitleBar />
       <header className="flex items-center justify-between gap-1.5 px-3.5 sm:px-4 py-3.5 pt-[max(0.75rem,env(safe-area-inset-top,0px))] bg-base-100/80 backdrop-blur-sm border-b border-base-300 flex-shrink-0 min-h-[3.25rem]">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <motion.div
-            animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={crossfadeTransition}
             className="shrink-0"
           >
-            <img src="/icono.png" alt="Planivy" className="w-9 h-9" />
+            <img src="/icono.png" alt="Planivy" className="w-9 h-9" loading="lazy" decoding="async" />
           </motion.div>
           <button
             type="button"
@@ -158,22 +143,14 @@ export function AppLayout() {
       </header>
 
       <main className="flex-1 overflow-hidden">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="sync">
           <motion.div
             key={section}
             ref={contentScrollRef}
-            initial={{
-              opacity: 0,
-              x: slideDir === 0 ? 0 : enterX,
-              y: slideDir === 0 ? 8 : 0,
-            }}
-            animate={{ opacity: 1, x: 0, y: 0 }}
-            exit={{
-              opacity: 0,
-              x: slideDir === 0 ? 0 : exitX,
-              y: slideDir === 0 ? -4 : 0,
-            }}
-            transition={{ type: "spring", stiffness: 400, damping: 34, mass: 0.6 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={crossfadeTransition}
             className="h-full overflow-y-auto overscroll-behavior-y-contain pb-[max(6.25rem,env(safe-area-inset-bottom,0px))] px-4 pt-4 sm:pt-5"
             onPointerDown={swipe.onPointerDown}
             onPointerUp={swipe.onPointerUp}
