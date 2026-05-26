@@ -19,7 +19,7 @@ export function TiendaPage() {
   }, [])
 
   return (
-    <div className="flex flex-col gap-6 pb-6">
+    <div className="flex flex-col gap-4 pb-6 sm:gap-6">
       <StoreHeader activeTab={activeTab} />
 
       <StoreCategoryRail active={activeTab} onSelect={setActiveTab} />

@@ -1,6 +1,6 @@
 import { memo } from "react"
 import { motion } from "framer-motion"
-import { Check, Coins, Lock, Sparkles } from "lucide-react"
+import { Check, Coins, Lock } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { staggerDelay, springSnappy, tapScale } from "../../../../lib/motion"
 import type { ThemeDef } from "../../../../types"
@@ -101,10 +101,10 @@ export const ThemeCard = memo(function ThemeCard({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ ...springSnappy, delay: staggerDelay(index) }}
-      className={`relative overflow-hidden rounded-3xl border bg-base-200/30 backdrop-blur-sm transition-shadow duration-300 ${
+      className={`relative overflow-hidden rounded-3xl border bg-base-200/45 backdrop-blur-sm transition-all duration-300 ${
         equipped
           ? "border-primary/50 shadow-[0_0_32px_rgba(255,45,107,0.12)]"
-          : "border-base-300/80 hover:border-base-content/15 hover:shadow-lg hover:shadow-black/15"
+          : "border-base-300/80 hover:-translate-y-0.5 hover:border-base-content/15 hover:shadow-lg hover:shadow-black/15"
       } ${featured ? "p-5" : "p-4"}`}
     >
       {showAmbient && (
@@ -149,12 +149,12 @@ export const ThemeCard = memo(function ThemeCard({
             {...(isInteractive ? tapScale : {})}
             onClick={handleCardPress}
             disabled={equipped}
-            className={`w-full rounded-2xl py-3 text-sm font-bold transition-colors duration-200 disabled:cursor-default ${
+            className={`flex min-h-11 w-full items-center justify-center rounded-2xl px-4 py-3 text-sm font-bold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 disabled:cursor-default ${
               equipped
                 ? "bg-base-300/50 text-base-content/50"
                 : owned
-                  ? "bg-primary text-primary-content shadow-md shadow-primary/25 hover:brightness-110"
-                  : "border border-warning/30 bg-warning/10 text-warning hover:bg-warning/15"
+                  ? "bg-primary text-primary-content shadow-md shadow-primary/25 hover:-translate-y-0.5 hover:brightness-110"
+                  : "border border-warning/30 bg-warning/10 text-warning hover:border-warning/45 hover:bg-warning/15"
             }`}
           >
             {equipped ? (
@@ -163,11 +163,13 @@ export const ThemeCard = memo(function ThemeCard({
                 {t("store.equipped")}
               </span>
             ) : owned ? (
-              t("store.equip")
+              <span className="inline-flex items-center gap-1.5">
+                <Check size={15} strokeWidth={2.5} aria-hidden />
+                {t("store.equip")}
+              </span>
             ) : (
               <span className="inline-flex items-center justify-center gap-2">
                 <Lock size={14} strokeWidth={2.5} aria-hidden />
-                <Sparkles size={14} strokeWidth={2} aria-hidden />
                 <Coins size={14} strokeWidth={2.25} aria-hidden />
                 {t("store.coinsPrice", { count: theme.cost })}
               </span>

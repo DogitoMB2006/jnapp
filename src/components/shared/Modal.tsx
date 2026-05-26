@@ -28,14 +28,8 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
 
           {/* Sheet */}
           <motion.div
-            className="relative w-full z-10 overflow-hidden"
-            style={{
-              background: "linear-gradient(160deg, #1a0825 0%, #150620 100%)",
-              borderTop: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "28px 28px 0 0",
-              boxShadow: "0 -8px 48px rgba(0,0,0,0.6), 0 -1px 0 rgba(255,45,107,0.15)",
-              maxHeight: "88vh",
-            }}
+            className="relative z-10 w-full overflow-hidden rounded-t-[28px] border-t border-base-300 bg-base-200 shadow-[0_-8px_48px_rgba(0,0,0,0.45),0_-1px_0_hsl(var(--p)/0.18)]"
+            style={{ maxHeight: "88vh" }}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -43,41 +37,20 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
           >
             {/* Drag handle */}
             <div className="flex justify-center pt-3 pb-1">
-              <div
-                className="rounded-full"
-                style={{
-                  width: "36px",
-                  height: "4px",
-                  background: "rgba(255,255,255,0.15)",
-                }}
-              />
+              <div className="h-1 w-9 rounded-full bg-base-content/15" />
             </div>
 
             {/* Scrollable content */}
             <div style={{ overflowY: "auto", maxHeight: "calc(88vh - 20px)" }}>
               {/* Header */}
               <div className="flex items-center justify-between px-6 pt-3 pb-4">
-                <h3
-                  className="font-bold text-base-content"
-                  style={{
-                    fontSize: "18px",
-                    letterSpacing: "-0.02em",
-                    background: "linear-gradient(90deg, #fff 60%, rgba(255,255,255,0.5) 100%)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                  }}
-                >
+                <h3 className="text-lg font-bold tracking-tight text-base-content">
                   {title}
                 </h3>
                 <motion.button
                   whileTap={{ scale: 0.88 }}
                   onClick={onClose}
-                  className="btn btn-ghost btn-sm btn-circle"
-                  style={{
-                    background: "rgba(255,255,255,0.06)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    color: "rgba(255,255,255,0.6)",
-                  }}
+                  className="btn btn-ghost btn-sm btn-circle border border-base-300 bg-base-100/60 text-base-content/60 hover:text-base-content"
                 >
                   <X size={16} />
                 </motion.button>

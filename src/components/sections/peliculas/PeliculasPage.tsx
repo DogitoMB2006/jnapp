@@ -604,7 +604,7 @@ export function PeliculasPage() {
 
           {/* Poster preview or upload button */}
           {form.posterUrl ? (
-            <div className="rounded-xl overflow-hidden relative" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
+            <div className="relative overflow-hidden rounded-xl border border-base-300">
               <img
                 src={form.posterUrl}
                 alt="Preview"
@@ -618,8 +618,7 @@ export function PeliculasPage() {
               />
               <button
                 onClick={() => setForm((f) => ({ ...f, posterUrl: "" }))}
-                className="absolute top-2 right-2 btn btn-circle btn-xs"
-                style={{ background: "rgba(0,0,0,0.7)", border: "none", color: "white" }}
+                className="btn btn-circle btn-xs absolute right-2 top-2 border-base-300 bg-base-200/90 text-base-content shadow-lg"
               >
                 <X size={12} />
               </button>
@@ -629,15 +628,7 @@ export function PeliculasPage() {
               whileTap={{ scale: 0.97 }}
               onClick={() => posterFileRef.current?.click()}
               disabled={uploadingPoster}
-              className="flex items-center justify-center gap-2 w-full font-semibold"
-              style={{
-                background: "rgba(255,255,255,0.04)",
-                border: "1.5px dashed rgba(255,255,255,0.12)",
-                borderRadius: "14px",
-                padding: "14px",
-                color: "rgba(255,255,255,0.5)",
-                fontSize: "13px",
-              }}
+              className="flex w-full items-center justify-center gap-2 rounded-[14px] border border-dashed border-base-300 bg-base-200/70 p-3.5 text-sm font-semibold text-base-content/55 transition-colors hover:border-primary/45 hover:text-base-content disabled:cursor-default disabled:opacity-50"
             >
               {uploadingPoster ? (
                 <span className="loading loading-spinner loading-sm" />

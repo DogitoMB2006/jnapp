@@ -127,7 +127,16 @@ export type Section = "planes" | "lista" | "salidas" | "peliculas" | "tienda" | 
 
 // ─── Store / Themes ────────────────────────────────────────────────────────────
 
-export type ThemeId = "jnapp" | "jnapp-aurora" | "jnapp-sakura" | "jnapp-ocean"
+export type ThemeId =
+  | "jnapp"
+  | "jnapp-aurora"
+  | "jnapp-sakura"
+  | "jnapp-ocean"
+  | "jnapp-mint"
+  | "jnapp-ember"
+  | "jnapp-lavender"
+  | "jnapp-cosmic"
+  | "jnapp-noir"
 
 export type ThemeRarity = "common" | "uncommon" | "epic" | "legendary"
 

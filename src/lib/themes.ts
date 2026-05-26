@@ -2,6 +2,11 @@ import type { ThemeDef, ThemeId } from "../types"
 import { auroraTheme } from "../components/sections/tienda/themes/common/auroraTheme"
 import { sakuraTheme } from "../components/sections/tienda/themes/common/sakuraTheme"
 import { oceanTheme } from "../components/sections/tienda/themes/common/oceanTheme"
+import { cosmicTheme } from "../components/sections/tienda/themes/common/cosmicTheme"
+import { emberTheme } from "../components/sections/tienda/themes/common/emberTheme"
+import { lavenderTheme } from "../components/sections/tienda/themes/common/lavenderTheme"
+import { mintTheme } from "../components/sections/tienda/themes/common/mintTheme"
+import { noirTheme } from "../components/sections/tienda/themes/common/noirTheme"
 
 /** The built-in default theme — always free, always available. */
 export const DEFAULT_THEME: ThemeDef = {
@@ -24,6 +29,11 @@ export const PURCHASABLE_THEMES: ThemeDef[] = [
   auroraTheme,
   sakuraTheme,
   oceanTheme,
+  mintTheme,
+  emberTheme,
+  lavenderTheme,
+  cosmicTheme,
+  noirTheme,
 ]
 
 /** All themes including default. */

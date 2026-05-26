@@ -122,54 +122,57 @@ export function StreakBreakAnimation({ fromStreak, visible, onDismiss }: Props) 
 
   const [current, setCurrent] = useState(fromStreak)
   const [phase, setPhase] = useState<"counting" | "done">("counting")
-  const countingRef = useRef(false)
+  const [canDismiss, setCanDismiss] = useState(false)
+  const startTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const doneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleDismiss = useCallback(() => onDismiss(), [onDismiss])
 
-  // Reset state when animation becomes visible
+  // Countdown logic — use tracked refs so cleanup is reliable
   useEffect(() => {
     if (!visible) {
+      if (startTimerRef.current) clearTimeout(startTimerRef.current)
+      if (intervalRef.current) clearInterval(intervalRef.current)
+      if (doneTimerRef.current) clearTimeout(doneTimerRef.current)
       setCurrent(fromStreak)
       setPhase("counting")
-      countingRef.current = false
+      setCanDismiss(false)
       return
     }
-
-    if (countingRef.current) return
-    countingRef.current = true
 
     if (fromStreak <= 1) {
       setPhase("done")
       return
     }
 
-    // Pause briefly then count down
-    let cancelled = false
     let n = fromStreak
 
-    const tick = () => {
-      if (cancelled) return
-      n--
-      setCurrent(n)
+    startTimerRef.current = setTimeout(() => {
+      intervalRef.current = setInterval(() => {
+        n--
+        setCurrent(n)
+        if (n <= 1) {
+          if (intervalRef.current) clearInterval(intervalRef.current)
+          intervalRef.current = null
+          doneTimerRef.current = setTimeout(() => setPhase("done"), 500)
+        }
+      }, 150)
+    }, 900)
 
-      if (n <= 1) {
-        setTimeout(() => {
-          if (!cancelled) setPhase("done")
-        }, 500)
-        return
-      }
-
-      // Speed: fast at start, slightly slower near end for drama
-      const delay = n <= 5 ? 180 : n <= 10 ? 120 : 75
-      setTimeout(tick, delay)
-    }
-
-    const startTimer = setTimeout(tick, 900)
     return () => {
-      cancelled = true
-      clearTimeout(startTimer)
+      if (startTimerRef.current) clearTimeout(startTimerRef.current)
+      if (intervalRef.current) clearInterval(intervalRef.current)
+      if (doneTimerRef.current) clearTimeout(doneTimerRef.current)
     }
   }, [visible, fromStreak])
+
+  // Allow tap-to-dismiss after 1.5s regardless of phase
+  useEffect(() => {
+    if (!visible) { setCanDismiss(false); return }
+    const t = setTimeout(() => setCanDismiss(true), 1500)
+    return () => clearTimeout(t)
+  }, [visible])
 
   // Auto-dismiss 3s after countdown finishes
   useEffect(() => {
@@ -177,6 +180,13 @@ export function StreakBreakAnimation({ fromStreak, visible, onDismiss }: Props) 
     const t = setTimeout(handleDismiss, 3000)
     return () => clearTimeout(t)
   }, [phase, visible, handleDismiss])
+
+  // Absolute max lifetime — always dismisses after 14s
+  useEffect(() => {
+    if (!visible) return
+    const t = setTimeout(handleDismiss, 14000)
+    return () => clearTimeout(t)
+  }, [visible, handleDismiss])
 
   // Fade ratio: 0 (full color) → 1 (full grey) as current drops from fromStreak → 1
   const fadeRatio = fromStreak > 1 ? Math.max(0, Math.min(1, (fromStreak - current) / (fromStreak - 1))) : 1
@@ -192,11 +202,11 @@ export function StreakBreakAnimation({ fromStreak, visible, onDismiss }: Props) 
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          onClick={phase === "done" ? handleDismiss : undefined}
+          onClick={canDismiss ? handleDismiss : undefined}
           className="fixed inset-0 z-[9999] flex items-center justify-center"
           style={{
             background: "radial-gradient(ellipse at center, rgba(10,0,0,0.92) 0%, rgba(0,0,0,0.98) 100%)",
-            cursor: phase === "done" ? "pointer" : "default",
+            cursor: canDismiss ? "pointer" : "default",
           }}
         >
           {/* Background pulse (slow, dying) */}

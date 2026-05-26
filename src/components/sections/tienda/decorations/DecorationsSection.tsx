@@ -51,19 +51,19 @@ export function DecorationsSection() {
     if (!user) return
     try {
       await equipDecoration(user.id, decorId)
-      toast.success(t("store.decor.applied"), { icon: "✨" })
+      toast.success(t("store.decor.applied"))
     } catch {
       toast.error(t("store.decor.equipFail"))
     }
   }
 
   return (
-    <motion.div className="flex flex-col gap-4">
+    <motion.div className="flex flex-col gap-4 sm:gap-5">
       <motion.div
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
-        className="flex items-start gap-2.5 rounded-2xl border border-sky-500/15 bg-sky-500/8 px-4 py-3"
+        className="flex items-start gap-2.5 rounded-2xl border border-sky-500/15 bg-sky-500/10 px-4 py-3 shadow-sm shadow-sky-950/10"
       >
         <MessageCircle size={14} className="mt-0.5 shrink-0 text-sky-400" strokeWidth={2.25} aria-hidden />
         <p className="text-xs leading-relaxed text-base-content/60">{t("store.decor.hint")}</p>
@@ -88,7 +88,7 @@ export function DecorationsSection() {
       </motion.div>
 
       <motion.div
-        className="grid grid-cols-2 gap-3"
+        className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2 sm:gap-4"
         role="list"
         aria-label={t("store.decor.bubbleStyles")}
       >
@@ -96,7 +96,7 @@ export function DecorationsSection() {
           <motion.div
             key={featured.id}
             role="listitem"
-            className="col-span-2"
+            className="min-[390px]:col-span-2"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: staggerDelay(0, 0.05) }}

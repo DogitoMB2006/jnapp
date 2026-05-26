@@ -444,7 +444,7 @@ export function PostInteractions({ targetType, targetId, groupId, userId }: Prop
 
   return (
     <>
-      <motion.div ref={rootRef} className="mt-4 border-t border-white/10 pt-3">
+      <motion.div ref={rootRef} className="mt-4 border-t border-base-300/60 pt-3">
         {reactionsSummary.length > 0 ? (
           <div className="mb-2 flex flex-wrap gap-2">
             {reactionsSummary.map((item) => (
@@ -455,7 +455,7 @@ export function PostInteractions({ targetType, targetId, groupId, userId }: Prop
                 className={`btn btn-sm min-h-12 rounded-full px-4 shadow-sm transition-all duration-200 ${
                   item.reactedByMe
                     ? "btn-primary shadow-primary/25 animate-pulse-heart"
-                    : "btn-ghost border border-white/10 bg-base-200/60"
+                    : "btn-ghost border border-base-300/70 bg-base-200/60"
                 }`}
               >
                 <span className="text-lg leading-none">{item.emoji}</span>
@@ -472,7 +472,7 @@ export function PostInteractions({ targetType, targetId, groupId, userId }: Prop
               void ensureLoaded()
             }}
             whileTap={{ scale: 0.92 }}
-            className="btn btn-sm min-h-12 w-full rounded-full border border-white/10 bg-base-200/70 px-3 shadow-sm"
+            className="btn btn-sm min-h-12 w-full rounded-full border border-base-300/70 bg-base-200/70 px-3 shadow-sm"
           >
             <SmilePlus size={18} className="shrink-0" />
             <span className="min-w-0 truncate text-sm font-semibold">{t("postInteractions.react")}</span>
@@ -521,7 +521,7 @@ export function PostInteractions({ targetType, targetId, groupId, userId }: Prop
                 />
               ))
             ) : (
-              <div className="rounded-[28px] border border-dashed border-white/12 bg-base-200/40 px-5 py-10 text-center shadow-inner">
+              <div className="rounded-[28px] border border-dashed border-base-300 bg-base-200/40 px-5 py-10 text-center shadow-inner">
                 <MessageCircle className="mx-auto mb-3 text-primary/70" size={34} />
                 <p className="text-sm font-semibold text-base-content/70">
                   {t("postInteractions.noComments")}
@@ -548,7 +548,7 @@ export function PostInteractions({ targetType, targetId, groupId, userId }: Prop
             </motion.div>
           ) : null}
 
-          <div className="sticky bottom-0 mx-2 flex items-end gap-2 rounded-[28px] border border-white/10 bg-base-200/95 p-2 shadow-2xl shadow-black/25 backdrop-blur sm:mx-0">
+          <div className="sticky bottom-0 mx-2 flex items-end gap-2 rounded-[28px] border border-base-300 bg-base-200/95 p-2 shadow-2xl shadow-black/25 backdrop-blur sm:mx-0">
             <textarea
               value={commentInput}
               onChange={(e) => setCommentInput(e.target.value)}
@@ -583,13 +583,13 @@ export function PostInteractions({ targetType, targetId, groupId, userId }: Prop
                 key={emoji}
                 onClick={() => void handleEmojiClick(emoji)}
                 whileTap={{ scale: 0.85 }}
-                className="btn btn-ghost min-h-14 rounded-2xl border border-white/10 bg-base-200/70 px-2 shadow-sm"
+                className="btn btn-ghost min-h-14 rounded-2xl border border-base-300/70 bg-base-200/70 px-2 shadow-sm"
               >
                 <span className="text-2xl leading-none">{emoji}</span>
               </motion.button>
             ))}
           </div>
-          <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-base-200/70 p-2">
+          <div className="flex items-center gap-2 rounded-2xl border border-base-300/70 bg-base-200/70 p-2">
             <input
               value={customEmoji}
               onChange={(e) => setCustomEmoji(e.target.value)}

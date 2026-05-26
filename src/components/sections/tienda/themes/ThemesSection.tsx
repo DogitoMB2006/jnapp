@@ -57,9 +57,7 @@ export function ThemesSection() {
     setBusy(theme.id)
     try {
       await equipTheme(group.id, theme.id)
-      toast.success(lang === "en" ? `${theme.nameEn} equipped!` : `¡${theme.nameEs} equipado!`, {
-        icon: "🎨",
-      })
+      toast.success(lang === "en" ? `${theme.nameEn} equipped!` : `¡${theme.nameEs} equipado!`)
     } catch {
       toast.error(lang === "en" ? "Could not equip theme" : "Error al equipar tema")
     } finally {
@@ -68,12 +66,12 @@ export function ThemesSection() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5 sm:gap-6">
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.12 }}
-        className="flex items-center justify-center gap-2 text-center text-xs text-base-content/45"
+        className="mx-auto flex max-w-[19rem] items-center justify-center gap-2 text-center text-xs leading-relaxed text-base-content/50"
       >
         <Users className="h-3.5 w-3.5 shrink-0 text-primary/70" aria-hidden />
         {t("store.themesHint")}
@@ -113,7 +111,7 @@ export function ThemesSection() {
           >
             {t("store.collection")}
           </motion.h3>
-          <div className="flex flex-col gap-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {others.map((theme, i) => (
               <div
                 key={theme.id}

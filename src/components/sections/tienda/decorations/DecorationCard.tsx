@@ -1,6 +1,6 @@
 import { memo, useState } from "react"
 import { motion } from "framer-motion"
-import { CheckCircle2, Gem, Sparkles, Zap } from "lucide-react"
+import { CheckCircle2, Gem, Zap } from "lucide-react"
 import { usePrefersReducedMotion } from "../../../../lib/motion"
 import { AnimatedBubbleFrame } from "./AnimatedBubbleFrame"
 import { useTranslation } from "react-i18next"
@@ -98,7 +98,7 @@ export const DecorationCard = memo(function DecorationCard({
           className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide"
           style={{ color: decor.accent }}
         >
-          <Sparkles size={11} strokeWidth={2.5} aria-hidden />
+          <CheckCircle2 size={11} strokeWidth={2.5} aria-hidden />
           {t("store.decor.owned")}
         </motion.span>
       ) : (
@@ -137,8 +137,8 @@ export const DecorationCard = memo(function DecorationCard({
       onClick={() => void handlePress()}
       disabled={busy || equipped || (!owned && !canAfford)}
       {...tapScale}
-      className={`group relative flex w-full text-left transition-shadow duration-200 overflow-hidden rounded-2xl border bg-base-200/60 disabled:cursor-default disabled:opacity-55 ${
-        isFeatured ? "flex-row items-stretch gap-0 sm:gap-1" : "flex-col"
+      className={`group relative flex w-full overflow-hidden rounded-2xl border bg-base-200/65 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/45 disabled:cursor-default disabled:opacity-65 ${
+        isFeatured ? "flex-col sm:flex-row sm:items-stretch sm:gap-1" : "flex-col hover:-translate-y-0.5"
       }`}
       style={{
         borderColor: equipped
@@ -177,7 +177,7 @@ export const DecorationCard = memo(function DecorationCard({
 
       {isFeatured ? (
         <>
-          <motion.div className="flex flex-1 items-center justify-center border-r border-base-300/50 px-3 py-4 sm:max-w-[42%]">
+          <motion.div className="flex flex-1 items-center justify-center border-b border-base-300/50 px-3 py-4 sm:max-w-[42%] sm:border-b-0 sm:border-r">
             {previewBubble}
           </motion.div>
           <motion.div className="flex min-w-0 flex-1 flex-col justify-center gap-2 px-4 py-4">

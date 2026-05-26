@@ -69,17 +69,14 @@ export function EarnDiamondsModal({ isOpen, onClose, userId }: EarnDiamondsModal
       setCooldownMs(getDiamondAdCooldownMs(userId))
       toast.success(
         lang === "en"
-          ? `+${DIAMOND_PER_AD} diamond earned! 💎`
-          : `+${DIAMOND_PER_AD} diamante ganado! 💎`
+          ? `+${DIAMOND_PER_AD} diamond earned`
+          : `+${DIAMOND_PER_AD} diamante ganado`
       )
       preloadAd()
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : ""
       if (msg === "ad_not_ready") {
-        toast(
-          lang === "en" ? "Ad not ready, try again" : "Anuncio no listo, intenta de nuevo",
-          { icon: "⏳" }
-        )
+        toast(lang === "en" ? "Ad not ready, try again" : "Anuncio no listo, intenta de nuevo")
       } else if (msg !== "limit_reached") {
         toast.error(lang === "en" ? "Ad failed, try again" : "Error con el anuncio")
       }
@@ -148,8 +145,9 @@ export function EarnDiamondsModal({ isOpen, onClose, userId }: EarnDiamondsModal
                         <span className="text-xs font-bold text-base-content/30">{i + 1}</span>
                       )}
                     </div>
-                    <span className="text-[10px] text-base-content/30 font-medium">
-                      {watched ? `+${DIAMOND_PER_AD}💎` : `💎${DIAMOND_PER_AD}`}
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-base-content/30">
+                      {watched ? `+${DIAMOND_PER_AD}` : DIAMOND_PER_AD}
+                      <Gem size={9} strokeWidth={2.5} aria-hidden />
                     </span>
                   </div>
                 )
@@ -196,8 +194,8 @@ export function EarnDiamondsModal({ isOpen, onClose, userId }: EarnDiamondsModal
                 ? lang === "en" ? "Loading..." : "Cargando..."
                 : canWatch
                   ? lang === "en"
-                    ? `Watch Ad · +${DIAMOND_PER_AD} 💎`
-                    : `Ver anuncio · +${DIAMOND_PER_AD} 💎`
+                    ? `Watch Ad · +${DIAMOND_PER_AD} diamond`
+                    : `Ver anuncio · +${DIAMOND_PER_AD} diamante`
                   : lang === "en"
                     ? "Come back later"
                     : "Vuelve más tarde"}

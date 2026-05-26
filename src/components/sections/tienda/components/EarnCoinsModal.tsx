@@ -66,18 +66,12 @@ export function EarnCoinsModal({ isOpen, onClose, userId }: EarnCoinsModalProps)
       await earnCoins(group.id, AD_COINS)
       setViewsRecent(getCoinAdViewsRecent(userId))
       setCooldownMs(getCoinAdCooldownMs(userId))
-      toast.success(
-        lang === "en" ? `+${AD_COINS} coins earned!` : `+${AD_COINS} monedas ganadas!`,
-        { icon: "🪙" },
-      )
+      toast.success(lang === "en" ? `+${AD_COINS} coins earned` : `+${AD_COINS} monedas ganadas`)
       preloadAd()
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : ""
       if (msg === "ad_not_ready") {
-        toast(
-          lang === "en" ? "Ad not ready, try again" : "Anuncio no listo, intenta de nuevo",
-          { icon: "⏳" },
-        )
+        toast(lang === "en" ? "Ad not ready, try again" : "Anuncio no listo, intenta de nuevo")
       } else if (msg !== "limit_reached") {
         toast.error(lang === "en" ? "Ad failed, try again" : "Error con el anuncio")
       }
@@ -144,8 +138,9 @@ export function EarnCoinsModal({ isOpen, onClose, userId }: EarnCoinsModalProps)
                         <span className="text-xs font-bold text-base-content/30">{i + 1}</span>
                       )}
                     </div>
-                    <span className="text-[10px] text-base-content/30 font-medium">
-                      {watched ? `+${AD_COINS}` : `🪙${AD_COINS}`}
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-base-content/30">
+                      {watched ? `+${AD_COINS}` : AD_COINS}
+                      <Coins size={9} strokeWidth={2.5} aria-hidden />
                     </span>
                   </motion.div>
                 )
