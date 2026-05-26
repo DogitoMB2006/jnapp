@@ -11,7 +11,7 @@ import {
   DIAMOND_AD_LIMIT,
   DIAMOND_PER_AD,
 } from "../../../../lib/diamonds"
-import { preloadAd } from "../../../../lib/admob"
+import { preloadDiamondAd } from "../../../../lib/diamonds"
 import { useDiamondStore } from "../../../../store/diamondStore"
 
 interface EarnDiamondsModalProps {
@@ -72,7 +72,7 @@ export function EarnDiamondsModal({ isOpen, onClose, userId }: EarnDiamondsModal
           ? `+${DIAMOND_PER_AD} diamond earned`
           : `+${DIAMOND_PER_AD} diamante ganado`
       )
-      preloadAd()
+      preloadDiamondAd()
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : ""
       if (msg === "ad_not_ready") {

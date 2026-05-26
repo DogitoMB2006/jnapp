@@ -7,6 +7,7 @@ import { ThemesSection } from "./themes/ThemesSection"
 import { DecorationsSection } from "./decorations/DecorationsSection"
 import { useStoreStore } from "../../../store/storeStore"
 import { preloadAd } from "../../../lib/admob"
+import { preloadDiamondAd } from "../../../lib/diamonds"
 import { isMobileTauri } from "../../../lib/platform"
 
 export function TiendaPage() {
@@ -15,7 +16,10 @@ export function TiendaPage() {
   const [activeTab, setActiveTab] = useState<StoreCategoryId>("themes")
 
   useEffect(() => {
-    if (isMobileTauri) preloadAd()
+    if (isMobileTauri) {
+      preloadAd()
+      preloadDiamondAd()
+    }
   }, [])
 
   return (

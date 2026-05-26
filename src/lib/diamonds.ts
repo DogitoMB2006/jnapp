@@ -7,10 +7,13 @@ export const DIAMOND_AD_WINDOW_MS = 3 * 60 * 60 * 1000 // 3 hours
 interface JNAdMob {
   showRewardedAd: () => void
   preload: () => void
+  showDiamondAd: () => void
+  preloadDiamond: () => void
 }
 interface AdMobWindow extends Window {
   JNAdMob?: JNAdMob
   __admobCallback?: (success: boolean, error: string | null) => void
+  __admobDiamondCallback?: (success: boolean, error: string | null) => void
 }
 declare const window: AdMobWindow
 
@@ -68,8 +71,8 @@ export function watchDiamondAd(userId: string): Promise<void> {
       reject(new Error("limit_reached"))
       return
     }
-    window.__admobCallback = (success: boolean, error: string | null) => {
-      window.__admobCallback = undefined
+    window.__admobDiamondCallback = (success: boolean, error: string | null) => {
+      window.__admobDiamondCallback = undefined
       if (success) {
         recordAdView(userId)
         resolve()
@@ -77,6 +80,10 @@ export function watchDiamondAd(userId: string): Promise<void> {
         reject(new Error(error ?? "ad_failed"))
       }
     }
-    window.JNAdMob.showRewardedAd()
+    window.JNAdMob.showDiamondAd()
   })
+}
+
+export function preloadDiamondAd(): void {
+  window.JNAdMob?.preloadDiamond()
 }

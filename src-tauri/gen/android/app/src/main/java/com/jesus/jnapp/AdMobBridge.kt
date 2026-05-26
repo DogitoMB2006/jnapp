@@ -14,91 +14,164 @@ import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
  * JavaScript bridge for Google AdMob rewarded ads.
  * Registered as window.JNAdMob in the WebView.
  *
- * Usage from JS:
- *   window.__admobCallback = (success, error) => { ... }
- *   window.JNAdMob.showRewardedAd()
- *
+ * Coins ad:   window.__admobCallback(success, error)   → window.JNAdMob.showRewardedAd()
+ * Diamonds ad: window.__admobDiamondCallback(success, error) → window.JNAdMob.showDiamondAd()
  */
 class AdMobBridge(private val activity: Activity, private val webView: WebView) {
 
-    private var rewardedAd: RewardedAd? = null
-    private var isLoading = false
+    // ── Coins ──────────────────────────────────────────────────────────────────
+    private var coinAd: RewardedAd? = null
+    private var coinLoading = false
+
+    // ── Diamonds ───────────────────────────────────────────────────────────────
+    private var diamondAd: RewardedAd? = null
+    private var diamondLoading = false
 
     companion object {
-        private const val AD_UNIT_ID = "ca-app-pub-8685487552580546/6291376522"
+        private const val COIN_AD_UNIT_ID    = "ca-app-pub-8685487552580546/6291376522"
+        private const val DIAMOND_AD_UNIT_ID = "ca-app-pub-8685487552580546/2289967044"
     }
 
     init {
-        loadAd()
+        loadCoinAd()
+        loadDiamondAd()
     }
 
-    private fun loadAd() {
-        if (isLoading || rewardedAd != null) return
-        isLoading = true
+    // ── Coin ad load ───────────────────────────────────────────────────────────
+
+    private fun loadCoinAd() {
+        if (coinLoading || coinAd != null) return
+        coinLoading = true
         activity.runOnUiThread {
             RewardedAd.load(
                 activity,
-                AD_UNIT_ID,
+                COIN_AD_UNIT_ID,
                 AdRequest.Builder().build(),
                 object : RewardedAdLoadCallback() {
                     override fun onAdLoaded(ad: RewardedAd) {
-                        rewardedAd = ad
-                        isLoading = false
+                        coinAd = ad
+                        coinLoading = false
                     }
-
                     override fun onAdFailedToLoad(error: LoadAdError) {
-                        rewardedAd = null
-                        isLoading = false
+                        coinAd = null
+                        coinLoading = false
                     }
                 }
             )
         }
     }
 
+    // ── Diamond ad load ────────────────────────────────────────────────────────
+
+    private fun loadDiamondAd() {
+        if (diamondLoading || diamondAd != null) return
+        diamondLoading = true
+        activity.runOnUiThread {
+            RewardedAd.load(
+                activity,
+                DIAMOND_AD_UNIT_ID,
+                AdRequest.Builder().build(),
+                object : RewardedAdLoadCallback() {
+                    override fun onAdLoaded(ad: RewardedAd) {
+                        diamondAd = ad
+                        diamondLoading = false
+                    }
+                    override fun onAdFailedToLoad(error: LoadAdError) {
+                        diamondAd = null
+                        diamondLoading = false
+                    }
+                }
+            )
+        }
+    }
+
+    // ── JS interface: coins ────────────────────────────────────────────────────
+
     @JavascriptInterface
     fun showRewardedAd() {
-        val ad = rewardedAd
+        val ad = coinAd
         if (ad == null) {
-            loadAd()
-            fireCallback(false, "ad_not_ready")
+            loadCoinAd()
+            fireCoinCallback(false, "ad_not_ready")
             return
         }
 
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {
-                rewardedAd = null
-                loadAd()
+                coinAd = null
+                loadCoinAd()
             }
-
             override fun onAdFailedToShowFullScreenContent(error: AdError) {
-                rewardedAd = null
-                loadAd()
-                fireCallback(false, error.message)
+                coinAd = null
+                loadCoinAd()
+                fireCoinCallback(false, error.message)
             }
         }
 
         activity.runOnUiThread {
             ad.show(activity) { _ ->
-                // Reward earned — coins are tracked on the frontend
-                fireCallback(true, null)
+                fireCoinCallback(true, null)
             }
         }
     }
 
     @JavascriptInterface
     fun preload() {
-        loadAd()
+        loadCoinAd()
     }
 
-    private fun fireCallback(success: Boolean, error: String?) {
-        val js = if (success) {
-            "window.__admobCallback && window.__admobCallback(true, null)"
-        } else {
-            val safe = (error ?: "unknown")
-                .replace("\\", "\\\\")
-                .replace("'", "\\'")
-            "window.__admobCallback && window.__admobCallback(false, '$safe')"
+    // ── JS interface: diamonds ─────────────────────────────────────────────────
+
+    @JavascriptInterface
+    fun showDiamondAd() {
+        val ad = diamondAd
+        if (ad == null) {
+            loadDiamondAd()
+            fireDiamondCallback(false, "ad_not_ready")
+            return
         }
+
+        ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+            override fun onAdDismissedFullScreenContent() {
+                diamondAd = null
+                loadDiamondAd()
+            }
+            override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                diamondAd = null
+                loadDiamondAd()
+                fireDiamondCallback(false, error.message)
+            }
+        }
+
+        activity.runOnUiThread {
+            ad.show(activity) { _ ->
+                fireDiamondCallback(true, null)
+            }
+        }
+    }
+
+    @JavascriptInterface
+    fun preloadDiamond() {
+        loadDiamondAd()
+    }
+
+    // ── Callback helpers ───────────────────────────────────────────────────────
+
+    private fun fireCoinCallback(success: Boolean, error: String?) {
+        fireJs("window.__admobCallback && window.__admobCallback(${success}, ${errorArg(error)})")
+    }
+
+    private fun fireDiamondCallback(success: Boolean, error: String?) {
+        fireJs("window.__admobDiamondCallback && window.__admobDiamondCallback(${success}, ${errorArg(error)})")
+    }
+
+    private fun errorArg(error: String?): String {
+        if (error == null) return "null"
+        val safe = error.replace("\\", "\\\\").replace("'", "\\'")
+        return "'$safe'"
+    }
+
+    private fun fireJs(js: String) {
         webView.post {
             webView.evaluateJavascript(js, null)
         }
