@@ -7,6 +7,7 @@ import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 
@@ -33,8 +34,14 @@ class AdMobBridge(private val activity: Activity, private val webView: WebView) 
     }
 
     init {
-        loadCoinAd()
-        loadDiamondAd()
+        // Wait for MobileAds SDK init to complete before loading ads.
+        // MobileAds.initialize is idempotent — callback fires immediately if already done.
+        MobileAds.initialize(activity) {
+            activity.runOnUiThread {
+                loadCoinAd()
+                loadDiamondAd()
+            }
+        }
     }
 
     // ── Coin ad load ───────────────────────────────────────────────────────────
@@ -89,30 +96,37 @@ class AdMobBridge(private val activity: Activity, private val webView: WebView) 
 
     @JavascriptInterface
     fun showRewardedAd() {
+        waitAndShowCoin(attemptsLeft = 10)
+    }
+
+    private fun waitAndShowCoin(attemptsLeft: Int) {
         val ad = coinAd
-        if (ad == null) {
+        if (ad != null) {
+            ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    coinAd = null
+                    loadCoinAd()
+                }
+                override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                    coinAd = null
+                    loadCoinAd()
+                    fireCoinCallback(false, error.message)
+                }
+            }
+            activity.runOnUiThread {
+                ad.show(activity) { _ -> fireCoinCallback(true, null) }
+            }
+            return
+        }
+        if (attemptsLeft <= 0) {
             loadCoinAd()
             fireCoinCallback(false, "ad_not_ready")
             return
         }
-
-        ad.fullScreenContentCallback = object : FullScreenContentCallback() {
-            override fun onAdDismissedFullScreenContent() {
-                coinAd = null
-                loadCoinAd()
-            }
-            override fun onAdFailedToShowFullScreenContent(error: AdError) {
-                coinAd = null
-                loadCoinAd()
-                fireCoinCallback(false, error.message)
-            }
-        }
-
-        activity.runOnUiThread {
-            ad.show(activity) { _ ->
-                fireCoinCallback(true, null)
-            }
-        }
+        // Ad still loading — wait 500ms and retry
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            waitAndShowCoin(attemptsLeft - 1)
+        }, 500)
     }
 
     @JavascriptInterface
@@ -124,30 +138,36 @@ class AdMobBridge(private val activity: Activity, private val webView: WebView) 
 
     @JavascriptInterface
     fun showDiamondAd() {
+        waitAndShowDiamond(attemptsLeft = 10)
+    }
+
+    private fun waitAndShowDiamond(attemptsLeft: Int) {
         val ad = diamondAd
-        if (ad == null) {
+        if (ad != null) {
+            ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    diamondAd = null
+                    loadDiamondAd()
+                }
+                override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                    diamondAd = null
+                    loadDiamondAd()
+                    fireDiamondCallback(false, error.message)
+                }
+            }
+            activity.runOnUiThread {
+                ad.show(activity) { _ -> fireDiamondCallback(true, null) }
+            }
+            return
+        }
+        if (attemptsLeft <= 0) {
             loadDiamondAd()
             fireDiamondCallback(false, "ad_not_ready")
             return
         }
-
-        ad.fullScreenContentCallback = object : FullScreenContentCallback() {
-            override fun onAdDismissedFullScreenContent() {
-                diamondAd = null
-                loadDiamondAd()
-            }
-            override fun onAdFailedToShowFullScreenContent(error: AdError) {
-                diamondAd = null
-                loadDiamondAd()
-                fireDiamondCallback(false, error.message)
-            }
-        }
-
-        activity.runOnUiThread {
-            ad.show(activity) { _ ->
-                fireDiamondCallback(true, null)
-            }
-        }
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            waitAndShowDiamond(attemptsLeft - 1)
+        }, 500)
     }
 
     @JavascriptInterface

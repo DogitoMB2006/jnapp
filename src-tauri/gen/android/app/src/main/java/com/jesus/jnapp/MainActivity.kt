@@ -19,6 +19,8 @@ class MainActivity : TauriActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
+        // Initialize AdMob SDK before WebView/bridge creation so ads can load immediately
+        MobileAds.initialize(this)
         super.onCreate(savedInstanceState)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
@@ -29,7 +31,6 @@ class MainActivity : TauriActivity() {
                 requestNotifPerm.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
-        MobileAds.initialize(this)
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (!task.isSuccessful) return@addOnCompleteListener
             val t = task.result ?: return@addOnCompleteListener
