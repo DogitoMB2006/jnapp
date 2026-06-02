@@ -4,7 +4,6 @@ import type { Section } from "../types"
 export const NAV_SECTION_ORDER: readonly Section[] = [
   "planes",
   "lista",
-  "salidas",
   "peliculas",
   "tienda",
   "perfil",

@@ -7,11 +7,14 @@ import {
   watchDiamondAd,
   getDiamondAdViewsRecent,
   getDiamondAdCooldownMs,
-  diamondAdsAvailable,
+  hasDiamondAdSlots,
   DIAMOND_AD_LIMIT,
   DIAMOND_PER_AD,
+  preloadDiamondAd,
 } from "../../../../lib/diamonds"
-import { preloadDiamondAd } from "../../../../lib/diamonds"
+import { isRewardedAdsSupported } from "../../../../lib/admobBridge"
+import { isMobileTauri } from "../../../../lib/platform"
+import { useAdMobBridgeReady } from "../../../../hooks/useAdMobBridgeReady"
 import { useDiamondStore } from "../../../../store/diamondStore"
 
 interface EarnDiamondsModalProps {
@@ -57,7 +60,9 @@ export function EarnDiamondsModal({ isOpen, onClose, userId }: EarnDiamondsModal
     }
   }, [isOpen, userId])
 
-  const canWatch = diamondAdsAvailable(userId)
+  const bridgeReady = useAdMobBridgeReady(isOpen)
+  const slotsLeft = hasDiamondAdSlots(userId)
+  const canWatch = isMobileTauri && bridgeReady && slotsLeft
 
   async function handleWatchAd() {
     if (watching || !canWatch) return
@@ -75,8 +80,14 @@ export function EarnDiamondsModal({ isOpen, onClose, userId }: EarnDiamondsModal
       preloadDiamondAd()
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : ""
-      if (msg === "ad_not_ready") {
+      if (msg === "ad_not_ready" || msg === "bridge_not_ready") {
         toast(lang === "en" ? "Ad not ready, try again" : "Anuncio no listo, intenta de nuevo")
+      } else if (msg === "not_available") {
+        toast(
+          lang === "en"
+            ? "Ads are only available in the Android app"
+            : "Los anuncios solo están en la app de Android",
+        )
       } else if (msg !== "limit_reached") {
         toast.error(lang === "en" ? "Ad failed, try again" : "Error con el anuncio")
       }
@@ -191,14 +202,24 @@ export function EarnDiamondsModal({ isOpen, onClose, userId }: EarnDiamondsModal
                 <Play size={16} strokeWidth={2.5} fill="currentColor" />
               )}
               {watching
-                ? lang === "en" ? "Loading..." : "Cargando..."
+                ? lang === "en"
+                  ? "Loading..."
+                  : "Cargando..."
                 : canWatch
                   ? lang === "en"
                     ? `Watch Ad · +${DIAMOND_PER_AD} diamond`
                     : `Ver anuncio · +${DIAMOND_PER_AD} diamante`
-                  : lang === "en"
-                    ? "Come back later"
-                    : "Vuelve más tarde"}
+                  : !isRewardedAdsSupported()
+                    ? lang === "en"
+                      ? "Android app only"
+                      : "Solo app Android"
+                    : !bridgeReady
+                      ? lang === "en"
+                        ? "Preparing ads…"
+                        : "Preparando anuncios…"
+                      : lang === "en"
+                        ? "Come back later"
+                        : "Vuelve más tarde"}
             </button>
           </motion.div>
         </>

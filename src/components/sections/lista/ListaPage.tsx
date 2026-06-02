@@ -361,24 +361,38 @@ export function ListaPage() {
         onClose={() => { setShowModal(false); setEditItem(null); setInputText(""); }}
         title={editItem ? t("lista.editModal") : t("lista.newModal")}
       >
-        <div className="flex flex-col gap-3">
-          <textarea
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            placeholder={t("lista.placeholder")}
-            className="textarea textarea-bordered w-full bg-base-100 resize-none focus:outline-primary"
-            rows={3}
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && e.ctrlKey) {
-                editItem ? handleEdit() : handleAdd();
-              }
-            }}
-          />
-          <button
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3 rounded-3xl border border-base-300 bg-base-100/35 p-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+              <ListChecks size={22} strokeWidth={2.35} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-base-content">{editItem ? t("lista.editModal") : t("lista.newModal")}</p>
+              <p className="text-xs leading-relaxed text-base-content/50">{t("lista.placeholder")}</p>
+            </div>
+          </div>
+          <label className="flex flex-col gap-1.5">
+            <span className="px-1 text-xs font-bold uppercase tracking-wide text-base-content/45">{t("lista.placeholder")}</span>
+            <textarea
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder={t("lista.placeholder")}
+              className="textarea textarea-bordered min-h-32 w-full resize-none rounded-2xl bg-base-100/80 text-base leading-relaxed focus:outline-primary"
+              rows={4}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && e.ctrlKey) {
+                  editItem ? handleEdit() : handleAdd();
+                }
+              }}
+            />
+          </label>
+          <p className="hidden px-1 text-[11px] font-medium text-base-content/35 sm:block">Ctrl + Enter</p>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
             onClick={editItem ? handleEdit : handleAdd}
             disabled={!inputText.trim() || saving}
-            className="btn btn-primary w-full gap-2"
+            className="btn btn-primary min-h-12 w-full gap-2 rounded-2xl text-sm font-bold disabled:cursor-default disabled:opacity-50"
           >
             {saving ? (
               <span className="loading loading-spinner loading-sm" />
@@ -389,7 +403,7 @@ export function ListaPage() {
                 <Plus size={16} /> {t("lista.add")}
               </>
             )}
-          </button>
+          </motion.button>
         </div>
       </Modal>
     </div>

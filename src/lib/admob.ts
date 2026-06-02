@@ -1,3 +1,4 @@
+import { getJNAdMob, isAdMobBridgeReady } from "./admobBridge"
 import { isMobileTauri } from "./platform"
 
 export const AD_COINS = 10
@@ -6,18 +7,6 @@ export const COIN_AD_WINDOW_MS = 3 * 60 * 60 * 1000 // 3 hours
 
 /** @deprecated Use COIN_AD_LIMIT */
 export const MAX_ADS_PER_DAY = COIN_AD_LIMIT
-
-interface JNAdMob {
-  showRewardedAd: () => void
-  preload: () => void
-}
-
-interface AdMobWindow extends Window {
-  JNAdMob?: JNAdMob
-  __admobCallback?: (success: boolean, error: string | null) => void
-}
-
-declare const window: AdMobWindow
 
 // ─── 3-hour rolling window tracking ───────────────────────────────────────────
 
@@ -56,8 +45,12 @@ export function getCoinAdCooldownMs(userId: string): number {
   return Math.max(0, oldest + COIN_AD_WINDOW_MS - Date.now())
 }
 
+export function hasCoinAdSlots(userId: string): boolean {
+  return getCoinAdViewsRecent(userId) < COIN_AD_LIMIT
+}
+
 export function coinAdsAvailable(userId: string): boolean {
-  return isMobileTauri && getCoinAdViewsRecent(userId) < COIN_AD_LIMIT
+  return isMobileTauri && isAdMobBridgeReady() && hasCoinAdSlots(userId)
 }
 
 /** @deprecated Use coinAdsAvailable */
@@ -79,8 +72,9 @@ function recordAdView(userId: string): void {
  */
 export function watchRewardedAd(userId: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (!window.JNAdMob) {
-      reject(new Error("not_available"))
+    const bridge = getJNAdMob()
+    if (!bridge) {
+      reject(new Error(isMobileTauri ? "bridge_not_ready" : "not_available"))
       return
     }
 
@@ -89,8 +83,12 @@ export function watchRewardedAd(userId: string): Promise<void> {
       return
     }
 
-    window.__admobCallback = (success: boolean, error: string | null) => {
-      window.__admobCallback = undefined
+    const win = window as Window & {
+      __admobCallback?: (success: boolean, error: string | null) => void
+    }
+
+    win.__admobCallback = (success: boolean, error: string | null) => {
+      win.__admobCallback = undefined
       if (success) {
         recordAdView(userId)
         resolve()
@@ -99,11 +97,11 @@ export function watchRewardedAd(userId: string): Promise<void> {
       }
     }
 
-    window.JNAdMob.showRewardedAd()
+    bridge.showRewardedAd()
   })
 }
 
 /** Preload next ad (call after the store tab mounts on mobile). */
 export function preloadAd(): void {
-  window.JNAdMob?.preload()
+  getJNAdMob()?.preload()
 }

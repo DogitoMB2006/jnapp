@@ -3,7 +3,7 @@ import { GoogleAuth } from "npm:google-auth-library@9.14.0"
 
 /**
  * Reminder cron — runs daily (e.g. 09:00 UTC).
- * For every planes/salidas item whose date = tomorrow:
+ * For every plan/outing item whose date = tomorrow:
  *   1. Inserts a notification row in the DB (visible in the bell icon)
  *   2. Sends FCM push to the user's Android device (if token available)
  *
@@ -31,22 +31,23 @@ type ReminderRow = {
   member_user_id: string
   member_fcm_token: string | null
   member_lang: string
+  item_kind?: string | null
 }
 
 const MESSAGES: Record<string, Record<string, (title: string) => { title: string; body: string }>> = {
   es: {
-    planes:  (t) => ({ title: "Recordatorio 📅", body: `¡Mañana tienen "${t}"! No olviden su plan.` }),
-    salidas: (t) => ({ title: "Recordatorio 📅", body: `¡Mañana es "${t}"! Prepárense para su salida.` }),
+    plan: (t) => ({ title: "Recordatorio", body: `Mañana tienen "${t}". No olviden su plan.` }),
+    outing: (t) => ({ title: "Recordatorio", body: `Mañana es "${t}". Prepárense para su salida.` }),
   },
   en: {
-    planes:  (t) => ({ title: "Reminder 📅",    body: `Tomorrow you have "${t}"! Don't forget your plan.` }),
-    salidas: (t) => ({ title: "Reminder 📅",    body: `Tomorrow is "${t}"! Get ready for your outing.` }),
+    plan: (t) => ({ title: "Reminder", body: `Tomorrow you have "${t}". Don't forget your plan.` }),
+    outing: (t) => ({ title: "Reminder", body: `Tomorrow is "${t}". Get ready for your outing.` }),
   },
 }
 
-function buildMessage(lang: string, section: string, title: string) {
+function buildMessage(lang: string, kind: string | null | undefined, title: string) {
   const langMap = MESSAGES[lang] ?? MESSAGES["es"]
-  const fn = langMap[section] ?? langMap["planes"]
+  const fn = langMap[kind === "outing" ? "outing" : "plan"] ?? langMap["plan"]
   return fn(title)
 }
 
@@ -151,7 +152,7 @@ export default async function handler(req: Request): Promise<Response> {
   let fcmSent = 0
 
   for (const row of reminders) {
-    const msg = buildMessage(row.member_lang, row.section, row.item_title)
+    const msg = buildMessage(row.member_lang, row.item_kind, row.item_title)
 
     // 1. Insert DB notification row
     try {

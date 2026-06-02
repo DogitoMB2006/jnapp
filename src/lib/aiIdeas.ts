@@ -29,18 +29,6 @@ const fallbackIdeas: Record<AiIdeaSection, Record<"en" | "es", AiIdea[]>> = {
       { title: "Postre sin celulares", description: "Preparen o compren un postre, guarden los celulares y háganse 5 preguntas divertidas.", tag: "Tranqui" },
     ],
   },
-  salidas: {
-    en: [
-      { title: "Sunset walk", description: "Go for a short walk before sunset and end with a drink or snack.", location: "Park or viewpoint", tag: "Cheap" },
-      { title: "Tiny food tour", description: "Try one snack from three different places and pick the winner.", location: "Nearby food spots", tag: "Fun" },
-      { title: "Bookstore mini date", description: "Each picks one book the other would like, then compare choices over coffee.", location: "Bookstore", tag: "Chill" },
-    ],
-    es: [
-      { title: "Paseo al atardecer", description: "Den un paseo corto antes del atardecer y terminen con una bebida o snack.", location: "Parque o mirador", tag: "Barato" },
-      { title: "Mini tour de comida", description: "Prueben un snack de tres lugares distintos y elijan ganador.", location: "Lugares cercanos", tag: "Divertido" },
-      { title: "Cita en librería", description: "Cada uno elige un libro que al otro le gustaría y luego comparan con café.", location: "Librería", tag: "Tranqui" },
-    ],
-  },
   peliculas: {
     en: [
       { title: "About Time", description: "Warm romantic movie with time-travel and cozy couple energy.", genre: "Romance" },

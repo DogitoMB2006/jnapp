@@ -29,6 +29,9 @@ export interface Plan {
   title: string;
   description: string | null;
   date: string | null;
+  kind: "plan" | "outing";
+  location: string | null;
+  completed: boolean;
   created_by: string;
   edited_by: string | null;
   last_edited_at: string | null;
@@ -123,7 +126,7 @@ export interface GroupMember {
   joined_at: string;
 }
 
-export type Section = "planes" | "lista" | "salidas" | "peliculas" | "tienda" | "perfil";
+export type Section = "planes" | "lista" | "peliculas" | "tienda" | "perfil";
 
 // ─── Store / Themes ────────────────────────────────────────────────────────────
 

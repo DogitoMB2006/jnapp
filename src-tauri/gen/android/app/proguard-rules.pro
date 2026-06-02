@@ -10,12 +10,15 @@
 -keep class com.google.android.gms.** { *; }
 -dontwarn com.google.firebase.**
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# WebView JavaScript bridges (rewarded ads + APK installer)
+-keep class com.jesus.jnapp.AdMobBridge { *; }
+-keep class com.jesus.jnapp.ApkInstaller { *; }
+-keepclassmembers class com.jesus.jnapp.AdMobBridge {
+    @android.webkit.JavascriptInterface <methods>;
+}
+-keepclassmembers class com.jesus.jnapp.ApkInstaller {
+    @android.webkit.JavascriptInterface <methods>;
+}
 
 # Uncomment this to preserve the line number information for
 # debugging stack traces.

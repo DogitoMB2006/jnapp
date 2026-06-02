@@ -3,18 +3,16 @@ import { requestPartnerFcmPush } from "./requestPartnerFcmPush"
 import { useGroupStore } from "../store/groupStore"
 import { useAuthStore } from "../store/authStore"
 
-export type PartnerNotifySection = "lista" | "planes" | "salidas" | "peliculas"
+export type PartnerNotifySection = "lista" | "planes" | "peliculas"
 
 const TARGET_LABEL: Record<string, string> = {
   planes: "Planes",
-  salidas: "Salidas",
   peliculas: "Películas",
 }
 
 const SECTION_LABEL: Record<PartnerNotifySection, string> = {
   lista: "Lista para Hacer",
   planes: "Planes",
-  salidas: "Salidas",
   peliculas: "Películas para Ver",
 }
 

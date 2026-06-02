@@ -1,21 +1,9 @@
+import { getJNAdMob, isAdMobBridgeReady } from "./admobBridge"
 import { isMobileTauri } from "./platform"
 
 export const DIAMOND_PER_AD = 1
 export const DIAMOND_AD_LIMIT = 3
 export const DIAMOND_AD_WINDOW_MS = 3 * 60 * 60 * 1000 // 3 hours
-
-interface JNAdMob {
-  showRewardedAd: () => void
-  preload: () => void
-  showDiamondAd: () => void
-  preloadDiamond: () => void
-}
-interface AdMobWindow extends Window {
-  JNAdMob?: JNAdMob
-  __admobCallback?: (success: boolean, error: string | null) => void
-  __admobDiamondCallback?: (success: boolean, error: string | null) => void
-}
-declare const window: AdMobWindow
 
 // ─── 3-hour rolling window tracking ──────────────────────────────────────────
 
@@ -49,8 +37,12 @@ export function getDiamondAdCooldownMs(userId: string): number {
   return Math.max(0, oldest + DIAMOND_AD_WINDOW_MS - Date.now())
 }
 
+export function hasDiamondAdSlots(userId: string): boolean {
+  return getDiamondAdViewsRecent(userId) < DIAMOND_AD_LIMIT
+}
+
 export function diamondAdsAvailable(userId: string): boolean {
-  return isMobileTauri && getDiamondAdViewsRecent(userId) < DIAMOND_AD_LIMIT
+  return isMobileTauri && isAdMobBridgeReady() && hasDiamondAdSlots(userId)
 }
 
 function recordAdView(userId: string): void {
@@ -63,16 +55,22 @@ function recordAdView(userId: string): void {
 
 export function watchDiamondAd(userId: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (!window.JNAdMob) {
-      reject(new Error("not_available"))
+    const bridge = getJNAdMob()
+    if (!bridge) {
+      reject(new Error(isMobileTauri ? "bridge_not_ready" : "not_available"))
       return
     }
     if (getDiamondAdViewsRecent(userId) >= DIAMOND_AD_LIMIT) {
       reject(new Error("limit_reached"))
       return
     }
-    window.__admobDiamondCallback = (success: boolean, error: string | null) => {
-      window.__admobDiamondCallback = undefined
+
+    const win = window as Window & {
+      __admobDiamondCallback?: (success: boolean, error: string | null) => void
+    }
+
+    win.__admobDiamondCallback = (success: boolean, error: string | null) => {
+      win.__admobDiamondCallback = undefined
       if (success) {
         recordAdView(userId)
         resolve()
@@ -80,10 +78,10 @@ export function watchDiamondAd(userId: string): Promise<void> {
         reject(new Error(error ?? "ad_failed"))
       }
     }
-    window.JNAdMob.showDiamondAd()
+    bridge.showDiamondAd()
   })
 }
 
 export function preloadDiamondAd(): void {
-  window.JNAdMob?.preloadDiamond()
+  getJNAdMob()?.preloadDiamond()
 }

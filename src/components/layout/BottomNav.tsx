@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Map, ListChecks, Compass, Film, ShoppingBag, UserCircle, type LucideIcon } from "lucide-react"
+import { Map, ListChecks, Film, ShoppingBag, UserCircle, type LucideIcon } from "lucide-react"
 import { useTranslation } from "react-i18next";
 import { NAV_SECTION_ORDER } from "../../lib/sectionOrder";
 import type { Section } from "../../types";
@@ -12,7 +12,6 @@ interface BottomNavProps {
 const SECTION_ICONS: Record<Section, LucideIcon> = {
   planes: Map,
   lista: ListChecks,
-  salidas: Compass,
   peliculas: Film,
   tienda: ShoppingBag,
   perfil: UserCircle,

@@ -5,7 +5,9 @@ import { isMobileTauri } from "../lib/platform"
 import { useNavigationStore } from "../store/navigationStore"
 import type { Section } from "../types"
 
-const VALID_SECTIONS = new Set<string>(["planes", "lista", "salidas", "peliculas"])
+const normalizeSection = (section: string): string => section === "salidas" ? "planes" : section
+
+const VALID_SECTIONS = new Set<string>(["planes", "lista", "peliculas"])
 
 const isValidSection = (s: string): s is Section =>
   VALID_SECTIONS.has(s)
@@ -29,7 +31,7 @@ export const useDeepLinkNavigation = (userId: string | undefined) => {
           reference_id?: string
           reference_type?: string
         }
-        const section = parsed.reference_type
+        const section = parsed.reference_type ? normalizeSection(parsed.reference_type) : undefined
         const itemId = parsed.reference_id ?? null
         if (!section || !isValidSection(section)) return
         navigateTo(section, itemId)

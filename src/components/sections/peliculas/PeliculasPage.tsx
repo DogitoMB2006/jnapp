@@ -573,27 +573,45 @@ export function PeliculasPage() {
         onClose={() => { setShowModal(false); setEditItem(null); }}
         title={editItem ? t("peliculas.editModal") : t("peliculas.newModal")}
       >
-        <div className="flex flex-col gap-3">
-          <input
-            value={form.title}
-            onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-            placeholder={t("peliculas.titlePlaceholder")}
-            className="input input-bordered w-full bg-base-100 focus:outline-primary"
-            autoFocus
-          />
-          <textarea
-            value={form.description}
-            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-            placeholder={t("peliculas.descPlaceholder")}
-            className="textarea textarea-bordered w-full bg-base-100 resize-none"
-            rows={2}
-          />
-          <input
-            value={form.genre}
-            onChange={(e) => setForm((f) => ({ ...f, genre: e.target.value }))}
-            placeholder={t("peliculas.genrePlaceholder")}
-            className="input input-bordered w-full bg-base-100 focus:outline-primary"
-          />
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3 rounded-3xl border border-base-300 bg-base-100/35 p-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+              <Film size={22} strokeWidth={2.35} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-base-content">{editItem ? t("peliculas.editModal") : t("peliculas.newModal")}</p>
+              <p className="text-xs leading-relaxed text-base-content/50">{t("peliculas.genrePlaceholder")}</p>
+            </div>
+          </div>
+          <label className="flex flex-col gap-1.5">
+            <span className="px-1 text-xs font-bold uppercase tracking-wide text-base-content/45">{t("peliculas.titlePlaceholder")}</span>
+            <input
+              value={form.title}
+              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+              placeholder={t("peliculas.titlePlaceholder")}
+              className="input input-bordered min-h-12 w-full rounded-2xl bg-base-100/80 text-base focus:outline-primary"
+              autoFocus
+            />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="px-1 text-xs font-bold uppercase tracking-wide text-base-content/45">{t("peliculas.descPlaceholder")}</span>
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              placeholder={t("peliculas.descPlaceholder")}
+              className="textarea textarea-bordered min-h-24 w-full resize-none rounded-2xl bg-base-100/80 text-base leading-relaxed focus:outline-primary"
+              rows={3}
+            />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="px-1 text-xs font-bold uppercase tracking-wide text-base-content/45">{t("peliculas.genrePlaceholder")}</span>
+            <input
+              value={form.genre}
+              onChange={(e) => setForm((f) => ({ ...f, genre: e.target.value }))}
+              placeholder={t("peliculas.genrePlaceholder")}
+              className="input input-bordered min-h-12 w-full rounded-2xl bg-base-100/80 text-base focus:outline-primary"
+            />
+          </label>
           <input
             ref={posterFileRef}
             type="file"
@@ -604,13 +622,13 @@ export function PeliculasPage() {
 
           {/* Poster preview or upload button */}
           {form.posterUrl ? (
-            <div className="relative overflow-hidden rounded-xl border border-base-300">
+            <div className="group relative overflow-hidden rounded-3xl border border-base-300 bg-base-100/35">
               <img
                 src={form.posterUrl}
                 alt="Preview"
                 style={{
                   width: "100%",
-                  height: "180px",
+                  height: "190px",
                   objectFit: "cover",
                   objectPosition: "center top",
                   display: "block",
@@ -618,9 +636,9 @@ export function PeliculasPage() {
               />
               <button
                 onClick={() => setForm((f) => ({ ...f, posterUrl: "" }))}
-                className="btn btn-circle btn-xs absolute right-2 top-2 border-base-300 bg-base-200/90 text-base-content shadow-lg"
+                className="btn btn-circle btn-sm absolute right-3 top-3 border-base-300 bg-base-200/90 text-base-content shadow-lg backdrop-blur"
               >
-                <X size={12} />
+                <X size={14} />
               </button>
             </div>
           ) : (
@@ -628,12 +646,14 @@ export function PeliculasPage() {
               whileTap={{ scale: 0.97 }}
               onClick={() => posterFileRef.current?.click()}
               disabled={uploadingPoster}
-              className="flex w-full items-center justify-center gap-2 rounded-[14px] border border-dashed border-base-300 bg-base-200/70 p-3.5 text-sm font-semibold text-base-content/55 transition-colors hover:border-primary/45 hover:text-base-content disabled:cursor-default disabled:opacity-50"
+              className="flex min-h-24 w-full flex-col items-center justify-center gap-2 rounded-3xl border border-dashed border-base-300 bg-base-100/35 p-4 text-center text-sm font-semibold text-base-content/55 transition-colors hover:border-primary/45 hover:bg-base-100/55 hover:text-base-content disabled:cursor-default disabled:opacity-50"
             >
               {uploadingPoster ? (
                 <span className="loading loading-spinner loading-sm" />
               ) : (
-                <ImagePlus size={16} />
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+                  <ImagePlus size={20} strokeWidth={2.35} />
+                </span>
               )}
               {uploadingPoster ? t("peliculas.uploading") : t("peliculas.uploadPoster")}
             </motion.button>
@@ -643,7 +663,7 @@ export function PeliculasPage() {
             whileTap={{ scale: 0.97 }}
             onClick={handleSave}
             disabled={!form.title.trim() || saving}
-            className="btn btn-primary w-full gap-2 mt-1"
+            className="btn btn-primary mt-1 min-h-12 w-full gap-2 rounded-2xl text-sm font-bold disabled:cursor-default disabled:opacity-50"
           >
             {saving ? (
               <span className="loading loading-spinner loading-sm" />

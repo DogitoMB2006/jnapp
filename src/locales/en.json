@@ -215,9 +215,17 @@
     "deleteError": "Could not delete",
     "newModal": "New plan",
     "editModal": "Edit plan",
+    "chooseType": "What are you adding?",
+    "plan": "Plan",
+    "outing": "Outing",
+    "planHint": "Something to do together, at home or anywhere.",
+    "outingHint": "A place to go, date spot, trip, or outside activity.",
     "titlePlaceholder": "What are you planning to do?",
     "descPlaceholder": "Description (optional)",
+    "locationPlaceholder": "Place (optional)",
     "datePlaceholder": "Date (optional)",
+    "weWent": "We went",
+    "completed": "Completed",
     "save": "Save",
     "add": "Add"
   },
@@ -308,7 +316,6 @@
     "shuffle": "Shuffle ideas",
     "sections": {
       "planes": "Plans for both of you",
-      "salidas": "Outing ideas",
       "peliculas": "Movie picks",
       "lista": "Useful list ideas"
     }

@@ -215,9 +215,17 @@
     "deleteError": "No se pudo eliminar",
     "newModal": "Nuevo plan",
     "editModal": "Editar plan",
+    "chooseType": "¿Qué van a agregar?",
+    "plan": "Plan",
+    "outing": "Salida",
+    "planHint": "Algo para hacer juntos, en casa o donde sea.",
+    "outingHint": "Un lugar para ir, una cita, un viaje o actividad afuera.",
     "titlePlaceholder": "¿Qué planean hacer?",
     "descPlaceholder": "Descripción (opcional)",
+    "locationPlaceholder": "Lugar (opcional)",
     "datePlaceholder": "Fecha (opcional)",
+    "weWent": "Fuimos",
+    "completed": "Completado",
     "save": "Guardar",
     "add": "Agregar"
   },
@@ -308,7 +316,6 @@
     "shuffle": "Mezclar ideas",
     "sections": {
       "planes": "Planes para los dos",
-      "salidas": "Ideas para salir",
       "peliculas": "Películas recomendadas",
       "lista": "Ideas útiles para la lista"
     }

@@ -9,7 +9,6 @@ import { NotificationPanel } from "../notifications/NotificationPanel";
 import { Avatar } from "../shared/Avatar";
 import { PlanesPage } from "../sections/planes/PlanesPage";
 import { ListaPage } from "../sections/lista/ListaPage";
-import { SalidasPage } from "../sections/salidas/SalidasPage";
 import { PeliculasPage } from "../sections/peliculas/PeliculasPage";
 import { TiendaPage } from "../sections/tienda/TiendaPage";
 import { ProfilePage } from "../profile/ProfilePage";
@@ -168,7 +167,6 @@ export function AppLayout() {
           >
             {section === "planes" && <PlanesPage />}
             {section === "lista" && <ListaPage />}
-            {section === "salidas" && <SalidasPage />}
             {section === "peliculas" && <PeliculasPage />}
             {section === "tienda" && <TiendaPage />}
             {section === "perfil" && <ProfilePage />}
