@@ -12,9 +12,9 @@ import {
   DIAMOND_PER_AD,
   preloadDiamondAd,
 } from "../../../../lib/diamonds"
-import { isRewardedAdsSupported } from "../../../../lib/admobBridge"
+import { formatAdError, isRewardedAdsSupported } from "../../../../lib/admobBridge"
 import { isMobileTauri } from "../../../../lib/platform"
-import { useAdMobBridgeReady } from "../../../../hooks/useAdMobBridgeReady"
+import { useRewardedAdReady } from "../../../../hooks/useAdMobBridgeReady"
 import { useDiamondStore } from "../../../../store/diamondStore"
 
 interface EarnDiamondsModalProps {
@@ -45,6 +45,7 @@ export function EarnDiamondsModal({ isOpen, onClose, userId }: EarnDiamondsModal
   // Refresh countdown every second when at limit
   useEffect(() => {
     if (!isOpen) return
+    preloadDiamondAd()
     setViewsRecent(getDiamondAdViewsRecent(userId))
     setCooldownMs(getDiamondAdCooldownMs(userId))
 
@@ -60,12 +61,12 @@ export function EarnDiamondsModal({ isOpen, onClose, userId }: EarnDiamondsModal
     }
   }, [isOpen, userId])
 
-  const bridgeReady = useAdMobBridgeReady(isOpen)
+  const { bridgeReady, adReady, adLoading } = useRewardedAdReady("diamond", isOpen)
   const slotsLeft = hasDiamondAdSlots(userId)
-  const canWatch = isMobileTauri && bridgeReady && slotsLeft
+  const canWatch = isMobileTauri && bridgeReady && slotsLeft && adReady
 
   async function handleWatchAd() {
-    if (watching || !canWatch) return
+    if (watching || !isMobileTauri || !bridgeReady || !slotsLeft) return
     setWatching(true)
     try {
       await watchDiamondAd(userId)
@@ -80,17 +81,16 @@ export function EarnDiamondsModal({ isOpen, onClose, userId }: EarnDiamondsModal
       preloadDiamondAd()
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : ""
-      if (msg === "ad_not_ready" || msg === "bridge_not_ready") {
-        toast(lang === "en" ? "Ad not ready, try again" : "Anuncio no listo, intenta de nuevo")
-      } else if (msg === "not_available") {
+      if (msg === "not_available") {
         toast(
           lang === "en"
             ? "Ads are only available in the Android app"
             : "Los anuncios solo están en la app de Android",
         )
       } else if (msg !== "limit_reached") {
-        toast.error(lang === "en" ? "Ad failed, try again" : "Error con el anuncio")
+        toast.error(formatAdError(msg, lang))
       }
+      preloadDiamondAd()
     } finally {
       setWatching(false)
     }
@@ -217,9 +217,13 @@ export function EarnDiamondsModal({ isOpen, onClose, userId }: EarnDiamondsModal
                       ? lang === "en"
                         ? "Preparing ads…"
                         : "Preparando anuncios…"
-                      : lang === "en"
-                        ? "Come back later"
-                        : "Vuelve más tarde"}
+                      : adLoading || !adReady
+                        ? lang === "en"
+                          ? "Loading ad from Google…"
+                          : "Cargando anuncio de Google…"
+                        : lang === "en"
+                          ? "Come back later"
+                          : "Vuelve más tarde"}
             </button>
           </motion.div>
         </>

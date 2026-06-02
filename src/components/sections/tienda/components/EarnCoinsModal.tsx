@@ -12,9 +12,9 @@ import {
   AD_COINS,
   COIN_AD_LIMIT,
 } from "../../../../lib/admob"
-import { isRewardedAdsSupported } from "../../../../lib/admobBridge"
+import { formatAdError, isRewardedAdsSupported } from "../../../../lib/admobBridge"
 import { isMobileTauri } from "../../../../lib/platform"
-import { useAdMobBridgeReady } from "../../../../hooks/useAdMobBridgeReady"
+import { useRewardedAdReady } from "../../../../hooks/useAdMobBridgeReady"
 import { useStoreStore } from "../../../../store/storeStore"
 import { useGroupStore } from "../../../../store/groupStore"
 
@@ -46,6 +46,7 @@ export function EarnCoinsModal({ isOpen, onClose, userId }: EarnCoinsModalProps)
 
   useEffect(() => {
     if (!isOpen) return
+    preloadAd()
     setViewsRecent(getCoinAdViewsRecent(userId))
     setCooldownMs(getCoinAdCooldownMs(userId))
 
@@ -59,12 +60,12 @@ export function EarnCoinsModal({ isOpen, onClose, userId }: EarnCoinsModalProps)
     }
   }, [isOpen, userId])
 
-  const bridgeReady = useAdMobBridgeReady(isOpen)
+  const { bridgeReady, adReady, adLoading } = useRewardedAdReady("coin", isOpen)
   const slotsLeft = hasCoinAdSlots(userId)
-  const canWatch = isMobileTauri && bridgeReady && slotsLeft
+  const canWatch = isMobileTauri && bridgeReady && slotsLeft && adReady
 
   async function handleWatchAd() {
-    if (!group || watching || !canWatch) return
+    if (!group || watching || !isMobileTauri || !bridgeReady || !slotsLeft) return
     setWatching(true)
     try {
       await watchRewardedAd(userId)
@@ -75,17 +76,16 @@ export function EarnCoinsModal({ isOpen, onClose, userId }: EarnCoinsModalProps)
       preloadAd()
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : ""
-      if (msg === "ad_not_ready" || msg === "bridge_not_ready") {
-        toast(lang === "en" ? "Ad not ready, try again" : "Anuncio no listo, intenta de nuevo")
-      } else if (msg === "not_available") {
+      if (msg === "not_available") {
         toast(
           lang === "en"
             ? "Ads are only available in the Android app"
             : "Los anuncios solo están en la app de Android",
         )
       } else if (msg !== "limit_reached") {
-        toast.error(lang === "en" ? "Ad failed, try again" : "Error con el anuncio")
+        toast.error(formatAdError(msg, lang))
       }
+      preloadAd()
     } finally {
       setWatching(false)
     }
@@ -210,9 +210,13 @@ export function EarnCoinsModal({ isOpen, onClose, userId }: EarnCoinsModalProps)
                       ? lang === "en"
                         ? "Preparing ads…"
                         : "Preparando anuncios…"
-                      : lang === "en"
-                        ? "Come back later"
-                        : "Vuelve más tarde"}
+                      : adLoading || !adReady
+                        ? lang === "en"
+                          ? "Loading ad from Google…"
+                          : "Cargando anuncio de Google…"
+                        : lang === "en"
+                          ? "Come back later"
+                          : "Vuelve más tarde"}
             </button>
           </motion.div>
         </>

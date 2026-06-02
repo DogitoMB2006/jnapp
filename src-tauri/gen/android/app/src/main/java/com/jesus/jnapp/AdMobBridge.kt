@@ -1,6 +1,7 @@
 package com.jesus.jnapp
 
 import android.app.Activity
+import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import com.google.android.gms.ads.AdError
@@ -13,90 +14,148 @@ import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 
 /**
  * JavaScript bridge for Google AdMob rewarded ads.
- * Registered as window.JNAdMob in the WebView.
  *
- * Coins ad:   window.__admobCallback(success, error)   → window.JNAdMob.showRewardedAd()
- * Diamonds ad: window.__admobDiamondCallback(success, error) → window.JNAdMob.showDiamondAd()
+ * Coins:   window.JNAdMob.showRewardedAd()
+ * Diamonds: window.JNAdMob.showDiamondAd()
  */
 class AdMobBridge(private val activity: Activity, private val webView: WebView) {
 
-    // ── Coins ──────────────────────────────────────────────────────────────────
     private var coinAd: RewardedAd? = null
     private var coinLoading = false
+    private var coinLoadError: String? = null
+    private var coinRetryCount = 0
 
-    // ── Diamonds ───────────────────────────────────────────────────────────────
     private var diamondAd: RewardedAd? = null
     private var diamondLoading = false
+    private var diamondLoadError: String? = null
+    private var diamondRetryCount = 0
 
     companion object {
-        private const val COIN_AD_UNIT_ID    = "ca-app-pub-8685487552580546/6291376522"
+        private const val TAG = "AdMobBridge"
+        private const val COIN_AD_UNIT_ID = "ca-app-pub-8685487552580546/6291376522"
         private const val DIAMOND_AD_UNIT_ID = "ca-app-pub-8685487552580546/2289967044"
+        /** Google sample rewarded ad — always fills in debug builds */
+        private const val TEST_REWARDED_AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917"
+        private const val SHOW_WAIT_ATTEMPTS = 40
+        private const val SHOW_WAIT_MS = 500L
+        private const val MAX_LOAD_RETRIES = 6
     }
 
     init {
-        // Wait for MobileAds SDK init to complete before loading ads.
-        // MobileAds.initialize is idempotent — callback fires immediately if already done.
         MobileAds.initialize(activity) {
             activity.runOnUiThread {
-                loadCoinAd()
-                loadDiamondAd()
+                loadCoinAd(force = true)
+                loadDiamondAd(force = true)
             }
         }
     }
 
-    // ── Coin ad load ───────────────────────────────────────────────────────────
+    private fun coinUnitId(): String =
+        if (BuildConfig.DEBUG) TEST_REWARDED_AD_UNIT_ID else COIN_AD_UNIT_ID
 
-    private fun loadCoinAd() {
-        if (coinLoading || coinAd != null) return
+    private fun diamondUnitId(): String =
+        if (BuildConfig.DEBUG) TEST_REWARDED_AD_UNIT_ID else DIAMOND_AD_UNIT_ID
+
+    private fun loadCoinAd(force: Boolean = false) {
+        if (coinAd != null) return
+        if (coinLoading && !force) return
         coinLoading = true
+        coinLoadError = null
+
         activity.runOnUiThread {
+            Log.d(TAG, "Loading coin ad (${coinUnitId()})")
             RewardedAd.load(
                 activity,
-                COIN_AD_UNIT_ID,
+                coinUnitId(),
                 AdRequest.Builder().build(),
                 object : RewardedAdLoadCallback() {
                     override fun onAdLoaded(ad: RewardedAd) {
                         coinAd = ad
                         coinLoading = false
+                        coinLoadError = null
+                        coinRetryCount = 0
+                        Log.d(TAG, "Coin ad loaded")
                     }
+
                     override fun onAdFailedToLoad(error: LoadAdError) {
                         coinAd = null
                         coinLoading = false
+                        coinLoadError = "load_${error.code}:${error.message}"
+                        Log.e(TAG, "Coin ad failed: ${error.code} ${error.message}")
+                        scheduleCoinReload()
                     }
-                }
+                },
             )
         }
     }
 
-    // ── Diamond ad load ────────────────────────────────────────────────────────
-
-    private fun loadDiamondAd() {
-        if (diamondLoading || diamondAd != null) return
+    private fun loadDiamondAd(force: Boolean = false) {
+        if (diamondAd != null) return
+        if (diamondLoading && !force) return
         diamondLoading = true
+        diamondLoadError = null
+
         activity.runOnUiThread {
+            Log.d(TAG, "Loading diamond ad (${diamondUnitId()})")
             RewardedAd.load(
                 activity,
-                DIAMOND_AD_UNIT_ID,
+                diamondUnitId(),
                 AdRequest.Builder().build(),
                 object : RewardedAdLoadCallback() {
                     override fun onAdLoaded(ad: RewardedAd) {
                         diamondAd = ad
                         diamondLoading = false
+                        diamondLoadError = null
+                        diamondRetryCount = 0
+                        Log.d(TAG, "Diamond ad loaded")
                     }
+
                     override fun onAdFailedToLoad(error: LoadAdError) {
                         diamondAd = null
                         diamondLoading = false
+                        diamondLoadError = "load_${error.code}:${error.message}"
+                        Log.e(TAG, "Diamond ad failed: ${error.code} ${error.message}")
+                        scheduleDiamondReload()
                     }
-                }
+                },
             )
         }
     }
 
-    // ── JS interface: coins ────────────────────────────────────────────────────
+    private fun scheduleCoinReload() {
+        if (coinRetryCount >= MAX_LOAD_RETRIES) return
+        coinRetryCount++
+        val delayMs = 2000L * coinRetryCount
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            loadCoinAd(force = true)
+        }, delayMs)
+    }
+
+    private fun scheduleDiamondReload() {
+        if (diamondRetryCount >= MAX_LOAD_RETRIES) return
+        diamondRetryCount++
+        val delayMs = 2000L * diamondRetryCount
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            loadDiamondAd(force = true)
+        }, delayMs)
+    }
+
+    @JavascriptInterface
+    fun isCoinAdReady(): Boolean = coinAd != null
+
+    @JavascriptInterface
+    fun isDiamondAdReady(): Boolean = diamondAd != null
+
+    @JavascriptInterface
+    fun isCoinAdLoading(): Boolean = coinLoading
+
+    @JavascriptInterface
+    fun isDiamondAdLoading(): Boolean = diamondLoading
 
     @JavascriptInterface
     fun showRewardedAd() {
-        waitAndShowCoin(attemptsLeft = 10)
+        if (coinAd == null) loadCoinAd(force = true)
+        waitAndShowCoin(SHOW_WAIT_ATTEMPTS)
     }
 
     private fun waitAndShowCoin(attemptsLeft: Int) {
@@ -105,12 +164,13 @@ class AdMobBridge(private val activity: Activity, private val webView: WebView) 
             ad.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
                     coinAd = null
-                    loadCoinAd()
+                    loadCoinAd(force = true)
                 }
+
                 override fun onAdFailedToShowFullScreenContent(error: AdError) {
                     coinAd = null
-                    loadCoinAd()
-                    fireCoinCallback(false, error.message)
+                    loadCoinAd(force = true)
+                    fireCoinCallback(false, "show_${error.code}:${error.message}")
                 }
             }
             activity.runOnUiThread {
@@ -118,27 +178,28 @@ class AdMobBridge(private val activity: Activity, private val webView: WebView) 
             }
             return
         }
+
         if (attemptsLeft <= 0) {
-            loadCoinAd()
-            fireCoinCallback(false, "ad_not_ready")
+            loadCoinAd(force = true)
+            val err = coinLoadError ?: "ad_not_ready"
+            fireCoinCallback(false, err)
             return
         }
-        // Ad still loading — wait 500ms and retry
+
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
             waitAndShowCoin(attemptsLeft - 1)
-        }, 500)
+        }, SHOW_WAIT_MS)
     }
 
     @JavascriptInterface
     fun preload() {
-        loadCoinAd()
+        loadCoinAd(force = true)
     }
-
-    // ── JS interface: diamonds ─────────────────────────────────────────────────
 
     @JavascriptInterface
     fun showDiamondAd() {
-        waitAndShowDiamond(attemptsLeft = 10)
+        if (diamondAd == null) loadDiamondAd(force = true)
+        waitAndShowDiamond(SHOW_WAIT_ATTEMPTS)
     }
 
     private fun waitAndShowDiamond(attemptsLeft: Int) {
@@ -147,12 +208,13 @@ class AdMobBridge(private val activity: Activity, private val webView: WebView) 
             ad.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
                     diamondAd = null
-                    loadDiamondAd()
+                    loadDiamondAd(force = true)
                 }
+
                 override fun onAdFailedToShowFullScreenContent(error: AdError) {
                     diamondAd = null
-                    loadDiamondAd()
-                    fireDiamondCallback(false, error.message)
+                    loadDiamondAd(force = true)
+                    fireDiamondCallback(false, "show_${error.code}:${error.message}")
                 }
             }
             activity.runOnUiThread {
@@ -160,22 +222,23 @@ class AdMobBridge(private val activity: Activity, private val webView: WebView) 
             }
             return
         }
+
         if (attemptsLeft <= 0) {
-            loadDiamondAd()
-            fireDiamondCallback(false, "ad_not_ready")
+            loadDiamondAd(force = true)
+            val err = diamondLoadError ?: "ad_not_ready"
+            fireDiamondCallback(false, err)
             return
         }
+
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
             waitAndShowDiamond(attemptsLeft - 1)
-        }, 500)
+        }, SHOW_WAIT_MS)
     }
 
     @JavascriptInterface
     fun preloadDiamond() {
-        loadDiamondAd()
+        loadDiamondAd(force = true)
     }
-
-    // ── Callback helpers ───────────────────────────────────────────────────────
 
     private fun fireCoinCallback(success: Boolean, error: String?) {
         fireJs("window.__admobCallback && window.__admobCallback(${success}, ${errorArg(error)})")
