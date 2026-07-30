@@ -126,7 +126,57 @@ export interface GroupMember {
   joined_at: string;
 }
 
-export type Section = "planes" | "lista" | "peliculas" | "tienda" | "perfil";
+export type Section = "planes" | "lista" | "peliculas" | "tienda" | "juegos" | "perfil";
+
+// ─── Juegos / Heist ────────────────────────────────────────────────────────────
+
+export type HeistStatus =
+  | "starter_turn"
+  | "partner_waiting"
+  | "partner_turn"
+  | "completed"
+  | "expired"
+  | "cancelled"
+
+export type HeistInteraction = "tap" | "swipe" | "hold"
+
+export interface Heist {
+  id: string
+  group_id: string
+  starter_id: string
+  partner_id: string
+  status: HeistStatus
+  level: number
+  starter_interaction: HeistInteraction
+  partner_interaction: HeistInteraction
+  starter_goal: number
+  partner_goal: number
+  starter_progress: number
+  partner_progress: number
+  reward_coins: number
+  reward_xp: number
+  partner_joined_at: string | null
+  partner_stage_started_at: string | null
+  expires_at: string
+  completed_at: string | null
+  settled: boolean
+  revision: number
+  created_at: string
+  updated_at: string
+}
+
+export interface HeistProgression {
+  group_id: string
+  level: number
+  total_xp: number
+  wins: number
+  attempts: number
+  streak: number
+  best_streak: number
+  cooldown_until: string | null
+  last_played_at: string | null
+  updated_at: string
+}
 
 // ─── Store / Themes ────────────────────────────────────────────────────────────
 

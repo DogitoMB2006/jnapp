@@ -21,6 +21,9 @@ export const channelsMatch = (
   if (a === b) {
     return true
   }
+  if ((a.endsWith("%") && b.startsWith(a.slice(0, -1))) || (b.endsWith("%") && a.startsWith(b.slice(0, -1)))) {
+    return true
+  }
   const prefix = "notifications:"
   if (subscribedChannel.startsWith(prefix) && metaChannel.startsWith(prefix)) {
     const sa = subscribedChannel.slice(prefix.length).trim().toLowerCase()

@@ -1,5 +1,6 @@
 import insforge from "./insforge"
 import { requestPartnerFcmPush } from "./requestPartnerFcmPush"
+import i18n from "../i18n"
 import { useGroupStore } from "../store/groupStore"
 import { useAuthStore } from "../store/authStore"
 
@@ -111,5 +112,45 @@ export const notifyPartnerInteraction = async (opts: {
     body: message,
     referenceId: opts.targetId,
     referenceType: opts.targetType,
+  })
+}
+
+export type HeistNotifyEvent = "heist_started" | "heist_completed" | "heist_expired"
+
+/**
+ * Cooperative heist pushes. Every notification deep-links to the exact session.
+ */
+export const notifyPartnerHeist = async (opts: {
+  actorUserId: string
+  event: HeistNotifyEvent
+  heistId: string
+  level?: number
+  rewardCoins?: number
+}) => {
+  const { partnerId } = useGroupStore.getState()
+  if (!partnerId) return
+
+  const profile = useAuthStore.getState().profile
+  const who = profile?.display_name?.trim() || profile?.username?.trim() || "Tu pareja"
+
+  let title: string
+  let message: string
+  if (opts.event === "heist_started") {
+    title = i18n.t("juegos.heist.notifications.startedTitle")
+    message = i18n.t("juegos.heist.notifications.startedBody", { who, level: opts.level ?? 1 })
+  } else if (opts.event === "heist_completed") {
+    title = i18n.t("juegos.heist.notifications.completedTitle")
+    message = i18n.t("juegos.heist.notifications.completedBody", { who, coins: opts.rewardCoins ?? 0 })
+  } else {
+    title = i18n.t("juegos.heist.notifications.expiredTitle")
+    message = i18n.t("juegos.heist.notifications.expiredBody")
+  }
+
+  void requestPartnerFcmPush({
+    targetUserId: partnerId,
+    title,
+    body: message,
+    referenceId: opts.heistId,
+    referenceType: "juegos",
   })
 }

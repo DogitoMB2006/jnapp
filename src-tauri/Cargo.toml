@@ -1,6 +1,6 @@
 [package]
 name = "jnapp"
-version = "1.32.0"
+version = "1.33.0"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"

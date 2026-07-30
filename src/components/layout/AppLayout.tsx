@@ -11,19 +11,22 @@ import { PlanesPage } from "../sections/planes/PlanesPage";
 import { ListaPage } from "../sections/lista/ListaPage";
 import { PeliculasPage } from "../sections/peliculas/PeliculasPage";
 import { TiendaPage } from "../sections/tienda/TiendaPage";
+import { JuegosPage } from "../sections/juegos/JuegosPage";
+import { HeistResultModal } from "../sections/juegos/heist/HeistResultModal";
 import { ProfilePage } from "../profile/ProfilePage";
 import { useAuthStore } from "../../store/authStore";
 import { useGroupStore } from "../../store/groupStore";
 import { useNavigationStore } from "../../store/navigationStore";
 import { useStoreStore } from "../../store/storeStore";
 import { useDiamondStore } from "../../store/diamondStore";
+import { useHeistStore } from "../../store/heistStore";
 import { useGroupThemeSync } from "../../hooks/useGroupThemeSync";
 import { useRealtime } from "../../hooks/useRealtime";
 import { useSectionSwipe } from "../../hooks/useSectionSwipe";
 import { parseTableChangePayload } from "../../lib/realtimePayload";
 import { emitSectionRefresh } from "../../lib/sectionRefreshEvent";
 import { lightHaptic } from "../../lib/mobileHaptics";
-import type { Section } from "../../types";
+import type { Heist, Section } from "../../types";
 
 export function AppLayout() {
   const [section, setSection] = useState<Section>("lista");
@@ -35,6 +38,10 @@ export function AppLayout() {
   const fetchStore = useStoreStore((s) => s.fetchStore);
   const user = useAuthStore((s) => s.user);
   const fetchDiamonds = useDiamondStore((s) => s.fetchDiamonds);
+  const fetchHeistState = useHeistStore((s) => s.fetchState);
+  const activeHeist = useHeistStore((s) => s.activeHeist);
+  const fetchHeistSession = useHeistStore((s) => s.fetchSession);
+  const applyRemoteHeist = useHeistStore((s) => s.applyRemote);
 
   // Bootstrap store when group is known
   useEffect(() => {
@@ -47,6 +54,46 @@ export function AppLayout() {
   }, [user?.id, fetchDiamonds])
 
   useGroupThemeSync(group?.id)
+
+  // Heists stay live across every section so both partners receive the same
+  // progress and result even when Games is not currently mounted.
+  useEffect(() => {
+    if (group?.id) void fetchHeistState(group.id)
+  }, [group?.id, fetchHeistState])
+
+  useRealtime(
+    group?.id ? `heists:${group.id}` : "__none__",
+    (payload) => {
+      if (!user) return
+      const msg = parseTableChangePayload(payload)
+      if (!msg) return
+      const row = msg.record as unknown as Heist
+      if (row.group_id !== group?.id) return
+      applyRemoteHeist(row, user.id)
+    },
+    {
+      events: ["INSERT", "UPDATE", "heist_change"],
+      onReconnect: () => {
+        if (group?.id) void fetchHeistState(group.id, true)
+      },
+    },
+  )
+
+  // Realtime is primary. While a heist is active, reconcile the exact durable
+  // row as a short fallback for mobile transport closes and missed socket events.
+  useEffect(() => {
+    if (!activeHeist) return
+    const sync = () => void fetchHeistSession(activeHeist.id)
+    const interval = window.setInterval(sync, 750)
+    const onVisible = () => {
+      if (document.visibilityState === "visible") sync()
+    }
+    document.addEventListener("visibilitychange", onVisible)
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener("visibilitychange", onVisible)
+    }
+  }, [activeHeist?.id, fetchHeistSession])
 
   // Sync coins — when partner buys something, shared pool decreases
   useRealtime(
@@ -169,12 +216,14 @@ export function AppLayout() {
             {section === "lista" && <ListaPage />}
             {section === "peliculas" && <PeliculasPage />}
             {section === "tienda" && <TiendaPage />}
+            {section === "juegos" && <JuegosPage />}
             {section === "perfil" && <ProfilePage />}
           </motion.div>
         </AnimatePresence>
       </main>
 
       <BottomNav active={section} onNavigate={handleTabRequest} />
+      <HeistResultModal />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Map, ListChecks, Film, ShoppingBag, UserCircle, type LucideIcon } from "lucide-react"
+import { Map, ListChecks, Film, ShoppingBag, Gamepad2, UserCircle, type LucideIcon } from "lucide-react"
 import { useTranslation } from "react-i18next";
 import { NAV_SECTION_ORDER } from "../../lib/sectionOrder";
 import type { Section } from "../../types";
@@ -14,6 +14,7 @@ const SECTION_ICONS: Record<Section, LucideIcon> = {
   lista: ListChecks,
   peliculas: Film,
   tienda: ShoppingBag,
+  juegos: Gamepad2,
   perfil: UserCircle,
 };
 

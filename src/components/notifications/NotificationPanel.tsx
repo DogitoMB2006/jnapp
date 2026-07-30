@@ -8,6 +8,7 @@ import {
   Heart,
   ListChecks,
   MessageCircle,
+  Vault,
   X,
 } from "lucide-react";
 import { useLayoutEffect, useState, useRef } from "react";
@@ -19,6 +20,7 @@ import { formatDistanceToNow } from "../../lib/utils";
 import type { Notification, Section } from "../../types";
 
 const SECTION_TYPES = new Set<string>(["planes", "lista", "peliculas"])
+const HEIST_TYPES = new Set<string>(["heist_started", "heist_completed", "heist_expired"])
 
 function normalizeSection(section: string): string {
   return section === "salidas" ? "planes" : section
@@ -33,6 +35,9 @@ function getNavTarget(n: Notification): { section: Section; itemId: string | nul
   if ((n.type === "comment" || n.type === "reaction" || n.type === "reminder") && referenceType && SECTION_TYPES.has(referenceType)) {
     return { section: referenceType as Section, itemId: n.reference_id }
   }
+  if (HEIST_TYPES.has(n.type) || referenceType === "juegos") {
+    return { section: "juegos", itemId: n.reference_id }
+  }
   return null
 }
 
@@ -44,6 +49,7 @@ function getNotificationIcon(type: string, referenceType?: string | null) {
   if (type === "comment") return MessageCircle
   if (type === "reaction") return Heart
   if (type === "reminder") return AlarmClock
+  if (HEIST_TYPES.has(type) || target === "juegos") return Vault
   if (target === "planes") return CalendarDays
   if (target === "lista") return ListChecks
   if (target === "peliculas") return Film
@@ -201,6 +207,12 @@ export function NotificationPanel() {
                         {notifications.slice(0, 20).map((n) => {
                           const Icon = getNotificationIcon(n.type, n.reference_type)
                           const nav = getNavTarget(n)
+                          const localizedHeist = HEIST_TYPES.has(n.type)
+                            ? {
+                                title: t(`juegos.heist.notificationPanel.${n.type}.title`),
+                                message: t(`juegos.heist.notificationPanel.${n.type}.message`),
+                              }
+                            : null
                           const openNotification = () => {
                             void markAsRead(n.id)
                             if (nav) {
@@ -239,10 +251,10 @@ export function NotificationPanel() {
 
                               <span className="min-w-0 flex-1 pt-0.5">
                                 <span className="block text-sm font-bold leading-snug text-base-content">
-                                  {n.title}
+                                  {localizedHeist?.title ?? n.title}
                                 </span>
                                 <span className="mt-1 line-clamp-2 block text-xs leading-relaxed text-base-content/62">
-                                  {n.message}
+                                  {localizedHeist?.message ?? n.message}
                                 </span>
                                 <span className="mt-2 block text-[11px] font-medium text-base-content/40">
                                   {formatDistanceToNow(n.created_at)}

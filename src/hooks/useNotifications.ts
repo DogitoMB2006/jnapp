@@ -9,6 +9,7 @@ import insforge from "../lib/insforge";
 import { parseNotificationInsertPayload } from "../lib/notificationPayload";
 import { useNotificationStore } from "../store/notificationStore";
 import { useAuthStore } from "../store/authStore";
+import { useHeistStore } from "../store/heistStore";
 import type { Notification } from "../types";
 import { useRealtime } from "./useRealtime";
 
@@ -21,6 +22,14 @@ const NOTIFICATION_REALTIME_EVENTS = [
 
 const isTauriRuntime =
   typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+
+const HEIST_NOTIFICATION_TYPES = new Set(["heist_started", "heist_completed", "heist_expired"])
+
+const syncReferencedHeist = (notification: Notification) => {
+  if (HEIST_NOTIFICATION_TYPES.has(notification.type) && notification.reference_id) {
+    void useHeistStore.getState().fetchSession(notification.reference_id)
+  }
+}
 
 export function useNotifications() {
   const { user } = useAuthStore();
@@ -87,6 +96,7 @@ export function useNotifications() {
       for (const r of rows) {
         if (osToastSeenIdsRef.current.has(r.id)) continue;
         osToastSeenIdsRef.current.add(r.id);
+        syncReferencedHeist(r);
         await sendOsToast(r);
       }
       setNotifications(rows);
@@ -137,6 +147,7 @@ export function useNotifications() {
       }
 
       addNotification(n);
+      syncReferencedHeist(n);
 
       if (!osToastSeenIdsRef.current.has(n.id)) {
         osToastSeenIdsRef.current.add(n.id);

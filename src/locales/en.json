@@ -5,6 +5,7 @@
     "salidas": "Outings",
     "peliculas": "Movies",
     "tienda": "Store",
+    "juegos": "Games",
     "perfil": "Profile"
   },
   "sections": {
@@ -13,7 +14,76 @@
     "salidas": "Outings",
     "peliculas": "Movies to Watch",
     "tienda": "Store",
+    "juegos": "Games",
     "perfil": "My Profile"
+  },
+  "juegos": {
+    "title": "Mini-games",
+    "subtitle": "Play together, win coins",
+    "comingSoon": "Coming soon",
+    "heist": {
+      "title": "Heist",
+      "blurb": "Crack a vault together",
+      "lobbyTitle": "Co-op Heist",
+      "lobbyDesc": "Complete your challenge, then your partner completes theirs before time runs out. You both win.",
+      "level": "Level {{level}}",
+      "sharedProgress": "Shared couple progress",
+      "coins": "coins",
+      "startRaid": "Open the vault",
+      "noPartner": "You need a partner to play",
+      "cooldown": "The vault is cooling down",
+      "cooldownTimer": "Ready in {{seconds}}s",
+      "startFailed": "Could not start the heist. Try again.",
+      "activeRaid": "Co-op heist in progress",
+      "noEntryCost": "Free to enter. Success rewards shared coins and XP.",
+      "incomingRaid": "Your partner is opening a vault!",
+      "joinDescription": "Join before the timer ends, then complete your challenge.",
+      "joinNow": "Join the heist",
+      "joinFailed": "Could not join. Check your connection and try again.",
+      "waitingPartner": "Your part is done. Waiting for your partner…",
+      "waitingStarter": "You are in! Your partner is finishing stage one…",
+      "partnerPlaying": "Your partner is completing the final stage…",
+      "liveProgress": "Progress updates live on both screens.",
+      "interactions": {
+        "tap": "Tap the lock",
+        "swipe": "Swipe across the scanner",
+        "hold": "Hold to crack the seal"
+      },
+      "interactionHelp": {
+        "tap": "Tap quickly until the lock opens",
+        "swipe": "Swipe in any direction across the panel",
+        "hold": "Keep holding until the panel fills"
+      },
+      "notifications": {
+        "startedTitle": "A vault is opening! 🔐",
+        "startedBody": "{{who}} started a level {{level}} heist. Join quickly to complete your part!",
+        "completedTitle": "Vault opened together! 🏆",
+        "completedBody": "{{who}} completed the second stage. You earned {{coins}} shared coins.",
+        "expiredTitle": "The heist expired ⏳",
+        "expiredBody": "You did not open the vault in time. You can try again soon."
+      },
+      "notificationPanel": {
+        "heist_started": {
+          "title": "A vault is opening!",
+          "message": "Your partner started a heist. Join quickly to complete your part."
+        },
+        "heist_completed": {
+          "title": "Vault opened together!",
+          "message": "Shared coins and XP were added for both of you."
+        },
+        "heist_expired": {
+          "title": "The heist expired",
+          "message": "You can try opening another vault after the short cooldown."
+        }
+      },
+      "timeLeft": "{{seconds}}s",
+      "coopWon": "You opened it together!",
+      "coopWonDesc": "Shared coins and XP were added for both of you.",
+      "expiredDesc": "No penalty. Try again after the short cooldown.",
+      "levelUp": "Shared level {{level}} unlocked!",
+      "playAgain": "Back to lobby",
+      "expired": "The vault sealed itself"
+    }
   },
   "register": {
     "methodTitle": "Join Planivy",

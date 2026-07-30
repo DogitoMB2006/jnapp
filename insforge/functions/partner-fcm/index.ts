@@ -11,6 +11,8 @@ type Body = {
   target_user_id?: string
   title?: string
   body?: string
+  reference_id?: string | null
+  reference_type?: string | null
 }
 
 const json = (o: unknown, status = 200) =>
@@ -64,6 +66,8 @@ export default async function handler(req: Request): Promise<Response> {
   const targetId = body.target_user_id?.trim()
   const title = String(body.title ?? "Planivy").slice(0, 200)
   const text = String(body.body ?? "").slice(0, 4000)
+  const referenceId = typeof body.reference_id === "string" ? body.reference_id.slice(0, 100) : ""
+  const referenceType = typeof body.reference_type === "string" ? body.reference_type.slice(0, 50) : ""
   console.log("[partner-fcm] target:", targetId, "title:", title)
   if (!targetId?.length) {
     return json({ error: "target_user_id required" }, 400)
@@ -143,6 +147,10 @@ export default async function handler(req: Request): Promise<Response> {
         data: {
           title,
           body: text,
+          // Deep-link keys read by FcmMessagingService.kt -> DeepLinkStore
+          ...(referenceId && referenceType
+            ? { reference_id: referenceId, reference_type: referenceType }
+            : {}),
         },
       },
     }),

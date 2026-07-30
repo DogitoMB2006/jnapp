@@ -5,6 +5,7 @@
     "salidas": "Salidas",
     "peliculas": "Películas",
     "tienda": "Tienda",
+    "juegos": "Juegos",
     "perfil": "Perfil"
   },
   "sections": {
@@ -13,7 +14,76 @@
     "salidas": "Salidas",
     "peliculas": "Películas para Ver",
     "tienda": "Tienda",
+    "juegos": "Juegos",
     "perfil": "Mi Perfil"
+  },
+  "juegos": {
+    "title": "Minijuegos",
+    "subtitle": "Jueguen juntos, ganen monedas",
+    "comingSoon": "Próximamente",
+    "heist": {
+      "title": "Atraco",
+      "blurb": "Abran una bóveda juntos",
+      "lobbyTitle": "Atraco Cooperativo",
+      "lobbyDesc": "Completa tu reto y luego tu pareja completa el suyo antes de que se acabe el tiempo. Ambos ganan.",
+      "level": "Nivel {{level}}",
+      "sharedProgress": "Progreso compartido de pareja",
+      "coins": "monedas",
+      "startRaid": "Abrir la bóveda",
+      "noPartner": "Necesitas una pareja para jugar",
+      "cooldown": "La bóveda se está enfriando",
+      "cooldownTimer": "Lista en {{seconds}}s",
+      "startFailed": "No se pudo iniciar el atraco. Inténtalo de nuevo.",
+      "activeRaid": "Atraco cooperativo en curso",
+      "noEntryCost": "Entrada gratis. Al ganar reciben monedas compartidas y XP.",
+      "incomingRaid": "¡Tu pareja está abriendo una bóveda!",
+      "joinDescription": "Entra antes de que termine el tiempo y completa tu reto.",
+      "joinNow": "Entrar al atraco",
+      "joinFailed": "No se pudo entrar. Revisa tu conexión e inténtalo de nuevo.",
+      "waitingPartner": "Terminaste tu parte. Esperando a tu pareja…",
+      "waitingStarter": "¡Ya entraste! Tu pareja está terminando la primera fase…",
+      "partnerPlaying": "Tu pareja está completando la fase final…",
+      "liveProgress": "El progreso se actualiza en vivo en ambas pantallas.",
+      "interactions": {
+        "tap": "Toca la cerradura",
+        "swipe": "Desliza por el escáner",
+        "hold": "Mantén para romper el sello"
+      },
+      "interactionHelp": {
+        "tap": "Toca rápido hasta abrir la cerradura",
+        "swipe": "Desliza en cualquier dirección sobre el panel",
+        "hold": "Mantén presionado hasta llenar el panel"
+      },
+      "notifications": {
+        "startedTitle": "¡Están abriendo una bóveda! 🔐",
+        "startedBody": "{{who}} inició el atraco de nivel {{level}}. ¡Entra rápido para completar tu parte!",
+        "completedTitle": "¡Bóveda abierta juntos! 🏆",
+        "completedBody": "{{who}} completó la segunda fase. Ganaron {{coins}} monedas compartidas.",
+        "expiredTitle": "El atraco expiró ⏳",
+        "expiredBody": "No lograron abrir la bóveda a tiempo. Podrán intentarlo de nuevo pronto."
+      },
+      "notificationPanel": {
+        "heist_started": {
+          "title": "¡Están abriendo una bóveda!",
+          "message": "Tu pareja inició un atraco. Entra rápido para completar tu parte."
+        },
+        "heist_completed": {
+          "title": "¡Bóveda abierta juntos!",
+          "message": "Las monedas compartidas y el XP se sumaron para ambos."
+        },
+        "heist_expired": {
+          "title": "El atraco expiró",
+          "message": "Podrán abrir otra bóveda después de la espera corta."
+        }
+      },
+      "timeLeft": "{{seconds}}s",
+      "coopWon": "¡La abrieron juntos!",
+      "coopWonDesc": "Las monedas compartidas y el XP se sumaron para ambos.",
+      "expiredDesc": "Sin penalización. Intenten de nuevo después de la espera corta.",
+      "levelUp": "¡Desbloquearon el nivel compartido {{level}}!",
+      "playAgain": "Volver al lobby",
+      "expired": "La bóveda se cerró"
+    }
   },
   "register": {
     "methodTitle": "Únete a Planivy",

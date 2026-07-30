@@ -7,7 +7,7 @@ import type { Section } from "../types"
 
 const normalizeSection = (section: string): string => section === "salidas" ? "planes" : section
 
-const VALID_SECTIONS = new Set<string>(["planes", "lista", "peliculas"])
+const VALID_SECTIONS = new Set<string>(["planes", "lista", "peliculas", "juegos"])
 
 const isValidSection = (s: string): s is Section =>
   VALID_SECTIONS.has(s)

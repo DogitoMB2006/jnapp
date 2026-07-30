@@ -59,6 +59,8 @@ function getMetaChannel(raw: unknown): string | undefined {
 type UseRealtimeOptions = {
   /** Defaults to INSERT, UPDATE, DELETE (matches Postgres trigger publish event names). */
   events?: string[]
+  /** Reconcile durable state after the socket successfully rejoins this channel. */
+  onReconnect?: () => void
 }
 
 /**
@@ -72,6 +74,8 @@ export function useRealtime(
 ) {
   const callbackRef = useRef(callback)
   callbackRef.current = callback
+  const onReconnectRef = useRef(options?.onReconnect)
+  onReconnectRef.current = options?.onReconnect
 
   const eventsList = options?.events ?? defaultTableEvents
   const eventsDep = eventsList.join("|")
@@ -103,6 +107,8 @@ export function useRealtime(
             `[useRealtime] re-subscribe after connect failed for "${channel}"`,
             res
           )
+        } else {
+          onReconnectRef.current?.()
         }
       })()
     }

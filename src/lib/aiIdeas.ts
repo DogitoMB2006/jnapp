@@ -1,7 +1,7 @@
 import insforge from "./insforge"
 import type { Section } from "../types"
 
-export type AiIdeaSection = Exclude<Section, "perfil" | "tienda">
+export type AiIdeaSection = Exclude<Section, "perfil" | "tienda" | "juegos">
 
 export type AiIdea = {
   title: string
