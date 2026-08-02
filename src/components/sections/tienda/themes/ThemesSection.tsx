@@ -26,7 +26,7 @@ export function ThemesSection() {
   const [busy, setBusy] = useState<string | null>(null)
 
   const equipped = ALL_THEMES.find((th) => th.id === equippedTheme) ?? ALL_THEMES[0]
-  const others = ALL_THEMES.filter((th) => th.id !== equippedTheme)
+  const equippedName = lang === "en" ? equipped.nameEn : equipped.nameEs
 
   async function handleBuy(theme: ThemeDef) {
     if (!group) return
@@ -66,70 +66,62 @@ export function ThemesSection() {
   }
 
   return (
-    <div className="flex flex-col gap-5 sm:gap-6">
+    <div className="flex flex-col gap-3">
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.12 }}
-        className="mx-auto flex max-w-[19rem] items-center justify-center gap-2 text-center text-xs leading-relaxed text-base-content/50"
+        className="flex items-center justify-center gap-1.5 text-center text-[11px] leading-snug text-base-content/45"
       >
-        <Users className="h-3.5 w-3.5 shrink-0 text-primary/70" aria-hidden />
+        <Users className="h-3 w-3 shrink-0 text-primary/70" aria-hidden />
         {t("store.themesHint")}
       </motion.p>
 
-      <section aria-labelledby="store-your-space">
-        <motion.h3
-          id="store-your-space"
-          initial={{ opacity: 0, x: -8 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.14 }}
-          className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-base-content/35"
-        >
-          {t("store.yourSpace")}
-        </motion.h3>
-        <div className={busy === equipped.id ? "opacity-60 pointer-events-none" : ""}>
-          <ThemeCard
-            theme={equipped}
-            owned={purchases.has(equipped.id)}
-            equipped
-            onBuy={() => handleBuy(equipped)}
-            onEquip={() => handleEquip(equipped)}
-            index={0}
-            featured
-          />
+      <motion.div
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center gap-2.5 rounded-xl border border-primary/25 bg-primary/8 px-2.5 py-2"
+        aria-label={`${t("store.yourSpace")}: ${equippedName}`}
+      >
+        <div
+          className="h-8 w-8 shrink-0 rounded-lg border border-white/15 shadow-inner"
+          style={{
+            background: `linear-gradient(135deg, ${equipped.preview.bg}, ${equipped.preview.primary}, ${equipped.preview.accent})`,
+          }}
+          aria-hidden
+        />
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-base-content/40">
+            {t("store.yourSpace")}
+          </p>
+          <p className="truncate text-sm font-bold text-base-content">{equippedName}</p>
         </div>
-      </section>
+        <span className="shrink-0 rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-bold text-primary">
+          {t("store.on")}
+        </span>
+      </motion.div>
 
-      {others.length > 0 && (
-        <section aria-labelledby="store-collection">
-          <motion.h3
-            id="store-collection"
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.18 }}
-            className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-base-content/35"
+      <div
+        className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2.5"
+        role="list"
+        aria-label={t("store.collection")}
+      >
+        {ALL_THEMES.map((theme, i) => (
+          <div
+            key={theme.id}
+            role="listitem"
+            className={busy === theme.id ? "opacity-55 pointer-events-none" : ""}
           >
-            {t("store.collection")}
-          </motion.h3>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {others.map((theme, i) => (
-              <div
-                key={theme.id}
-                className={busy === theme.id ? "opacity-60 pointer-events-none" : ""}
-              >
-                <ThemeCard
-                  theme={theme}
-                  owned={purchases.has(theme.id)}
-                  equipped={false}
-                  onBuy={() => handleBuy(theme)}
-                  onEquip={() => handleEquip(theme)}
-                  index={i + 1}
-                />
-              </div>
-            ))}
+            <ThemeCard
+              theme={theme}
+              owned={purchases.has(theme.id)}
+              equipped={theme.id === equippedTheme}
+              onBuy={() => handleBuy(theme)}
+              onEquip={() => handleEquip(theme)}
+              index={i}
+            />
           </div>
-        </section>
-      )}
+        ))}
+      </div>
     </div>
   )
 }

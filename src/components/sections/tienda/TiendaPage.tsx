@@ -23,22 +23,22 @@ export function TiendaPage() {
   }, [])
 
   return (
-    <div className="flex flex-col gap-4 pb-6 sm:gap-6">
-      <StoreHeader activeTab={activeTab} />
+    <div className="flex flex-col gap-3 pb-6">
+      <StoreHeader />
 
       <StoreCategoryRail active={activeTab} onSelect={setActiveTab} />
 
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ type: "spring", stiffness: 360, damping: 32 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ type: "spring", stiffness: 380, damping: 34 }}
         >
           {activeTab === "themes" && (
             loading ? (
-              <div className="flex flex-col items-center justify-center gap-3 py-20">
+              <div className="flex flex-col items-center justify-center gap-3 py-16">
                 <span className="loading loading-spinner loading-md text-primary" />
                 <p className="text-xs text-base-content/40">{t("store.loading")}</p>
               </div>

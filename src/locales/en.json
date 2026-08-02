@@ -37,6 +37,13 @@
       "activeRaid": "Co-op heist in progress",
       "noEntryCost": "Free to enter. Success rewards shared coins and XP.",
       "incomingRaid": "Your partner is opening a vault!",
+      "incomingAlert": {
+        "title": "Your partner opened a vault!",
+        "message": "They are opening a vault and need you to complete your part before it closes.",
+        "seconds": "{{seconds}}s remaining",
+        "join": "Continue the heist",
+        "later": "Not now"
+      },
       "joinDescription": "Join before the timer ends, then complete your challenge.",
       "joinNow": "Join the heist",
       "joinFailed": "Could not join. Check your connection and try again.",

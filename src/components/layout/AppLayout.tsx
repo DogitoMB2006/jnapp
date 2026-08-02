@@ -13,6 +13,7 @@ import { PeliculasPage } from "../sections/peliculas/PeliculasPage";
 import { TiendaPage } from "../sections/tienda/TiendaPage";
 import { JuegosPage } from "../sections/juegos/JuegosPage";
 import { HeistResultModal } from "../sections/juegos/heist/HeistResultModal";
+import { IncomingHeistModal } from "../sections/juegos/heist/IncomingHeistModal";
 import { ProfilePage } from "../profile/ProfilePage";
 import { useAuthStore } from "../../store/authStore";
 import { useGroupStore } from "../../store/groupStore";
@@ -223,6 +224,7 @@ export function AppLayout() {
       </main>
 
       <BottomNav active={section} onNavigate={handleTabRequest} />
+      <IncomingHeistModal currentSection={section} />
       <HeistResultModal />
     </div>
   );

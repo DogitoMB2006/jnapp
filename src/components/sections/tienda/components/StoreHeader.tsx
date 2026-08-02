@@ -1,66 +1,33 @@
-import { motion, AnimatePresence } from "framer-motion"
-import { ShoppingBag } from "lucide-react"
+import { motion } from "framer-motion"
 import { useTranslation } from "react-i18next"
 import { CoinDisplay } from "./CoinDisplay"
 import { DiamondDisplay } from "./DiamondDisplay"
-import type { StoreCategoryId } from "./StoreCategoryRail"
 
-interface StoreHeaderProps {
-  activeTab: StoreCategoryId
-}
-
-export function StoreHeader({ activeTab }: StoreHeaderProps) {
+export function StoreHeader() {
   const { t } = useTranslation()
-  const showDiamonds = activeTab === "decor"
 
   return (
     <motion.header
-      initial={{ opacity: 0, y: -16 }}
+      initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 280, damping: 26 }}
-      className="relative flex flex-col items-center px-2 pt-1 pb-1 text-center sm:pb-2"
+      transition={{ type: "spring", stiffness: 320, damping: 28 }}
+      className="flex items-start justify-between gap-3 px-0.5"
     >
-      <div
-        className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl border border-base-300 bg-base-200/80 text-base-content/70 sm:mb-3 sm:h-11 sm:w-11"
-        aria-hidden
-      >
-        <ShoppingBag className="h-5 w-5" strokeWidth={2} />
+      <div className="min-w-0">
+        <h2
+          className="font-serif text-xl font-bold tracking-tight text-base-content sm:text-2xl"
+          style={{ fontFamily: "'Fraunces', Georgia, serif" }}
+        >
+          {t("store.title")}
+        </h2>
+        <p className="mt-0.5 text-xs leading-snug text-base-content/45 truncate max-w-[12rem] sm:max-w-[16rem]">
+          {t("store.tagline")}
+        </p>
       </div>
 
-      <h2
-        className="relative font-serif text-[1.65rem] font-bold tracking-tight text-base-content sm:text-[1.85rem]"
-        style={{ fontFamily: "'Fraunces', Georgia, serif" }}
-      >
-        {t("store.title")}
-      </h2>
-      <p className="relative mt-1 max-w-[18rem] text-sm leading-relaxed text-base-content/50 sm:mt-1.5">
-        {t("store.tagline")}
-      </p>
-
-      <div className="relative mt-3 sm:mt-4">
-        <AnimatePresence mode="wait">
-          {showDiamonds ? (
-            <motion.div
-              key="diamond"
-              initial={{ opacity: 0, y: 6, scale: 0.92 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -6, scale: 0.92 }}
-              transition={{ type: "spring", stiffness: 340, damping: 26 }}
-            >
-              <DiamondDisplay />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="coin"
-              initial={{ opacity: 0, y: 6, scale: 0.92 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -6, scale: 0.92 }}
-              transition={{ type: "spring", stiffness: 340, damping: 26 }}
-            >
-              <CoinDisplay variant="pill" />
-            </motion.div>
-          )}
-        </AnimatePresence>
+      <div className="flex shrink-0 items-center gap-1.5">
+        <CoinDisplay variant="compact" />
+        <DiamondDisplay variant="compact" />
       </div>
     </motion.header>
   )

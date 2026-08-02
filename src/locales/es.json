@@ -37,6 +37,13 @@
       "activeRaid": "Atraco cooperativo en curso",
       "noEntryCost": "Entrada gratis. Al ganar reciben monedas compartidas y XP.",
       "incomingRaid": "¡Tu pareja está abriendo una bóveda!",
+      "incomingAlert": {
+        "title": "¡Tu pareja abrió una bóveda!",
+        "message": "Está abriendo una bóveda y necesita que completes tu parte antes de que se cierre.",
+        "seconds": "Quedan {{seconds}}s",
+        "join": "Continuar el atraco",
+        "later": "Ahora no"
+      },
       "joinDescription": "Entra antes de que termine el tiempo y completa tu reto.",
       "joinNow": "Entrar al atraco",
       "joinFailed": "No se pudo entrar. Revisa tu conexión e inténtalo de nuevo.",
