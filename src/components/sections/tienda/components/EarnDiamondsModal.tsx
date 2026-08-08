@@ -1,21 +1,8 @@
-import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Play, CheckCircle, Gem, Clock } from "lucide-react"
+import { X, Gem, Sparkles, Lock } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import toast from "react-hot-toast"
-import {
-  watchDiamondAd,
-  getDiamondAdViewsRecent,
-  getDiamondAdCooldownMs,
-  hasDiamondAdSlots,
-  DIAMOND_AD_LIMIT,
-  DIAMOND_PER_AD,
-  preloadDiamondAd,
-} from "../../../../lib/diamonds"
-import { formatAdError, isRewardedAdsSupported } from "../../../../lib/admobBridge"
-import { isMobileTauri } from "../../../../lib/platform"
-import { useRewardedAdReady } from "../../../../hooks/useAdMobBridgeReady"
-import { useDiamondStore } from "../../../../store/diamondStore"
+import { DIAMOND_PACKS, DIAMONDS_IAP_ENABLED, type DiamondPack } from "../../../../lib/diamonds"
 
 interface EarnDiamondsModalProps {
   isOpen: boolean
@@ -23,77 +10,20 @@ interface EarnDiamondsModalProps {
   userId: string
 }
 
-function formatMs(ms: number): string {
-  const total = Math.ceil(ms / 1000)
-  const h = Math.floor(total / 3600)
-  const m = Math.floor((total % 3600) / 60)
-  const s = total % 60
-  if (h > 0) return `${h}h ${m.toString().padStart(2, "0")}m`
-  return `${m}:${s.toString().padStart(2, "0")}`
-}
+/**
+ * Diamond shop shell. Packs are display-only until Play Billing is wired.
+ * Ads never grant diamonds.
+ */
+export function EarnDiamondsModal({ isOpen, onClose }: EarnDiamondsModalProps) {
+  const { t } = useTranslation()
 
-export function EarnDiamondsModal({ isOpen, onClose, userId }: EarnDiamondsModalProps) {
-  const { i18n } = useTranslation()
-  const lang = i18n.language === "en" ? "en" : "es"
-  const { earnDiamonds } = useDiamondStore()
-
-  const [watching, setWatching] = useState(false)
-  const [viewsRecent, setViewsRecent] = useState(() => getDiamondAdViewsRecent(userId))
-  const [cooldownMs, setCooldownMs] = useState(() => getDiamondAdCooldownMs(userId))
-  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  // Refresh countdown every second when at limit
-  useEffect(() => {
-    if (!isOpen) return
-    preloadDiamondAd()
-    setViewsRecent(getDiamondAdViewsRecent(userId))
-    setCooldownMs(getDiamondAdCooldownMs(userId))
-
-    tickRef.current = setInterval(() => {
-      const views = getDiamondAdViewsRecent(userId)
-      const cd = getDiamondAdCooldownMs(userId)
-      setViewsRecent(views)
-      setCooldownMs(cd)
-    }, 1000)
-
-    return () => {
-      if (tickRef.current) clearInterval(tickRef.current)
+  const handleSelectPack = (_pack: DiamondPack) => {
+    if (!DIAMONDS_IAP_ENABLED) {
+      toast(t("store.diamondsShop.comingSoonToast"))
+      return
     }
-  }, [isOpen, userId])
-
-  const { bridgeReady, adReady, adLoading } = useRewardedAdReady("diamond", isOpen)
-  const slotsLeft = hasDiamondAdSlots(userId)
-  const canWatch = isMobileTauri && bridgeReady && slotsLeft && adReady
-
-  async function handleWatchAd() {
-    if (watching || !isMobileTauri || !bridgeReady || !slotsLeft) return
-    setWatching(true)
-    try {
-      await watchDiamondAd(userId)
-      await earnDiamonds(userId, DIAMOND_PER_AD)
-      setViewsRecent(getDiamondAdViewsRecent(userId))
-      setCooldownMs(getDiamondAdCooldownMs(userId))
-      toast.success(
-        lang === "en"
-          ? `+${DIAMOND_PER_AD} diamond earned`
-          : `+${DIAMOND_PER_AD} diamante ganado`
-      )
-      preloadDiamondAd()
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : ""
-      if (msg === "not_available") {
-        toast(
-          lang === "en"
-            ? "Ads are only available in the Android app"
-            : "Los anuncios solo están en la app de Android",
-        )
-      } else if (msg !== "limit_reached") {
-        toast.error(formatAdError(msg, lang))
-      }
-      preloadDiamondAd()
-    } finally {
-      setWatching(false)
-    }
+    // TODO: launch Google Play Billing for pack.productId
+    // On success, a server-side receipt verifier credits the balance.
   }
 
   return (
@@ -106,125 +36,93 @@ export function EarnDiamondsModal({ isOpen, onClose, userId }: EarnDiamondsModal
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
             onClick={onClose}
+            aria-hidden
           />
 
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="diamonds-shop-title"
             initial={{ opacity: 0, y: 40, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.97 }}
             transition={{ type: "spring", stiffness: 380, damping: 30 }}
             className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-lg rounded-t-3xl bg-base-200 border-t border-sky-500/15 p-6 pb-[max(1.5rem,env(safe-area-inset-bottom,0px))]"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="font-bold text-base-content text-lg flex items-center gap-2">
-                  <Gem size={18} className="text-sky-400" strokeWidth={2.5} />
-                  {lang === "en" ? "Earn Diamonds" : "Ganar Diamantes"}
+            <div className="flex items-start justify-between gap-3 mb-5">
+              <div className="min-w-0">
+                <h3
+                  id="diamonds-shop-title"
+                  className="font-bold text-base-content text-lg flex items-center gap-2"
+                >
+                  <Gem size={18} className="text-sky-400 shrink-0" strokeWidth={2.5} aria-hidden />
+                  {t("store.diamondsShop.title")}
                 </h3>
-                <p className="text-xs text-base-content/40 mt-0.5">
-                  {lang === "en"
-                    ? `Watch ads to earn diamonds · resets every 3h`
-                    : `Mira anuncios para ganar diamantes · se reinicia cada 3h`}
+                <p className="text-xs text-base-content/45 mt-1 leading-relaxed">
+                  {t("store.diamondsShop.subtitle")}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="btn btn-ghost btn-sm btn-square rounded-xl"
+                className="btn btn-ghost btn-sm btn-square rounded-xl shrink-0"
+                aria-label={t("store.diamondsShop.close")}
               >
                 <X size={18} />
               </button>
             </div>
 
-            {/* Slot dots */}
-            <div className="flex items-center justify-center gap-4 mb-6">
-              {Array.from({ length: DIAMOND_AD_LIMIT }).map((_, i) => {
-                const watched = i < viewsRecent
-                return (
-                  <div key={i} className="flex flex-col items-center gap-1.5">
-                    <div
-                      className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 ${
-                        watched
-                          ? "bg-sky-500/15 border border-sky-500/30"
-                          : "bg-base-300 border border-base-300"
-                      }`}
-                    >
-                      {watched ? (
-                        <CheckCircle size={22} className="text-sky-400" />
-                      ) : (
-                        <span className="text-xs font-bold text-base-content/30">{i + 1}</span>
-                      )}
-                    </div>
-                    <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-base-content/30">
-                      {watched ? `+${DIAMOND_PER_AD}` : DIAMOND_PER_AD}
-                      <Gem size={9} strokeWidth={2.5} aria-hidden />
-                    </span>
-                  </div>
-                )
-              })}
+            <div
+              className="mb-4 flex items-start gap-2 rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-2.5"
+              role="status"
+            >
+              <Sparkles size={14} className="mt-0.5 shrink-0 text-sky-400" aria-hidden />
+              <p className="text-[11px] leading-snug text-base-content/60">
+                {t("store.diamondsShop.premiumNote")}
+              </p>
             </div>
 
-            {/* Status text */}
-            <p className="text-center text-sm text-base-content/50 mb-5">
-              {viewsRecent < DIAMOND_AD_LIMIT ? (
-                lang === "en"
-                  ? `${DIAMOND_AD_LIMIT - viewsRecent} ad${DIAMOND_AD_LIMIT - viewsRecent > 1 ? "s" : ""} remaining this window`
-                  : `${DIAMOND_AD_LIMIT - viewsRecent} anuncio${DIAMOND_AD_LIMIT - viewsRecent > 1 ? "s" : ""} restante${DIAMOND_AD_LIMIT - viewsRecent > 1 ? "s" : ""} esta ventana`
-              ) : cooldownMs > 0 ? (
-                <span className="flex items-center justify-center gap-1.5">
-                  <Clock size={13} className="text-sky-400/60" />
-                  {lang === "en"
-                    ? `Resets in ${formatMs(cooldownMs)}`
-                    : `Se reinicia en ${formatMs(cooldownMs)}`}
-                </span>
-              ) : (
-                lang === "en" ? "Slots refreshed! Watch another ad." : "¡Espacios disponibles! Mira otro anuncio."
-              )}
-            </p>
+            <div className="flex flex-col gap-2.5" role="list" aria-label={t("store.diamondsShop.packsLabel")}>
+              {DIAMOND_PACKS.map((pack) => (
+                <button
+                  key={pack.id}
+                  type="button"
+                  role="listitem"
+                  onClick={() => handleSelectPack(pack)}
+                  className={`flex w-full items-center gap-3 rounded-2xl border px-3.5 py-3 text-left transition-all active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/45 ${
+                    pack.highlight
+                      ? "border-sky-400/40 bg-sky-500/12"
+                      : "border-base-300 bg-base-300/30 hover:border-sky-500/25"
+                  }`}
+                  aria-label={`${pack.amount} ${t("store.diamonds")}, ${pack.displayPrice}`}
+                >
+                  <div
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-sky-400/25 bg-sky-400/10 text-sky-300"
+                    aria-hidden
+                  >
+                    <Gem size={20} strokeWidth={2.25} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-base-content tabular-nums">
+                      {t("store.diamondsShop.packAmount", { count: pack.amount })}
+                    </p>
+                    {pack.highlight && (
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-sky-400 mt-0.5">
+                        {t("store.diamondsShop.bestValue")}
+                      </p>
+                    )}
+                  </div>
+                  <span className="inline-flex items-center gap-1 shrink-0 rounded-xl border border-base-300 bg-base-100/50 px-2.5 py-1.5 text-xs font-bold text-base-content/70">
+                    {!DIAMONDS_IAP_ENABLED && <Lock size={11} strokeWidth={2.5} aria-hidden />}
+                    {pack.displayPrice}
+                  </span>
+                </button>
+              ))}
+            </div>
 
-            {/* Watch button */}
-            <button
-              type="button"
-              onClick={handleWatchAd}
-              disabled={!canWatch || watching}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl py-3.5 font-bold text-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-40 disabled:cursor-default"
-              style={{
-                background: canWatch
-                  ? "linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)"
-                  : undefined,
-                color: canWatch ? "#0c1a2e" : undefined,
-              }}
-            >
-              {watching ? (
-                <span className="loading loading-spinner loading-sm" />
-              ) : (
-                <Play size={16} strokeWidth={2.5} fill="currentColor" />
-              )}
-              {watching
-                ? lang === "en"
-                  ? "Loading..."
-                  : "Cargando..."
-                : canWatch
-                  ? lang === "en"
-                    ? `Watch Ad · +${DIAMOND_PER_AD} diamond`
-                    : `Ver anuncio · +${DIAMOND_PER_AD} diamante`
-                  : !isRewardedAdsSupported()
-                    ? lang === "en"
-                      ? "Android app only"
-                      : "Solo app Android"
-                    : !bridgeReady
-                      ? lang === "en"
-                        ? "Preparing ads…"
-                        : "Preparando anuncios…"
-                      : adLoading || !adReady
-                        ? lang === "en"
-                          ? "Loading ad from Google…"
-                          : "Cargando anuncio de Google…"
-                        : lang === "en"
-                          ? "Come back later"
-                          : "Vuelve más tarde"}
-            </button>
+            <p className="mt-4 text-center text-[11px] text-base-content/40">
+              {t("store.diamondsShop.footer")}
+            </p>
           </motion.div>
         </>
       )}

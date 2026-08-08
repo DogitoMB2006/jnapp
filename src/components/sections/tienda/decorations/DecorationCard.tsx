@@ -3,6 +3,7 @@ import { motion } from "framer-motion"
 import { Check, Gem, Lock, Zap } from "lucide-react"
 import { usePrefersReducedMotion, staggerDelay, springSnappy, tapScale } from "../../../../lib/motion"
 import { AnimatedBubbleFrame } from "./AnimatedBubbleFrame"
+import { CardDecorationFrame } from "../../../shared/CardDecorationFrame"
 import { useTranslation } from "react-i18next"
 import type { DecorationDef } from "./decorationDefs"
 
@@ -12,7 +13,7 @@ interface DecorationCardProps {
   equipped: boolean
   diamonds: number
   index: number
-  onBuy: () => Promise<void>
+  onPreview: () => void
   onEquip: () => Promise<void>
 }
 
@@ -22,7 +23,7 @@ export const DecorationCard = memo(function DecorationCard({
   equipped,
   diamonds,
   index,
-  onBuy,
+  onPreview,
   onEquip,
 }: DecorationCardProps) {
   const { t, i18n } = useTranslation()
@@ -32,14 +33,16 @@ export const DecorationCard = memo(function DecorationCard({
   const canAfford = diamonds >= decor.cost
   const name = lang === "en" ? decor.nameEn : decor.nameEs
   const previewLabel = lang === "en" ? "Hi" : "Hola"
-  const disabled = busy || equipped || (!owned && !canAfford)
+  const cardPreviewLabel = lang === "en" ? "Friday plan" : "Plan del viernes"
+  const animated = Boolean(decor.variant)
+  const disabled = busy || equipped
 
   async function handlePress() {
     if (disabled) return
     setBusy(true)
     try {
       if (owned) await onEquip()
-      else await onBuy()
+      else onPreview()
     } finally {
       setBusy(false)
     }
@@ -82,7 +85,7 @@ export const DecorationCard = memo(function DecorationCard({
         aria-hidden
       />
 
-      {decor.animated && (
+      {animated && (
         <span
           className="absolute top-1.5 left-1.5 z-10 inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide"
           style={{
@@ -117,7 +120,16 @@ export const DecorationCard = memo(function DecorationCard({
       )}
 
       <div className="relative flex h-[58%] items-center justify-center px-2 pt-5">
-        {decor.animated ? (
+        {decor.target === "card" ? (
+          <CardDecorationFrame decorationId={decor.id} preview className="w-[92%]">
+            <div className="relative overflow-hidden rounded-[11px] bg-[#170d20] px-2.5 py-2 shadow-lg">
+              <span className="absolute inset-y-0 left-0 w-[2px] bg-gradient-to-b from-primary to-secondary" />
+              <p className="truncate pl-1 text-[9px] font-bold text-white/90">{cardPreviewLabel}</p>
+              <p className="mt-1 pl-1 text-[7px] text-white/40">{lang === "en" ? "A shared moment" : "Un momento juntos"}</p>
+              <div className="mt-2 ml-1 h-px bg-white/8" />
+            </div>
+          </CardDecorationFrame>
+        ) : decor.variant === "bubble-nebula" ? (
           <AnimatedBubbleFrame
             isMine
             reducedMotion={reducedMotion}

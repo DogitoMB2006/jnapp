@@ -3,6 +3,7 @@ import { motion } from "framer-motion"
 import { Pencil, Trash2 } from "lucide-react"
 import { springSnappy } from "../../lib/motion"
 import { Avatar } from "./Avatar"
+import { CardDecorationFrame } from "./CardDecorationFrame"
 import type { Profile } from "../../types"
 
 interface ItemCardProps {
@@ -41,25 +42,24 @@ export const ItemCard = memo(function ItemCard({
   highlighted,
 }: ItemCardProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 6 }}
-      transition={springSnappy}
-      data-item-id={itemId}
-      className={`relative mb-3 rounded-2xl overflow-hidden transition-shadow duration-200 ${
-        completed ? "opacity-50" : ""
-      }`}
-      style={{
-        background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)",
-        border: highlighted
-          ? "1px solid rgba(255,45,107,0.6)"
-          : "1px solid rgba(255,255,255,0.07)",
-        boxShadow: highlighted
-          ? "0 4px 24px rgba(0,0,0,0.3), 0 0 0 3px rgba(255,45,107,0.18), inset 0 1px 0 rgba(255,255,255,0.05)"
-          : "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
-      }}
-    >
+    <CardDecorationFrame creator={creator} className={`mb-3 ${completed ? "opacity-50" : ""}`}>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 6 }}
+        transition={springSnappy}
+        data-item-id={itemId}
+        className="relative rounded-2xl overflow-hidden transition-shadow duration-200"
+        style={{
+          background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)",
+          border: highlighted
+            ? "1px solid rgba(255,45,107,0.6)"
+            : "1px solid rgba(255,255,255,0.07)",
+          boxShadow: highlighted
+            ? "0 4px 24px rgba(0,0,0,0.3), 0 0 0 3px rgba(255,45,107,0.18), inset 0 1px 0 rgba(255,255,255,0.05)"
+            : "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
+        }}
+      >
       <motion.div
         className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-2xl"
         style={{
@@ -161,6 +161,7 @@ export const ItemCard = memo(function ItemCard({
           </motion.div>
         </motion.div>
       </motion.div>
-    </motion.div>
+      </motion.div>
+    </CardDecorationFrame>
   )
 })

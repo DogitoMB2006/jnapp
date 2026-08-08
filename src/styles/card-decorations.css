@@ -1,0 +1,55 @@
+.card-decor-frame {
+  position: relative;
+  border-radius: 18px;
+}
+
+.card-decor-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: none;
+  border-radius: inherit;
+  padding: 1.5px;
+  pointer-events: none;
+  background-size: 260% 260%;
+  opacity: 0.82;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.card-decor-frame--aurora-circuit::before {
+  display: block;
+  background-image: linear-gradient(115deg, #22d3ee, #6366f1, #d946ef, #22d3ee);
+  animation: card-border-flow 7s ease-in-out infinite;
+}
+
+.card-decor-frame--ember-crown::before {
+  display: block;
+  background-image: linear-gradient(110deg, #92400e, #f59e0b, #fde68a, #f97316, #92400e);
+  animation: card-border-flow 8s linear infinite;
+}
+
+.card-decor-frame--celestial-bloom::before {
+  display: block;
+  background-image: linear-gradient(125deg, #312e81, #60a5fa, #c084fc, #f472b6, #312e81);
+  animation: card-border-flow 9s ease-in-out infinite;
+}
+
+.card-decor-frame--preview {
+  border-radius: 12px;
+}
+
+@keyframes card-border-flow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-decor-frame::before {
+    animation: none !important;
+  }
+}

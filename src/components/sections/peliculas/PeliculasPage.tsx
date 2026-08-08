@@ -16,6 +16,7 @@ import { useAuthStore } from "../../../store/authStore";
 import { useGroupStore } from "../../../store/groupStore";
 import { useNavigationStore } from "../../../store/navigationStore";
 import { Avatar } from "../../shared/Avatar";
+import { CardDecorationFrame } from "../../shared/CardDecorationFrame";
 import { PostInteractions } from "../../shared/PostInteractions";
 import { springSnappy } from "../../../lib/motion";
 import type { Pelicula, Profile } from "../../../types";
@@ -42,22 +43,22 @@ const MovieCard = memo(function MovieCard({
   const { t } = useTranslation();
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 6 }}
-      transition={springSnappy}
-      data-item-id={item.id}
-      className="mb-4 rounded-2xl overflow-hidden"
-      style={{
-        background: "linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)",
-        border: highlighted ? "1px solid rgba(255,45,107,0.6)" : "1px solid rgba(255,255,255,0.08)",
-        boxShadow: highlighted
-          ? "0 4px 28px rgba(0,0,0,0.35), 0 0 0 3px rgba(255,45,107,0.18), inset 0 1px 0 rgba(255,255,255,0.05)"
-          : "0 4px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)",
-        opacity: item.watched ? 0.65 : 1,
-      }}
-    >
+    <CardDecorationFrame creator={creator} className="mb-4" style={{ opacity: item.watched ? 0.65 : 1 }}>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 6 }}
+        transition={springSnappy}
+        data-item-id={item.id}
+        className="rounded-2xl overflow-hidden"
+        style={{
+          background: "linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)",
+          border: highlighted ? "1px solid rgba(255,45,107,0.6)" : "1px solid rgba(255,255,255,0.08)",
+          boxShadow: highlighted
+            ? "0 4px 28px rgba(0,0,0,0.35), 0 0 0 3px rgba(255,45,107,0.18), inset 0 1px 0 rgba(255,255,255,0.05)"
+            : "0 4px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)",
+        }}
+      >
       {/* Poster */}
       {item.poster_url && (
         <div
@@ -220,7 +221,8 @@ const MovieCard = memo(function MovieCard({
           userId={userId}
         />
       </div>
-    </motion.div>
+      </motion.div>
+    </CardDecorationFrame>
   );
 });
 

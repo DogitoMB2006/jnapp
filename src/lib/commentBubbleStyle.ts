@@ -24,9 +24,9 @@ export function getCommentBubbleAppearance(
 ): CommentBubbleAppearance | null {
   if (!equippedDecorId) return null
   const decor = getDecorationById(equippedDecorId)
-  if (!decor) return null
+  if (!decor || decor.target !== "bubble") return null
 
-  if (decor.animated) {
+  if (decor.variant === "bubble-nebula") {
     return {
       className: "",
       style: {},

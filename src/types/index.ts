@@ -8,6 +8,8 @@ export interface Profile {
   fcm_token?: string | null;
   /** Equipped chat bubble decoration id (visible to partner) */
   equipped_decor?: string | null;
+  /** Equipped content-card decoration id (visible on this user's cards) */
+  equipped_card_decor?: string | null;
   created_at: string;
   updated_at: string;
 }

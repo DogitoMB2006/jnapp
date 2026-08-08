@@ -1,11 +1,12 @@
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { motion } from "framer-motion"
-import { MessageCircle } from "lucide-react"
+import { LayoutPanelTop, MessageCircle } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import toast from "react-hot-toast"
 import { useShallow } from "zustand/react/shallow"
-import { DECORATIONS } from "./decorationDefs"
+import { DECORATIONS, type DecorationDef } from "./decorationDefs"
 import { DecorationCard } from "./DecorationCard"
+import { DecorationPreviewModal } from "./DecorationPreviewModal"
 import { useDiamondStore } from "../../../../store/diamondStore"
 import { useAuthStore } from "../../../../store/authStore"
 
@@ -13,31 +14,33 @@ export function DecorationsSection() {
   const { t, i18n } = useTranslation()
   const lang = i18n.language === "en" ? "en" : "es"
   const user = useAuthStore((s) => s.user)
-  const { diamonds, ownedDecor, equippedDecor, buyDecoration, equipDecoration } = useDiamondStore(
+  const profile = useAuthStore((s) => s.profile)
+  const [previewDecor, setPreviewDecor] = useState<DecorationDef | null>(null)
+  const { diamonds, ownedDecor, equippedDecor, equippedCardDecor, buyDecoration, equipDecoration } = useDiamondStore(
     useShallow((s) => ({
       diamonds: s.diamonds,
       ownedDecor: s.ownedDecor,
       equippedDecor: s.equippedDecor,
+      equippedCardDecor: s.equippedCardDecor,
       buyDecoration: s.buyDecoration,
       equipDecoration: s.equipDecoration,
     })),
   )
 
-  const equipped = useMemo(
-    () => DECORATIONS.find((d) => d.id === equippedDecor) ?? null,
-    [equippedDecor],
-  )
-
-  const catalog = useMemo(
-    () => [...DECORATIONS].sort((a, b) => b.cost - a.cost),
+  const catalogs = useMemo(
+    () => ({
+      bubble: DECORATIONS.filter((item) => item.target === "bubble").sort((a, b) => b.cost - a.cost),
+      card: DECORATIONS.filter((item) => item.target === "card").sort((a, b) => a.id.localeCompare(b.id)),
+    }),
     [],
   )
 
-  async function handleBuy(decorId: string, cost: number) {
+  async function handleBuy(decorId: string) {
     if (!user) return
     try {
-      await buyDecoration(user.id, decorId, cost)
+      await buyDecoration(decorId)
       toast.success(t("store.decor.unlocked"))
+      setPreviewDecor(null)
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : ""
       if (msg === "not_enough_diamonds") {
@@ -48,21 +51,36 @@ export function DecorationsSection() {
     }
   }
 
-  async function handleEquip(decorId: string) {
+  async function handleEquip(decorId: string, target: "bubble" | "card") {
     if (!user) return
     try {
-      await equipDecoration(user.id, decorId)
+      await equipDecoration(decorId, target)
       toast.success(t("store.decor.applied"))
     } catch {
       toast.error(t("store.decor.equipFail"))
     }
   }
 
-  const equippedName = equipped
-    ? lang === "en"
-      ? equipped.nameEn
-      : equipped.nameEs
-    : null
+  const groups = [
+    {
+      target: "card" as const,
+      title: t("store.decor.cardStyles"),
+      subtitle: t("store.decor.cardHint"),
+      icon: LayoutPanelTop,
+      items: catalogs.card,
+      equippedId: equippedCardDecor,
+      color: "#c084fc",
+    },
+    {
+      target: "bubble" as const,
+      title: t("store.decor.bubbleStyles"),
+      subtitle: t("store.decor.bubbleHint"),
+      icon: MessageCircle,
+      items: catalogs.bubble,
+      equippedId: equippedDecor,
+      color: "#38bdf8",
+    },
+  ]
 
   return (
     <motion.div className="flex flex-col gap-3">
@@ -71,62 +89,62 @@ export function DecorationsSection() {
         animate={{ opacity: 1 }}
         className="flex items-start gap-1.5 text-center text-[11px] leading-snug text-base-content/45 justify-center"
       >
-        <MessageCircle size={12} className="mt-0.5 shrink-0 text-sky-400" strokeWidth={2.25} aria-hidden />
+        <LayoutPanelTop size={12} className="mt-0.5 shrink-0 text-violet-400" strokeWidth={2.25} aria-hidden />
         <span>{t("store.decor.hint")}</span>
       </motion.p>
 
-      {equipped && (
-        <motion.div
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2.5 rounded-xl border px-2.5 py-2"
-          style={{
-            borderColor: `${equipped.accent}40`,
-            background: `${equipped.accent}12`,
-          }}
-          aria-label={`${t("store.yourSpace")}: ${equippedName}`}
-        >
-          <div
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[9px] font-bold shadow-sm"
-            style={equipped.previewStyle}
-            aria-hidden
+      {groups.map((group, groupIndex) => {
+        const active = group.items.find((item) => item.id === group.equippedId)
+        const Icon = group.icon
+        return (
+          <motion.section
+            key={group.target}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: groupIndex * 0.06 }}
+            className="rounded-2xl border border-base-300/80 bg-base-200/35 p-3"
           >
-            <span style={equipped.textStyle ?? {}}>{lang === "en" ? "Hi" : "Hola"}</span>
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-base-content/40">
-              {t("store.decor.bubbleStyles")}
-            </p>
-            <p className="truncate text-sm font-bold text-base-content">{equippedName}</p>
-          </div>
-          <span
-            className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
-            style={{ background: `${equipped.accent}28`, color: equipped.accent }}
-          >
-            {t("store.on")}
-          </span>
-        </motion.div>
-      )}
-
-      <div
-        className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2.5"
-        role="list"
-        aria-label={t("store.decor.bubbleStyles")}
-      >
-        {catalog.map((decor, i) => (
-          <div key={decor.id} role="listitem" className="min-w-0">
-            <DecorationCard
-              decor={decor}
-              owned={ownedDecor.has(decor.id)}
-              equipped={equippedDecor === decor.id}
-              diamonds={diamonds}
-              index={i}
-              onBuy={() => handleBuy(decor.id, decor.cost)}
-              onEquip={() => handleEquip(decor.id)}
-            />
-          </div>
-        ))}
-      </div>
+            <div className="mb-3 flex items-start gap-2.5">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ color: group.color, background: `${group.color}18` }}>
+                <Icon size={17} strokeWidth={2.3} aria-hidden />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-extrabold text-base-content">{group.title}</h3>
+                  {active && (
+                    <span className="max-w-[45%] truncate rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide" style={{ color: active.accent, background: `${active.accent}1f` }}>
+                      {lang === "en" ? active.nameEn : active.nameEs}
+                    </span>
+                  )}
+                </div>
+                <p className="mt-0.5 text-[10px] leading-snug text-base-content/40">{group.subtitle}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2.5" role="list" aria-label={group.title}>
+              {group.items.map((decor, i) => (
+                <div key={decor.id} role="listitem" className="min-w-0">
+                  <DecorationCard
+                    decor={decor}
+                    owned={ownedDecor.has(decor.id)}
+                    equipped={group.equippedId === decor.id}
+                    diamonds={diamonds}
+                    index={i}
+                    onPreview={() => setPreviewDecor(decor)}
+                    onEquip={() => handleEquip(decor.id, group.target)}
+                  />
+                </div>
+              ))}
+            </div>
+          </motion.section>
+        )
+      })}
+      <DecorationPreviewModal
+        decor={previewDecor}
+        profile={profile}
+        diamonds={diamonds}
+        onClose={() => setPreviewDecor(null)}
+        onBuy={handleBuy}
+      />
     </motion.div>
   )
 }

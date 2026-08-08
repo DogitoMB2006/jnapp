@@ -374,6 +374,12 @@ export function PostInteractions({ targetType, targetId, groupId, userId }: Prop
     if (shouldLoad) void ensureLoaded()
   }, [shouldLoad, ensureLoaded])
 
+  // When opening comments, re-fetch in case partner interacted before this card loaded realtime
+  useEffect(() => {
+    if (!showComments) return
+    void refresh({ silent: true })
+  }, [showComments, refresh])
+
   useEffect(() => {
     const el = rootRef.current
     if (!el) return

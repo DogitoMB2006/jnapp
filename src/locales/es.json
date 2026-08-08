@@ -153,6 +153,18 @@
     "uploadError": "Error al subir imagen",
     "photoUpdated": "Foto actualizada",
     "language": "Idioma",
+    "enableNotifications": "Activar notificaciones",
+    "notificationsEnabled": "Notificaciones activadas",
+    "privacyChoices": "Privacidad de anuncios",
+    "account": {
+      "privacyPolicy": "Política de privacidad",
+      "deletionInfo": "Detalles de eliminación",
+      "delete": "Eliminar cuenta",
+      "deleteConfirm": "¿Eliminar tu cuenta de Planivy? Tu perfil, compras personales, notificaciones e inicio de sesión se borrarán permanentemente.",
+      "deleteFinalConfirm": "Esta acción no se puede deshacer. ¿Eliminar la cuenta permanentemente?",
+      "deleted": "Cuenta eliminada",
+      "deleteError": "No se pudo eliminar la cuenta"
+    },
     "group": {
       "title": "Mi Grupo",
       "partner": "Tu pareja",
@@ -192,6 +204,26 @@
     },
     "comingSoon": "Pronto",
     "themesHint": "Los temas se aplican para los dos en tiempo real.",
+    "themeRarity": {
+      "common": "Común",
+      "uncommon": "Poco común",
+      "epic": "Épico",
+      "legendary": "Legendario"
+    },
+    "themePreview": {
+      "title": "Vista previa del tema",
+      "you": "Tú",
+      "welcome": "Bienvenido de nuevo",
+      "planTitle": "Cita del viernes",
+      "planText": "Un plan compartido para los dos",
+      "sharedTitle": "Hecho para su espacio compartido",
+      "sharedText": "Este tema cambia toda la aplicación para ti y tu pareja en tiempo real.",
+      "afterBuyHint": "Después de comprarlo, toca la tarjeta del tema para aplicarlo.",
+      "buyFor": "Comprar por {{count}} monedas",
+      "needMore": "Faltan monedas",
+      "tapApply": "Toca para aplicar",
+      "collectionHint": "Toca un tema bloqueado para verlo"
+    },
     "yourSpace": "Su espacio ahora",
     "collection": "Colección de temas",
     "equipped": "Equipado",
@@ -202,9 +234,24 @@
     "diamonds": "Diamantes",
     "diamondsPrice": "{{count}} diamantes",
     "earnCoinsHint": "Mira anuncios para ganar monedas · se reinicia cada 3h",
+    "diamondsShop": {
+      "title": "Obtener diamantes",
+      "subtitle": "Moneda premium para decoraciones. Solo comprando — sin anuncios.",
+      "premiumNote": "Los diamantes desbloquean estilos premium de burbuja y tarjeta. La compra llegará pronto en una actualización de Play Store.",
+      "packsLabel": "Paquetes de diamantes",
+      "packAmount": "{{count}} diamantes",
+      "bestValue": "Mejor valor",
+      "footer": "Los pagos aún no están. Las decoraciones usan diamantes que ya tengas.",
+      "comingSoonToast": "Compra de diamantes próximamente",
+      "openShop": "Obtener diamantes",
+      "close": "Cerrar"
+    },
     "decor": {
-      "hint": "Las decoraciones personalizan tus burbujas de chat. Son tuyas para siempre, incluso si cambias de pareja.",
+      "hint": "Equipa estilos separados para tus mensajes y las tarjetas que creas. Tu pareja también los verá.",
       "bubbleStyles": "Estilos de burbuja",
+      "bubbleHint": "Personaliza tus comentarios y respuestas",
+      "cardStyles": "Bordes animados de tarjeta",
+      "cardHint": "Se muestran en cada plan, tarea, salida y película que creas",
       "owned": "Tuya",
       "equip": "Equipar",
       "equipped": "Equipado",
@@ -215,7 +262,14 @@
       "notEnough": "No tienes suficientes diamantes",
       "buyFail": "Error al comprar",
       "equipFail": "Error al equipar",
-      "animated": "Animado"
+      "animated": "Animado",
+      "previewTitle": "Vista previa",
+      "previewCardTitle": "Cita del viernes",
+      "previewCardText": "Un pequeño plan hecho para nosotros dos.",
+      "previewBubbleText": "¡No puedo esperar para verte esta noche!",
+      "afterBuyHint": "Después de comprarlo, toca este estilo en la tienda para equiparlo.",
+      "buyFor": "Comprar por {{count}} diamantes",
+      "you": "Tú"
     }
   },
   "groupSetup": {

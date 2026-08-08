@@ -6,7 +6,10 @@ import {
   patchPostInteractionsCache,
   setPostInteractionsCache,
 } from "../lib/postInteractionsCache"
+import { subscribePostInteractionRealtime } from "../lib/postInteractionsRealtime"
 import { notifyPartnerInteraction } from "../lib/notifyPartner"
+import { parseTableChangePayload } from "../lib/realtimePayload"
+import { isLikelyNotificationRealtimeRow } from "../lib/realtimeGuards"
 import type {
   PostComment,
   PostCommentNode,
@@ -34,6 +37,26 @@ type UsePostInteractionsArgs = {
 
 const sanitizeEmojiInput = (raw: string): string => raw.trim().slice(0, 8)
 
+const matchesTarget = (
+  row: Record<string, unknown>,
+  targetType: PostTargetType,
+  targetId: string,
+  groupId?: string,
+) => {
+  const rowType = typeof row.target_type === "string" ? row.target_type : ""
+  const rowId =
+    typeof row.target_id === "string"
+      ? row.target_id
+      : row.target_id != null
+        ? String(row.target_id)
+        : ""
+  if (rowType !== targetType || rowId !== targetId) return false
+  if (groupId && typeof row.group_id === "string" && row.group_id !== groupId) {
+    return false
+  }
+  return true
+}
+
 export const usePostInteractions = ({
   targetType,
   targetId,
@@ -49,6 +72,7 @@ export const usePostInteractions = ({
   const [hasLoaded, setHasLoaded] = useState(false)
   const profilesRef = useRef(profiles)
   profilesRef.current = profiles
+  const fetchGenRef = useRef(0)
 
   const isEnabled = Boolean(groupId && targetId)
 
@@ -92,21 +116,19 @@ export const usePostInteractions = ({
     })
   }, [targetType, targetId])
 
-  const fetchAll = useCallback(async () => {
+  const fetchAll = useCallback(async (opts?: { silent?: boolean }) => {
     if (!isEnabled) return
 
+    const gen = ++fetchGenRef.current
     const cached = getPostInteractionsCache(targetType, targetId)
     if (cached) {
       setReactions(cached.reactions)
       setComments(cached.comments)
       setProfiles(cached.profiles)
       setHasLoaded(true)
-      const authorIds = [...new Set(cached.comments.map((row) => row.user_id))]
-      void loadProfiles(authorIds, { force: true })
-      return
+    } else if (!opts?.silent) {
+      setLoading(true)
     }
-
-    setLoading(true)
 
     const [reactionRes, commentRes] = await Promise.all([
       insforge.database
@@ -122,8 +144,10 @@ export const usePostInteractions = ({
         .order("created_at", { ascending: true }),
     ])
 
-    let nextReactions: PostReaction[] = []
-    let nextComments: PostComment[] = []
+    if (gen !== fetchGenRef.current) return
+
+    let nextReactions: PostReaction[] = cached?.reactions ?? []
+    let nextComments: PostComment[] = cached?.comments ?? []
     const nextProfiles: Record<string, Profile> = { ...profilesRef.current }
 
     if (!reactionRes.error && reactionRes.data) {
@@ -137,6 +161,7 @@ export const usePostInteractions = ({
           .from("profiles")
           .select("*")
           .in("user_id", missingIds)
+        if (gen !== fetchGenRef.current) return
         if (!error && data) {
           ;(data as Profile[]).forEach((profile) => {
             nextProfiles[profile.user_id] = profile
@@ -153,6 +178,7 @@ export const usePostInteractions = ({
           .from("profiles")
           .select("*")
           .in("user_id", ids)
+        if (gen !== fetchGenRef.current) return
         if (!error && data) {
           ;(data as Profile[]).forEach((profile) => {
             nextProfiles[profile.user_id] = profile
@@ -165,10 +191,10 @@ export const usePostInteractions = ({
     syncCache(nextReactions, nextComments, nextProfiles)
     setHasLoaded(true)
     setLoading(false)
-  }, [isEnabled, targetType, targetId, syncCache, loadProfiles])
+  }, [isEnabled, targetType, targetId, syncCache])
 
   const ensureLoaded = useCallback(async () => {
-    if (hasLoaded && !loading) return
+    if (loading || hasLoaded) return
     await fetchAll()
   }, [fetchAll, hasLoaded, loading])
 
@@ -187,6 +213,122 @@ export const usePostInteractions = ({
       setHasLoaded(true)
     }
   }, [shouldLoad, targetType, targetId, hasLoaded])
+
+  const updateReactions = useCallback(
+    (updater: (prev: PostReaction[]) => PostReaction[]) => {
+      setReactions((prev) => {
+        const next = updater(prev)
+        patchPostInteractionsCache(targetType, targetId, { reactions: next })
+        return next
+      })
+    },
+    [targetType, targetId],
+  )
+
+  const updateComments = useCallback(
+    (updater: (prev: PostComment[]) => PostComment[]) => {
+      setComments((prev) => {
+        const next = updater(prev)
+        patchPostInteractionsCache(targetType, targetId, { comments: next })
+        return next
+      })
+    },
+    [targetType, targetId],
+  )
+
+  // Live partner comments / reactions while the app is open
+  useEffect(() => {
+    if (!isEnabled) return
+
+    const applyPayload = (
+      channel: "post_comments" | "post_reactions",
+      payload: unknown,
+    ) => {
+      const msg = parseTableChangePayload(payload)
+      if (!msg) return
+
+      if (msg.op === "DELETE") {
+        const id = msg.id
+        if (!id) return
+        // DELETE may only include id; drop by id for this post's lists
+        if (channel === "post_comments") {
+          if (matchesTarget(msg.record, targetType, targetId, groupId) || msg.record.id) {
+            // Prefer scoped delete when target fields present; else id-only delete if known
+            if (
+              msg.record.target_type != null ||
+              msg.record.target_id != null
+            ) {
+              if (!matchesTarget(msg.record, targetType, targetId, groupId)) return
+            }
+            updateComments((prev) => {
+              if (!prev.some((c) => c.id === id)) return prev
+              return prev.filter((c) => c.id !== id)
+            })
+          }
+        } else {
+          if (
+            msg.record.target_type != null ||
+            msg.record.target_id != null
+          ) {
+            if (!matchesTarget(msg.record, targetType, targetId, groupId)) return
+          }
+          updateReactions((prev) => {
+            if (!prev.some((r) => r.id === id)) return prev
+            return prev.filter((r) => r.id !== id)
+          })
+        }
+        setHasLoaded(true)
+        return
+      }
+
+      const row = msg.record
+      if (isLikelyNotificationRealtimeRow(row)) return
+      if (!matchesTarget(row, targetType, targetId, groupId)) return
+
+      if (channel === "post_comments") {
+        const comment = row as unknown as PostComment
+        if (!comment.id) return
+        if (msg.op === "INSERT") {
+          updateComments((prev) =>
+            prev.some((c) => c.id === comment.id) ? prev : [...prev, comment],
+          )
+          if (comment.user_id) void loadProfiles([comment.user_id])
+        } else if (msg.op === "UPDATE") {
+          updateComments((prev) =>
+            prev.map((c) => (c.id === comment.id ? { ...c, ...comment } : c)),
+          )
+        }
+      } else {
+        const reaction = row as unknown as PostReaction
+        if (!reaction.id) return
+        if (msg.op === "INSERT") {
+          updateReactions((prev) =>
+            prev.some((r) => r.id === reaction.id) ? prev : [...prev, reaction],
+          )
+        } else if (msg.op === "UPDATE") {
+          updateReactions((prev) =>
+            prev.map((r) => (r.id === reaction.id ? { ...r, ...reaction } : r)),
+          )
+        }
+      }
+      setHasLoaded(true)
+    }
+
+    return subscribePostInteractionRealtime(applyPayload, {
+      onReconnect: () => {
+        void fetchAll({ silent: true })
+      },
+    })
+  }, [
+    isEnabled,
+    targetType,
+    targetId,
+    groupId,
+    updateComments,
+    updateReactions,
+    loadProfiles,
+    fetchAll,
+  ])
 
   const reactionsSummary = useMemo<ReactionSummary[]>(() => {
     const map = new Map<string, ReactionSummary>()
@@ -232,28 +374,6 @@ export const usePostInteractions = ({
     return build(null)
   }, [comments, profiles])
 
-  const updateReactions = useCallback(
-    (updater: (prev: PostReaction[]) => PostReaction[]) => {
-      setReactions((prev) => {
-        const next = updater(prev)
-        patchPostInteractionsCache(targetType, targetId, { reactions: next })
-        return next
-      })
-    },
-    [targetType, targetId],
-  )
-
-  const updateComments = useCallback(
-    (updater: (prev: PostComment[]) => PostComment[]) => {
-      setComments((prev) => {
-        const next = updater(prev)
-        patchPostInteractionsCache(targetType, targetId, { comments: next })
-        return next
-      })
-    },
-    [targetType, targetId],
-  )
-
   const toggleReaction = useCallback(async (emojiInput: string) => {
     const emoji = sanitizeEmojiInput(emojiInput)
     if (!emoji || !groupId || !userId || !targetId) return
@@ -271,7 +391,7 @@ export const usePostInteractions = ({
         .eq("id", existing.id)
       if (error) {
         toast.error("No se pudo quitar la reacción")
-        await fetchAll()
+        await fetchAll({ silent: true })
       }
       return
     }

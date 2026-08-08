@@ -1,87 +1,48 @@
-import { getJNAdMob, isAdMobBridgeReady } from "./admobBridge"
-import { isMobileTauri } from "./platform"
+/**
+ * Diamonds are a paid premium currency.
+ * They are NOT earned via ads. Client grant only after a verified purchase (IAP)
+ * or admin credit. Until Play Billing is wired, do not grant diamonds from the UI.
+ */
 
-export const DIAMOND_PER_AD = 1
-export const DIAMOND_AD_LIMIT = 3
-export const DIAMOND_AD_WINDOW_MS = 3 * 60 * 60 * 1000 // 3 hours
+/** Placeholder pack ids for future Google Play Billing products. */
+export type DiamondPackId = "diamonds_10" | "diamonds_50" | "diamonds_120"
 
-// ─── 3-hour rolling window tracking ──────────────────────────────────────────
-
-function viewsKey(userId: string): string {
-  return `diamond_ad_views_${userId}`
+export type DiamondPack = {
+  id: DiamondPackId
+  /** Amount granted after a successful verified purchase. */
+  amount: number
+  /** Display-only price string until Billing Client supplies localized price. */
+  displayPrice: string
+  /** Future Play product id (must match Play Console). */
+  productId: string
+  highlight?: boolean
 }
 
-function getAdTimestamps(userId: string): number[] {
-  try {
-    const raw = localStorage.getItem(viewsKey(userId))
-    return raw ? (JSON.parse(raw) as number[]) : []
-  } catch {
-    return []
-  }
-}
+/** Catalog shaped for the future shop; purchase is not live yet. */
+export const DIAMOND_PACKS: readonly DiamondPack[] = [
+  {
+    id: "diamonds_10",
+    amount: 10,
+    displayPrice: "$0.99",
+    productId: "diamonds_10",
+  },
+  {
+    id: "diamonds_50",
+    amount: 50,
+    displayPrice: "$3.99",
+    productId: "diamonds_50",
+    highlight: true,
+  },
+  {
+    id: "diamonds_120",
+    amount: 120,
+    displayPrice: "$7.99",
+    productId: "diamonds_120",
+  },
+] as const
 
-function getRecentTimestamps(userId: string): number[] {
-  const cutoff = Date.now() - DIAMOND_AD_WINDOW_MS
-  return getAdTimestamps(userId).filter((t) => t > cutoff)
-}
-
-export function getDiamondAdViewsRecent(userId: string): number {
-  return getRecentTimestamps(userId).length
-}
-
-/** Ms until the oldest slot expires (i.e. next diamond ad available). 0 if slots free. */
-export function getDiamondAdCooldownMs(userId: string): number {
-  const recent = getRecentTimestamps(userId)
-  if (recent.length < DIAMOND_AD_LIMIT) return 0
-  const oldest = Math.min(...recent)
-  return Math.max(0, oldest + DIAMOND_AD_WINDOW_MS - Date.now())
-}
-
-export function hasDiamondAdSlots(userId: string): boolean {
-  return getDiamondAdViewsRecent(userId) < DIAMOND_AD_LIMIT
-}
-
-export function diamondAdsAvailable(userId: string): boolean {
-  return isMobileTauri && isAdMobBridgeReady() && hasDiamondAdSlots(userId)
-}
-
-function recordAdView(userId: string): void {
-  const recent = getRecentTimestamps(userId)
-  recent.push(Date.now())
-  localStorage.setItem(viewsKey(userId), JSON.stringify(recent))
-}
-
-// ─── Ad bridge ────────────────────────────────────────────────────────────────
-
-export function watchDiamondAd(userId: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const bridge = getJNAdMob()
-    if (!bridge) {
-      reject(new Error(isMobileTauri ? "bridge_not_ready" : "not_available"))
-      return
-    }
-    if (getDiamondAdViewsRecent(userId) >= DIAMOND_AD_LIMIT) {
-      reject(new Error("limit_reached"))
-      return
-    }
-
-    const win = window as Window & {
-      __admobDiamondCallback?: (success: boolean, error: string | null) => void
-    }
-
-    win.__admobDiamondCallback = (success: boolean, error: string | null) => {
-      win.__admobDiamondCallback = undefined
-      if (success) {
-        recordAdView(userId)
-        resolve()
-      } else {
-        reject(new Error(error ?? "ad_failed"))
-      }
-    }
-    bridge.showDiamondAd()
-  })
-}
-
-export function preloadDiamondAd(): void {
-  getJNAdMob()?.preloadDiamond()
-}
+/**
+ * Purchases are not enabled yet.
+ * When live: open Billing flow, verify the receipt server-side, then credit diamonds through a protected RPC.
+ */
+export const DIAMONDS_IAP_ENABLED = false

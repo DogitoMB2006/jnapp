@@ -153,6 +153,18 @@
     "uploadError": "Error uploading image",
     "photoUpdated": "Photo updated",
     "language": "Language",
+    "enableNotifications": "Enable notifications",
+    "notificationsEnabled": "Notifications enabled",
+    "privacyChoices": "Ad privacy choices",
+    "account": {
+      "privacyPolicy": "Privacy policy",
+      "deletionInfo": "Deletion details",
+      "delete": "Delete account",
+      "deleteConfirm": "Delete your Planivy account? Your profile, personal purchases, notifications, and sign-in will be permanently removed.",
+      "deleteFinalConfirm": "This cannot be undone. Delete account permanently?",
+      "deleted": "Account deleted",
+      "deleteError": "Could not delete account"
+    },
     "group": {
       "title": "My Group",
       "partner": "Your partner",
@@ -192,6 +204,26 @@
     },
     "comingSoon": "Soon",
     "themesHint": "Themes apply for both of you in real time.",
+    "themeRarity": {
+      "common": "Common",
+      "uncommon": "Uncommon",
+      "epic": "Epic",
+      "legendary": "Legendary"
+    },
+    "themePreview": {
+      "title": "Theme preview",
+      "you": "You",
+      "welcome": "Welcome back",
+      "planTitle": "Friday date night",
+      "planText": "A shared plan for both of you",
+      "sharedTitle": "Made for your shared space",
+      "sharedText": "This theme changes the full app for you and your partner in real time.",
+      "afterBuyHint": "After buying, tap the theme card to apply it.",
+      "buyFor": "Buy for {{count}} coins",
+      "needMore": "Need more coins",
+      "tapApply": "Tap to apply",
+      "collectionHint": "Tap a locked theme to preview it"
+    },
     "yourSpace": "Your space now",
     "collection": "Theme collection",
     "equipped": "Equipped",
@@ -202,9 +234,24 @@
     "diamonds": "Diamonds",
     "diamondsPrice": "{{count}} diamonds",
     "earnCoinsHint": "Watch ads to earn coins · resets every 3h",
+    "diamondsShop": {
+      "title": "Get Diamonds",
+      "subtitle": "Premium currency for decorations. Purchase only — no ads.",
+      "premiumNote": "Diamonds unlock premium bubble and card styles. Buying is coming soon in a Play Store update.",
+      "packsLabel": "Diamond packs",
+      "packAmount": "{{count}} diamonds",
+      "bestValue": "Best value",
+      "footer": "Payment is not available yet. Decor purchases still use diamonds you already have.",
+      "comingSoonToast": "Diamond purchases coming soon",
+      "openShop": "Get diamonds",
+      "close": "Close"
+    },
     "decor": {
-      "hint": "Decorations style your chat bubbles. Yours forever — even if you change partners.",
+      "hint": "Equip separate styles for your messages and the cards you create. Your partner sees them too.",
       "bubbleStyles": "Bubble styles",
+      "bubbleHint": "Personalize your comments and replies",
+      "cardStyles": "Animated card borders",
+      "cardHint": "Shown on every plan, list item, outing, and movie you create",
       "owned": "Owned",
       "equip": "Equip",
       "equipped": "Equipped",
@@ -215,7 +262,14 @@
       "notEnough": "Not enough diamonds",
       "buyFail": "Purchase failed",
       "equipFail": "Failed to equip",
-      "animated": "Animated"
+      "animated": "Animated",
+      "previewTitle": "Live preview",
+      "previewCardTitle": "Friday date night",
+      "previewCardText": "A little plan made for the two of us.",
+      "previewBubbleText": "Can't wait to see you tonight!",
+      "afterBuyHint": "After buying, tap this style in the store to equip it.",
+      "buyFor": "Buy for {{count}} diamonds",
+      "you": "You"
     }
   },
   "groupSetup": {

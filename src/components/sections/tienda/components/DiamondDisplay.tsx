@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Gem, Plus } from "lucide-react"
+import { Gem, ShoppingBag } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useDiamondStore } from "../../../../store/diamondStore"
 import { useAuthStore } from "../../../../store/authStore"
@@ -11,8 +11,7 @@ type DiamondDisplayProps = {
 }
 
 export function DiamondDisplay({ variant = "default" }: DiamondDisplayProps) {
-  const { t, i18n } = useTranslation()
-  const lang = i18n.language === "en" ? "en" : "es"
+  const { t } = useTranslation()
   const { diamonds } = useDiamondStore()
   const { user } = useAuthStore()
   const [modalOpen, setModalOpen] = useState(false)
@@ -41,9 +40,9 @@ export function DiamondDisplay({ variant = "default" }: DiamondDisplayProps) {
                 type="button"
                 onClick={() => setModalOpen(true)}
                 className="flex h-5 w-5 items-center justify-center rounded-md border border-sky-400/30 bg-sky-400/15 text-sky-400 hover:bg-sky-400/25 active:scale-95 transition-colors"
-                aria-label={lang === "en" ? "Earn diamonds" : "Ganar diamantes"}
+                aria-label={t("store.diamondsShop.openShop")}
               >
-                <Plus size={11} strokeWidth={2.5} />
+                <ShoppingBag size={11} strokeWidth={2.5} />
               </button>
             )}
           </>
@@ -57,7 +56,7 @@ export function DiamondDisplay({ variant = "default" }: DiamondDisplayProps) {
             </div>
             <div className="flex flex-col leading-tight">
               <span className="text-[10px] text-sky-400/70 font-medium uppercase tracking-wider">
-                {lang === "en" ? "Diamonds" : "Diamantes"}
+                {t("store.diamonds")}
               </span>
               <span className="font-semibold text-base tabular-nums text-sky-300">{diamonds}</span>
             </div>
@@ -66,9 +65,9 @@ export function DiamondDisplay({ variant = "default" }: DiamondDisplayProps) {
                 type="button"
                 onClick={() => setModalOpen(true)}
                 className="ml-1 flex h-7 w-7 items-center justify-center rounded-lg border border-sky-400/25 bg-sky-400/12 text-sky-400 hover:bg-sky-400/20 active:scale-95 transition-colors duration-150"
-                aria-label={lang === "en" ? "Earn diamonds" : "Ganar diamantes"}
+                aria-label={t("store.diamondsShop.openShop")}
               >
-                <Plus size={14} strokeWidth={2.5} />
+                <ShoppingBag size={14} strokeWidth={2.5} />
               </button>
             )}
           </>
